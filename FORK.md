@@ -6,6 +6,16 @@ vídeo open source em Rust/Slint. O código continua sob a licença **AGPL-3.0-o
 (veja `TRADEMARK.md`). Este fork não é um build oficial e, se for distribuído a terceiros,
 deve usar outro nome e outro ícone.
 
+## Editar um vídeo: "edita esse vídeo"
+1. Uma vez por máquina: `./tools/setup.sh --app`, instale `dist/Concat.app` em /Applications, ligue a
+   API em Configurações > API e salve o token em `.concat-token`. Para B-roll, rode
+   `./tools/configurar_chave_higgsfield.sh`.
+2. Abra o **Claude Code** nesta pasta e diga: **"edita esse vídeo: ~/Downloads/C5430.MP4 e salva como
+   Meu Título"**. A skill `.claude/skills/edicao-reels` faz o processo inteiro e entrega o MP4 4K 30 fps
+   na Mesa.
+
+O estilo de edição (regras e números) está em **[EDICAO.md](EDICAO.md)**.
+
 ## O que muda em relação ao original
 
 ### 1. API JSON-RPC que edita ao vivo o projeto aberto na janela
@@ -43,6 +53,8 @@ Scripts que falam com a API (porta 7420; o token fica em `.concat-token`, fora d
 | `contraste_destaques.py` | escolhe a cor do destaque pelo brilho do fundo |
 | `exportar.py` | exporta pela API (padrão 4K) |
 | `quadros.py` | renderiza quadros para conferência |
+| `reel.py` | etapas mecânicas: novo projeto, transcrição, cortes/tomadas, 1.05x, nitidez, listar, fechar |
+| `setup.sh` | instala dependências, venv, fontes e (com `--app`) compila o Concat |
 
 As ferramentas usam um venv próprio (`tools/.venv`) com `higgsfield-client`, `python-dotenv`,
 `pillow`, `fonttools` e `opencv-python-headless<5`. As fontes Scholar e Montserrat **não**

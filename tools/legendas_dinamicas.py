@@ -20,7 +20,7 @@ plano.json: [{"estilo": "serifa", "linhas": [[0, 1], [2], [3]], "chave": [2]}, .
 Regra de leitura (do usuário): palavras PEQUENAS sempre em letra normal e reta (Helvetica /
 Montserrat), nunca fina nem cursiva; fontes finas e cursivas (Scholar Itálico, Bold Oblíqua)
 só nas palavras GRANDES de destaque.
-Estilos (prints em ~/Desktop/Legendas dinamicas):
+Estilos (inspirados em prints de legendas de reels; descritos em EDICAO.md):
   serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em Scholar Itálico amarelo, palavra final
              maior alinhada à direita embaixo da chave.
   classico - "Estilo 5": palavras pequenas (Helvetica) espalhadas sobre uma linha grande

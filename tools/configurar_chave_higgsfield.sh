@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Guarda a chave da API do Higgsfield em ~/Developer/Concat/.env.local (HF_KEY=id:segredo).
+# Guarda a chave da API do Higgsfield em <repositório>/.env.local (HF_KEY=id:segredo).
 # A chave é digitada sem aparecer na tela e nunca é mostrada; o arquivo é ignorado pelo Git.
 set -euo pipefail
 env_file="$(cd "$(dirname "$0")/.." && pwd)/.env.local"

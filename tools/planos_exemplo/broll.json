@@ -1,0 +1,11 @@
+{"modelo_api": "z-image/turbo",
+ "proporcao": "9:16",
+ "estilo": "Photorealistic, cinematic vertical photo, soft natural light, shallow depth of field.",
+ "cenas": [
+  {"inicio": 4.2, "fim": 5.93, "nome": "fim_de_semana",
+   "prompt": "Close-up of Brazilian friends' hands toasting with glasses of cold beer over a crowded boteco table on a Saturday night, string lights, warm festive atmosphere."},
+  {"inicio": 22.87, "fim": 24.83, "nome": "tontura",
+   "prompt": "A Brazilian middle-aged man with tanned skin standing in his home kitchen, feeling dizzy, one hand on his forehead and the other on the counter, soft daylight."},
+  {"inicio": 46.2, "fim": 49.27, "nome": "coracao",
+   "prompt": "Single image: realistic 3D medical render of a human heart with its main arteries, deep red tones, dark background, cinematic lighting."}
+ ]}

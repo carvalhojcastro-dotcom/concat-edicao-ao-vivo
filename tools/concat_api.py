@@ -3,7 +3,8 @@ import json
 import os
 import socket
 
-TOKEN_FILE = os.path.expanduser("~/Developer/Concat/.concat-token")
+# O token da API do Concat (Configurações › API), na raiz do repositório e fora do Git.
+TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".concat-token")
 
 
 class Concat:

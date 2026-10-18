@@ -9,7 +9,9 @@ from concat_api import Concat
 path, out, times = sys.argv[1], sys.argv[2], [float(t) for a in sys.argv[3:] for t in a.split()]
 api = Concat(path); api.sock.settimeout(300)
 api.call("project.open", path=path)
-d = tempfile.mkdtemp(dir=os.path.expanduser("~/Developer/Concat/dist/verificacao"))
+base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist", "verificacao")
+os.makedirs(base, exist_ok=True)
+d = tempfile.mkdtemp(dir=base)
 files = []
 for n, t in enumerate(times):
     f = os.path.join(d, f"q{n:02d}.png")

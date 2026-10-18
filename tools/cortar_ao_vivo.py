@@ -69,7 +69,10 @@ def main():
     ap.add_argument("--fechar-inicio", action="store_true",
                     help="encosta o primeiro clipe no zero da timeline no fim")
     args = ap.parse_args()
-    token = os.environ.get("CONCAT_TOKEN") or sys.exit("defina CONCAT_TOKEN")
+    token = os.environ.get("CONCAT_TOKEN")
+    if not token:
+        arq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".concat-token")
+        token = open(arq).read().strip() if os.path.exists(arq) else sys.exit("defina CONCAT_TOKEN ou crie .concat-token")
     cuts = sorted(json.load(open(args.cortes)), reverse=True)
 
     api = Concat(args.host, args.porta, token)
