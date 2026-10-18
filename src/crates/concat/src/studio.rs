@@ -724,6 +724,9 @@ pub struct Studio {
     /// Unsaved changes, and the timer that writes them.
     dirty: bool,
     autosave: slint::Timer,
+    /// Writes the dock to the preferences a moment after it last changed;
+    /// see `remember_dock`.
+    dock_save: slint::Timer,
 
     // ── the bin ──
     pub media: crate::panes::media_bin::MediaBin,
@@ -1981,6 +1984,12 @@ impl Studio {
         let languages = i18n::languages(&host.dirs);
         let recents = projects::list(&host.dirs.config);
         let text_presets = presets::all(&host.dirs);
+        // The arrangement the person left, when one was kept and still reads.
+        let dock = prefs
+            .layout
+            .as_ref()
+            .and_then(Dock::from_saved)
+            .unwrap_or_else(default_dock);
         let mut studio = Self {
             prefs,
             library: Default::default(),
@@ -1989,6 +1998,7 @@ impl Studio {
             empty: Project::new(),
             dirty: false,
             autosave: slint::Timer::default(),
+            dock_save: slint::Timer::default(),
             media: crate::panes::media_bin::MediaBin::default(),
             peaks: HashMap::new(),
             strips: HashMap::new(),
@@ -2027,7 +2037,7 @@ impl Studio {
             posters: HashMap::new(),
             posters_pending: HashSet::new(),
             project_name: "Untitled project".into(),
-            dock: default_dock(),
+            dock,
             dock_aside: crate::dock::compact_dock(),
             compact: false,
             workspace: (0.0, 0.0),
@@ -2466,6 +2476,137 @@ impl Studio {
         {
             session.redo();
             self.after_change();
+        }
+    }
+
+    /// Answers an API request for the project on screen: the Remote API
+    /// hands the window what a caller asks of the project it holds (see
+    /// `concat_api::WindowLink`), so the caller edits what the person is
+    /// looking at. Every edit takes the window's own path - the same
+    /// history, autosave, monitor and mix as a click - and a refusal comes
+    /// back to the caller rather than as a toast.
+    pub fn api_request(&mut self, request: concat_api::Request) -> concat_api::Response {
+        self.api_reply(request).into()
+    }
+
+    /// [`Studio::api_request`]'s answer, before it is wrapped.
+    fn api_reply(
+        &mut self,
+        request: concat_api::Request,
+    ) -> Result<concat_api::Reply, concat_api::ApiError> {
+        use concat_api::{ApiError, Done, ErrorCode, Reply, Request};
+        {
+            let path = match &request {
+                Request::ProjectOpen { path }
+                | Request::ProjectClose { path, .. }
+                | Request::ProjectGet { path }
+                | Request::ProjectDocument { path }
+                | Request::ProjectSave { path, .. }
+                | Request::ProjectSetVideo { path, .. }
+                | Request::EditApply { path, .. }
+                | Request::EditUndo { path }
+                | Request::EditRedo { path }
+                | Request::MediaImport { path, .. } => path.clone(),
+                _ => return Err(ApiError::invalid("the window does not take this request")),
+            };
+            let same = |a: &str, b: &str| {
+                let canonical = |p: &str| std::fs::canonicalize(p).unwrap_or_else(|_| p.into());
+                canonical(a) == canonical(b)
+            };
+            let on_screen = self
+                .session
+                .as_ref()
+                .is_some_and(|session| same(session.path(), &path));
+            if !on_screen {
+                return Err(ApiError::new(
+                    ErrorCode::NotOpen,
+                    format!("{path} is not the project open in the window"),
+                ));
+            }
+            let view = |studio: &Self| {
+                let session = studio.session.as_ref().expect("checked above");
+                Reply::View(Box::new(session.view()))
+            };
+            match request {
+                Request::ProjectOpen { .. } | Request::ProjectGet { .. } => Ok(view(self)),
+                // The window keeps its project; a caller letting go of it
+                // is simply done with it.
+                Request::ProjectClose { save, .. } => {
+                    if save {
+                        self.save(false);
+                    }
+                    Ok(Reply::Done(Done {}))
+                }
+                Request::ProjectDocument { .. } => Ok(Reply::Document(
+                    self.session.as_ref().expect("checked above").document(),
+                )),
+                Request::ProjectSave { name: Some(_), .. } => Err(ApiError::new(
+                    ErrorCode::Refused,
+                    "the project is open in the window: rename it there",
+                )),
+                Request::ProjectSave { .. } => {
+                    self.save(false);
+                    Ok(Reply::Done(Done {}))
+                }
+                Request::ProjectSetVideo { video, .. } => {
+                    self.flush_commit();
+                    self.echo = None;
+                    let session = self.session.as_mut().expect("checked above");
+                    let changed = session
+                        .set_video(video)
+                        .map_err(|message| ApiError::new(ErrorCode::Refused, message))?;
+                    self.after_change();
+                    Ok(Reply::View(Box::new(changed)))
+                }
+                Request::EditApply { command, .. } => self.api_apply(*command),
+                Request::EditUndo { .. } => {
+                    self.undo();
+                    Ok(view(self))
+                }
+                Request::EditRedo { .. } => {
+                    self.redo();
+                    Ok(view(self))
+                }
+                Request::MediaImport { file, .. } => {
+                    let item = concat_host::media::probe(&file)
+                        .map_err(ApiError::failed)?
+                        .to_new_media();
+                    self.api_apply(Command::AddMedia { item })
+                }
+                _ => Err(ApiError::invalid("the window does not take this request")),
+            }
+        }
+    }
+
+    /// [`Studio::apply`] for an API caller: the same bookkeeping, with the
+    /// edit's view or its refusal handed back instead of shown.
+    fn api_apply(
+        &mut self,
+        command: Command,
+    ) -> Result<concat_api::Reply, concat_api::ApiError> {
+        self.end_burst();
+        log::info!("edit: {} (API)", command_name(&command));
+        self.flush_commit();
+        self.echo = None;
+        self.last_commit = None;
+        let Some(session) = self.session.as_mut() else {
+            return Err(concat_api::ApiError::new(
+                concat_api::ErrorCode::NotOpen,
+                "no project is open in the window",
+            ));
+        };
+        let before = session.video().color_space;
+        match session.apply(command) {
+            Ok(view) => {
+                let after = session.video().color_space;
+                self.after_change();
+                self.tell_of_hdr(before, after);
+                Ok(concat_api::Reply::View(Box::new(view)))
+            }
+            Err(message) => Err(concat_api::ApiError::new(
+                concat_api::ErrorCode::Refused,
+                message,
+            )),
         }
     }
 
@@ -7653,6 +7794,33 @@ impl Studio {
         self.lanes.centred = phone;
         let playhead = self.playhead;
         self.lanes.recentre(playhead);
+    }
+
+    /// Keeps the wide dock in the preferences, so the next launch opens on
+    /// the arrangement the person left. Written half a second after the last
+    /// change, not on every step of a divider's drag; a dock that is as
+    /// already kept writes nothing.
+    pub fn remember_dock(&mut self) {
+        let wide = if self.compact {
+            &self.dock_aside
+        } else {
+            &self.dock
+        };
+        let saved = wide.to_saved();
+        if self.prefs.layout.as_ref() == Some(&saved) {
+            return;
+        }
+        self.prefs.layout = Some(saved);
+        self.dock_save.start(
+            slint::TimerMode::SingleShot,
+            std::time::Duration::from_millis(500),
+            || {
+                crate::host::Shell::with(|shell, _| {
+                    let studio = shell.studio.borrow();
+                    studio.prefs.save(&studio.host.dirs);
+                });
+            },
+        );
     }
 
     /// Shows the compact dock, or the wide one, keeping whichever is put

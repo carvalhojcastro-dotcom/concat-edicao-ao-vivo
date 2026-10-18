@@ -76,6 +76,10 @@ pub struct Preferences {
     /// unless the Settings sheet was asked for more or less. CONCAT_LOG in
     /// the environment overrides it for one run.
     pub log_level: Option<String>,
+    /// The wide workspace's arrangement as it was last left; None opens on
+    /// `dock::default_dock`. The compact dock a narrow window shows is
+    /// never kept: it is the same two seats every time.
+    pub layout: Option<crate::dock::SavedDock>,
 }
 
 impl Preferences {

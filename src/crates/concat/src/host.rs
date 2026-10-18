@@ -50,10 +50,10 @@ pub struct Host {
     pub enhancers: Arc<concat_host::Enhancers>,
     pub reversers: Arc<concat_host::Reversers>,
     /// The Concat API on a socket, while the Remote page has it on. Its
-    /// own sessions, apart from the window's: a caller edits projects of
-    /// its own, never the one on screen, which `open_projects` keeps it
-    /// from opening; the export slot is shared, so one export at a time
-    /// holds across the two.
+    /// own sessions for projects of its own; a request for the one on
+    /// screen, which `open_projects` keeps it from opening a second copy
+    /// of, is handed to the window and runs there, live. The export slot
+    /// is shared, so one export at a time holds across the two.
     pub server: Option<concat_server::Server>,
     /// Which project folders are open, here or over the socket.
     pub open_projects: concat_api::OpenProjects,

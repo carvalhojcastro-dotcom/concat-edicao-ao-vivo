@@ -35,7 +35,7 @@ use std::ops::Range;
 use std::sync::{Arc, Mutex};
 
 use tiny_skia::{
-    Color, FillRule, FilterQuality, LineCap, LineJoin, Paint, Path, PathBuilder, Pixmap,
+    Color, FillRule, FilterQuality, IntRect, LineCap, LineJoin, Paint, Path, PathBuilder, Pixmap,
     PixmapPaint, Rect, Stroke, Transform,
 };
 use unicode_bidi::ParagraphBidiInfo;
@@ -1095,28 +1095,48 @@ fn words(text: &str, range: Range<usize>) -> Vec<Range<usize>> {
 
 /// A separable box blur over premultiplied RGBA, run twice for a soft
 /// falloff. Radius in pixels; zero leaves the picture alone.
-fn blur(pixmap: &mut Pixmap, radius: usize) {
-    if radius == 0 {
-        return;
-    }
+///
+/// Only the pixels near `around` are touched: the caller has nothing
+/// painted outside it, and two passes spread it at most twice the radius
+/// further, so past that the picture is clear before and after. The edge
+/// of that region reads as clear just as the frame's edge would, so the
+/// result is the whole frame's blur, pixel for pixel. Blurring the whole
+/// frame was a quarter of a second for one shadowed title at 4K, nearly
+/// all of it on transparent pixels - half a minute for a caption run.
+///
+/// Returns the region that may hold paint afterwards, for the caller to
+/// lay down rather than the whole frame; None when it falls off the frame.
+fn blur(pixmap: &mut Pixmap, radius: usize, around: Rect) -> Option<IntRect> {
     let (width, height) = (pixmap.width() as usize, pixmap.height() as usize);
+    let reach = 2.0 * radius as f32 + 2.0;
+    let span = |from: f32, to: f32, size: usize| {
+        let low = (from - reach).floor().clamp(0.0, size as f32) as usize;
+        let high = (to + reach).ceil().clamp(0.0, size as f32) as usize;
+        (low, high)
+    };
+    let (x0, x1) = span(around.left(), around.right(), width);
+    let (y0, y1) = span(around.top(), around.bottom(), height);
+    let region = IntRect::from_ltrb(x0 as i32, y0 as i32, x1 as i32, y1 as i32)?;
+    if radius == 0 {
+        return Some(region);
+    }
     let data = pixmap.data_mut();
     let mut scratch = vec![0u8; data.len()];
+    let window = (2 * radius + 1) as u32;
     for _ in 0..2 {
         // Horizontal, into scratch.
-        for y in 0..height {
+        for y in y0..y1 {
             let row = y * width * 4;
             for channel in 0..4 {
                 let mut sum: u32 = 0;
-                let window = (2 * radius + 1) as u32;
                 let at = |x: isize| -> u32 {
-                    let x = x.clamp(0, width as isize - 1) as usize;
+                    let x = x.clamp(x0 as isize, x1 as isize - 1) as usize;
                     u32::from(data[row + x * 4 + channel])
                 };
-                for x in -(radius as isize)..=(radius as isize) {
+                for x in (x0 as isize - radius as isize)..=(x0 as isize + radius as isize) {
                     sum += at(x);
                 }
-                for x in 0..width {
+                for x in x0..x1 {
                     scratch[row + x * 4 + channel] = (sum / window) as u8;
                     sum += at(x as isize + radius as isize + 1);
                     sum -= at(x as isize - radius as isize);
@@ -1124,18 +1144,17 @@ fn blur(pixmap: &mut Pixmap, radius: usize) {
             }
         }
         // Vertical, back into data.
-        for x in 0..width {
+        for x in x0..x1 {
             for channel in 0..4 {
                 let mut sum: u32 = 0;
-                let window = (2 * radius + 1) as u32;
                 let at = |y: isize| -> u32 {
-                    let y = y.clamp(0, height as isize - 1) as usize;
+                    let y = y.clamp(y0 as isize, y1 as isize - 1) as usize;
                     u32::from(scratch[(y * width + x) * 4 + channel])
                 };
-                for y in -(radius as isize)..=(radius as isize) {
+                for y in (y0 as isize - radius as isize)..=(y0 as isize + radius as isize) {
                     sum += at(y);
                 }
-                for y in 0..height {
+                for y in y0..y1 {
                     data[(y * width + x) * 4 + channel] = (sum / window) as u8;
                     sum += at(y as isize + radius as isize + 1);
                     sum -= at(y as isize - radius as isize);
@@ -1143,6 +1162,7 @@ fn blur(pixmap: &mut Pixmap, radius: usize) {
             }
         }
     }
+    Some(region)
 }
 
 /// Paints `style` onto a `width` × `height` transparent canvas, the block
@@ -1394,17 +1414,32 @@ fn paint(
             ..Paint::default()
         };
         shade.set_color(Color::from_rgba8(0, 0, 0, 150));
-        let offset = Transform::from_translate(em * 0.05, em * 0.07);
+        let (dx, dy) = (em * 0.05, em * 0.07);
+        let offset = Transform::from_translate(dx, dy);
         layer.fill_path(words, &shade, FillRule::Winding, offset, None);
-        blur(&mut layer, (em * 0.04).round().max(1.0) as usize);
-        canvas.draw_pixmap(
-            0,
-            0,
-            layer.as_ref(),
-            &PixmapPaint::default(),
-            Transform::identity(),
-            None,
+        // Where the shade landed, a pixel wider for its anti-aliasing.
+        let bounds = words.bounds();
+        let around = Rect::from_ltrb(
+            bounds.left() + dx - 1.0,
+            bounds.top() + dy - 1.0,
+            bounds.right() + dx + 1.0,
+            bounds.bottom() + dy + 1.0,
         );
+        // Only that region is laid down: the rest of the layer is clear,
+        // and compositing all of a 4K frame cost more than the blur.
+        if let Some(around) = around
+            && let Some(region) = blur(&mut layer, (em * 0.04).round().max(1.0) as usize, around)
+            && let Some(shadow) = layer.clone_rect(region)
+        {
+            canvas.draw_pixmap(
+                region.x(),
+                region.y(),
+                shadow.as_ref(),
+                &PixmapPaint::default(),
+                Transform::identity(),
+                None,
+            );
+        }
     }
 
     // The outline, under the fill so only its outer half shows - which is
@@ -2603,5 +2638,30 @@ mod tests {
             picture > 50,
             "{picture} coloured pixels: the emoji came out in colour"
         );
+    }
+
+    #[test]
+    fn blurring_round_the_shade_alone_is_blurring_the_whole_frame() {
+        // A shape in the middle and one against the frame's corner: the
+        // region's own edge and the frame's must both read as before.
+        for (x, y) in [(70.0, 50.0), (0.0, 0.0)] {
+            let mut shade = Pixmap::new(200, 160).expect("a canvas");
+            let mut paint = Paint::default();
+            paint.set_color(Color::from_rgba8(0, 0, 0, 150));
+            let rect = Rect::from_xywh(x, y, 40.0, 25.0).expect("a rect");
+            shade.fill_path(
+                &PathBuilder::from_rect(rect),
+                &paint,
+                FillRule::Winding,
+                Transform::identity(),
+                None,
+            );
+            let mut whole = shade.clone();
+            blur(&mut whole, 6, Rect::from_xywh(0.0, 0.0, 200.0, 160.0).expect("the frame"));
+            let around = Rect::from_ltrb(x - 1.0, y - 1.0, x + 41.0, y + 26.0).expect("around");
+            blur(&mut shade, 6, around);
+            assert!(whole.data().iter().any(|byte| *byte != 0), "something to blur");
+            assert_eq!(shade.data(), whole.data(), "shape at ({x}, {y})");
+        }
     }
 }

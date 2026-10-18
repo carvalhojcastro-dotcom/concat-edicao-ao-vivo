@@ -142,6 +142,13 @@ impl OpenProjects {
     }
 }
 
+/// A window's way of answering requests for the project it has on screen.
+/// Called on the API's thread; the window runs the request on its own
+/// event loop, against its own session, and hands the response back, so
+/// a caller edits the project the person is looking at and sees each edit
+/// land in the window as it is made.
+pub type WindowLink = Arc<dyn Fn(Request) -> Response + Send + Sync>;
+
 /// The dispatcher: the open sessions and the services behind them.
 pub struct Api {
     dirs: AppDirs,
@@ -154,6 +161,9 @@ pub struct Api {
     /// Which project folders are open on this machine, across this API
     /// and a window it is embedded in.
     open: OpenProjects,
+    /// The window this API is embedded in, when it takes requests for the
+    /// projects it holds; see [`WindowLink`].
+    window: Option<WindowLink>,
     titles: Titles,
     cutouts: Arc<Cutouts>,
     monitor: Monitor,
@@ -182,6 +192,7 @@ impl Api {
             sessions: BTreeMap::new(),
             roots: Vec::new(),
             open: OpenProjects::default(),
+            window: None,
             events,
             jobs: Jobs::default(),
             dirs,
@@ -220,6 +231,51 @@ impl Api {
     /// round.
     pub fn share_open_projects(&mut self, open: OpenProjects) {
         self.open = open;
+    }
+
+    /// Hands the requests for a project the window holds to the window
+    /// instead of refusing them: opening, reading, editing, undoing and
+    /// saving the project on screen go through `link`. Needs the window's
+    /// register ([`Api::share_open_projects`]) to know which those are.
+    pub fn share_window(&mut self, link: WindowLink) {
+        self.window = Some(link);
+        self.add_capability("live-window");
+    }
+
+    /// The request, when it is one for a project the window holds and the
+    /// window takes it; see [`Api::share_window`]. A request the window
+    /// cannot serve - an export, a frame, a template - is answered here
+    /// with the reason.
+    fn for_window(&self, request: &Request) -> Option<Response> {
+        let link = self.window.as_ref()?;
+        let path = match request {
+            Request::ProjectOpen { path }
+            | Request::ProjectClose { path, .. }
+            | Request::ProjectGet { path }
+            | Request::ProjectDocument { path }
+            | Request::ProjectSave { path, .. }
+            | Request::ProjectSetVideo { path, .. }
+            | Request::EditApply { path, .. }
+            | Request::EditUndo { path }
+            | Request::EditRedo { path }
+            | Request::MediaImport { path, .. }
+            | Request::ExportRun { path, .. }
+            | Request::PreviewFrame { path, .. }
+            | Request::TemplateSave { path, .. } => path,
+            _ => return None,
+        };
+        if self.open.holder(path) != Some(Holder::Window) {
+            return None;
+        }
+        Some(match request {
+            Request::ExportRun { .. } | Request::PreviewFrame { .. } | Request::TemplateSave { .. } => {
+                Response::Error(ApiError::new(
+                    ErrorCode::Refused,
+                    format!("{path} is open in the window: export it, preview it or save it as a template from there"),
+                ))
+            }
+            _ => link(request.clone()),
+        })
     }
 
     /// Confines every write to `roots`: from here on a created project, an
@@ -291,6 +347,9 @@ impl Api {
     /// it begins reports through the sink from then on.
     pub fn dispatch(&mut self, request: Request) -> Response {
         self.jobs.reap();
+        if let Some(response) = self.for_window(&request) {
+            return response;
+        }
         self.run(request).into()
     }
 
@@ -1477,5 +1536,49 @@ mod tests {
             save: false,
         }));
         assert_eq!(open.holder(&path), None, "closing gives it back");
+    }
+
+    #[test]
+    fn a_window_that_takes_requests_gets_those_for_its_project() {
+        let (mut api, scratch, _events) = api();
+        let path = project(&mut api, &scratch, "Live");
+        ok(api.dispatch(Request::ProjectClose {
+            path: path.clone(),
+            save: false,
+        }));
+        let open = OpenProjects::default();
+        api.share_open_projects(open.clone());
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let log = Arc::clone(&seen);
+        api.share_window(Arc::new(move |request: Request| {
+            log.lock().expect("seen").push(request);
+            Response::Result(Reply::Done(Done {}))
+        }));
+        // Not the window's: the API serves it as ever.
+        ok(api.dispatch(Request::ProjectOpen { path: path.clone() }));
+        ok(api.dispatch(Request::ProjectClose {
+            path: path.clone(),
+            save: false,
+        }));
+        assert!(seen.lock().expect("seen").is_empty());
+
+        open.claim(&path, Holder::Window).expect("the window has it");
+        ok(api.dispatch(Request::ProjectOpen { path: path.clone() }));
+        ok(api.dispatch(Request::EditUndo { path: path.clone() }));
+        assert_eq!(seen.lock().expect("seen").len(), 2, "both went to the window");
+        assert_eq!(
+            open.holder(&path),
+            Some(Holder::Window),
+            "and the window keeps it"
+        );
+        let refused = err(api.dispatch(Request::ExportRun {
+            path: path.clone(),
+            spec: ExportSpec {
+                output: scratch.path().join("out.mp4").to_string_lossy().into_owned(),
+                ..ExportSpec::default()
+            },
+        }));
+        assert_eq!(refused.code, ErrorCode::Refused);
+        assert_eq!(seen.lock().expect("seen").len(), 2, "an export is not the window's");
     }
 }

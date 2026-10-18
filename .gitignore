@@ -56,3 +56,17 @@ desktop.ini
 # FFmpeg built for a phone by src/scripts/ffmpeg-mobile.sh: sources,
 # build trees and the installed prefixes, all machine-built.
 /src/vendor/
+
+# --- concat-edicao-ao-vivo (fork) ---
+# Segredos locais: token da API do Concat e chave do Higgsfield (.env.local já está acima).
+.concat-token
+.higgsfield-key
+# Builds montados localmente (.app) e quadros de verificação.
+/dist/
+# Fontes copiadas do cache do CapCut: licenças próprias, não redistribuir.
+/fonts/
+# Ambiente Python das ferramentas e caches.
+/tools/.venv/
+/tools/__pycache__/
+# Planos de edição por vídeo (conteúdo de clientes).
+/tools/planos/

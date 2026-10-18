@@ -14,7 +14,7 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use concat_host::models::SourcePreference;
 use concat_host::updates::{self, Fixed, Installed, Release, Standing, Version};
@@ -555,6 +555,10 @@ impl SettingsPane {
     /// why on the page.
     fn apply_server(&mut self, studio: &mut Studio) {
         if let Some(server) = studio.host.server.take() {
+            // A request waiting on the window lets go first: the stop
+            // waits for the API's thread, and this - the event loop - is
+            // what that request is waiting for.
+            WINDOW_LINKS_CUT.fetch_add(1, Ordering::SeqCst);
             server.stop();
         }
         self.server_error.clear();
@@ -577,11 +581,15 @@ impl SettingsPane {
                 };
                 // The window's export slot and its register of open
                 // projects, so one export at a time holds across the two
-                // and a caller never edits the project on screen.
+                // and a caller never opens a second copy of the project on
+                // screen; requests for that one go to the window itself,
+                // so a caller's edits land live where the person sees them.
+                let window = window_link();
                 concat_server::Server::start(config, move |events| {
                     let mut api = concat_api::Api::new(events)?;
                     api.share_exporter(exporter);
                     api.share_open_projects(open_projects);
+                    api.share_window(window);
                     Ok(api)
                 })
             });
@@ -826,6 +834,88 @@ fn fixed_note(why: Fixed) -> String {
         Fixed::Store => t("settings.fromStore"),
         Fixed::NotFromPackage => t("settings.notFromPackage"),
     }
+}
+
+/// How long the API waits for the window to answer a request for the
+/// project on screen: long enough for the heaviest edit - a caption run
+/// of a hundred-odd titles over a 4K frame took 25 s to paint before the
+/// shadow blur was confined to the words. A wait that runs out says the
+/// request may yet have been carried out, since the window cannot take
+/// one back once it has it.
+const WINDOW_WAIT: std::time::Duration = std::time::Duration::from_secs(120);
+
+/// How often a request waiting on the window looks up to see whether the
+/// API is being stopped (see [`WINDOW_LINKS_CUT`]).
+const WINDOW_POLL: std::time::Duration = std::time::Duration::from_millis(100);
+
+/// Counts the API servers the window has stopped. The stop runs on the
+/// event loop and waits for the API's thread; a request on that thread
+/// waiting for the event loop to answer would hold both up for the whole
+/// of [`WINDOW_WAIT`], so a link gives up as soon as this moves past the
+/// count it was made at.
+static WINDOW_LINKS_CUT: AtomicU64 = AtomicU64::new(0);
+
+/// The Remote API's way into the window: a request for the project on
+/// screen runs on the event loop, through `Studio::api_request`, and the
+/// window is redrawn before the answer goes back to the API's thread.
+/// Made right before the server it goes to starts, so a stop of an
+/// earlier server does not cut it.
+fn window_link() -> concat_api::WindowLink {
+    let made_at = WINDOW_LINKS_CUT.load(Ordering::SeqCst);
+    Arc::new(move |request| {
+        use concat_api::{ApiError, ErrorCode, Response};
+        use std::sync::mpsc::RecvTimeoutError;
+        let busy = |message: &str| Response::Error(ApiError::new(ErrorCode::Busy, message));
+        // Not "busy": the window may be part-way through it, or done, and
+        // a caller who simply sends it again could apply an edit twice.
+        let unknown = |why: &str| {
+            Response::Error(ApiError::new(
+                ErrorCode::Failed,
+                format!(
+                    "{why}: the window may still carry the request out - an edit may have \
+                     been applied - so check with project.get before sending it again"
+                ),
+            ))
+        };
+        let (answer, answered) = std::sync::mpsc::sync_channel(1);
+        let posted = slint::invoke_from_event_loop(move || {
+            let mut response = None;
+            crate::host::Shell::with(|shell, app| {
+                // A dialog running its own loop may hold the studio; the
+                // caller is told to try again rather than the window
+                // brought down.
+                let Ok(mut studio) = shell.studio.try_borrow_mut() else {
+                    return;
+                };
+                response = Some(studio.api_request(request));
+                drop(studio);
+                shell.studio.borrow().publish(&app, &shell.models);
+            });
+            let _ = answer.send(response);
+        });
+        if posted.is_err() {
+            return busy("the window is closing");
+        }
+        let asked = std::time::Instant::now();
+        loop {
+            match answered.recv_timeout(WINDOW_POLL) {
+                Ok(Some(response)) => return response,
+                Ok(None) => return busy("the window is busy - try again"),
+                // Dropped unrun: the event loop is gone.
+                Err(RecvTimeoutError::Disconnected) => return busy("the window is closing"),
+                Err(RecvTimeoutError::Timeout) => {}
+            }
+            if WINDOW_LINKS_CUT.load(Ordering::SeqCst) != made_at {
+                return unknown("the API is being stopped");
+            }
+            if asked.elapsed() >= WINDOW_WAIT {
+                return unknown(&format!(
+                    "the window did not answer within {} s",
+                    WINDOW_WAIT.as_secs()
+                ));
+            }
+        }
+    })
 }
 
 /// Closes the app on the event loop's next turn, the way File › Close

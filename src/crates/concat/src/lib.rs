@@ -491,8 +491,17 @@ fn start(project: Option<std::path::PathBuf>, smoke: bool) -> Result<(), slint::
     macro_rules! on_lanes {
         ($($handler:tt)*) => { handler!(publish_lanes, $($handler)*) };
     }
+    // Every change to the arrangement is kept for the next launch. The body
+    // runs in a closure of its own so an early `return` in it still reaches
+    // the keeping; a step that changed nothing writes nothing.
     macro_rules! on_dock {
-        ($($handler:tt)*) => { handler!(publish_dock, $($handler)*) };
+        (|$state:ident $(, $arg:ident : $ty:ty)*| $body:block) => {
+            handler!(publish_dock, |$state $(, $arg : $ty)*| {
+                #[allow(clippy::redundant_closure_call)]
+                (|| $body)();
+                $state.remember_dock();
+            })
+        };
     }
 
     let editor = app.global::<Editor>();

@@ -4,6 +4,8 @@
 //! The workspace's arrangement: a tree of splits and views, walked flat
 //! for Slint, which has no recursion.
 
+use serde::{Deserialize, Serialize};
+
 use crate::ui::{DockDivider, DockSide, PaneKind, SeatBox};
 
 pub const SEAT_MIN_W: f32 = 240.0;
@@ -19,8 +21,9 @@ pub const SEAT_GAP: f32 = 8.0;
 /// a side (see meters-pane.slint).
 pub const METERS_MIN_W: f32 = 76.0;
 /// The meters' share of the bottom row in the default layout: a slim
-/// column beside the timeline, at its full height.
-const METERS_SHARE: f32 = 0.055;
+/// column beside the timeline, at its full height. The row is about two
+/// thirds of the window wide, beside the monitor's column.
+const METERS_SHARE: f32 = 0.08;
 
 pub enum Dock {
     /// One view, filling its box.
@@ -253,33 +256,124 @@ pub fn lay_out(node: &Dock, (x, y, w, h): (f32, f32, f32, f32), out: &mut DockLa
     }
 }
 
-/// The arrangement the editor opens with: the library, the monitor and the
-/// inspector across the top, the timeline along the bottom. The same three
-/// shares the fixed layout carried, re-expressed as a tree — 0.31 of the width
-/// to the library and 0.22 to the inspector, which is 0.319 of what is left
-/// once the library has had its share.
+/// The arrangement the editor opens with when none was kept: the monitor in
+/// a column of its own down the right, the whole height of the window, so a
+/// vertical picture is shown as large as it can be; to its left the library
+/// and the inspector across the top and the timeline along the bottom. The
+/// shares are a phone-video editor's: about two thirds of the width to the
+/// working side, a little under half its height to the top row.
 pub fn default_dock() -> Dock {
     Dock::Split {
-        columns: false,
-        ratio: 0.6,
+        columns: true,
+        ratio: 0.68,
         first: Box::new(Dock::Split {
-            columns: true,
-            ratio: 0.31,
-            first: Dock::leaf(PaneKind::Media),
-            second: Box::new(Dock::Split {
+            columns: false,
+            ratio: 0.44,
+            first: Box::new(Dock::Split {
                 columns: true,
-                ratio: 0.681,
-                first: Dock::leaf(PaneKind::Preview),
+                ratio: 0.54,
+                first: Dock::leaf(PaneKind::Media),
                 second: Dock::leaf(PaneKind::Inspector),
             }),
+            // The timeline, and the VU meters in a slim column beside it.
+            second: Box::new(Dock::Split {
+                columns: true,
+                ratio: 1.0 - METERS_SHARE,
+                first: Dock::leaf(PaneKind::Timeline),
+                second: Dock::leaf(PaneKind::Meters),
+            }),
         }),
-        // The timeline, and the VU meters in a slim column beside it.
-        second: Box::new(Dock::Split {
-            columns: true,
-            ratio: 1.0 - METERS_SHARE,
-            first: Dock::leaf(PaneKind::Timeline),
-            second: Dock::leaf(PaneKind::Meters),
-        }),
+        second: Dock::leaf(PaneKind::Preview),
+    }
+}
+
+/// A dock as the preferences keep it, so the next launch opens on the
+/// arrangement the person left. Panes are named rather than numbered, so a
+/// file written by this build still reads after a pane is added.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum SavedDock {
+    /// One view.
+    Leaf {
+        /// The pane's name; see [`pane_name`].
+        pane: String,
+    },
+    /// Two nodes side by side (`columns`) or stacked, `ratio` to the first.
+    Split {
+        columns: bool,
+        ratio: f32,
+        first: Box<SavedDock>,
+        second: Box<SavedDock>,
+    },
+}
+
+fn pane_name(kind: PaneKind) -> &'static str {
+    match kind {
+        PaneKind::Media => "media",
+        PaneKind::Preview => "preview",
+        PaneKind::Inspector => "inspector",
+        PaneKind::Timeline => "timeline",
+        PaneKind::Keyframes => "keyframes",
+        PaneKind::Meters => "meters",
+    }
+}
+
+fn pane_of(name: &str) -> Option<PaneKind> {
+    Some(match name {
+        "media" => PaneKind::Media,
+        "preview" => PaneKind::Preview,
+        "inspector" => PaneKind::Inspector,
+        "timeline" => PaneKind::Timeline,
+        "keyframes" => PaneKind::Keyframes,
+        "meters" => PaneKind::Meters,
+        _ => return None,
+    })
+}
+
+impl Dock {
+    /// The dock as the preferences write it.
+    pub fn to_saved(&self) -> SavedDock {
+        match self {
+            Dock::Leaf(kind) => SavedDock::Leaf {
+                pane: pane_name(*kind).to_owned(),
+            },
+            Dock::Split {
+                columns,
+                ratio,
+                first,
+                second,
+            } => SavedDock::Split {
+                columns: *columns,
+                ratio: *ratio,
+                first: Box::new(first.to_saved()),
+                second: Box::new(second.to_saved()),
+            },
+        }
+    }
+
+    /// A kept dock read back, or None when it names a pane this build does
+    /// not know or a share outside the split - a hand-edited or damaged
+    /// file opens on the default rather than on a broken window.
+    pub fn from_saved(saved: &SavedDock) -> Option<Dock> {
+        match saved {
+            SavedDock::Leaf { pane } => pane_of(pane).map(Dock::Leaf),
+            SavedDock::Split {
+                columns,
+                ratio,
+                first,
+                second,
+            } => {
+                if !ratio.is_finite() || *ratio <= 0.0 || *ratio >= 1.0 {
+                    return None;
+                }
+                Some(Dock::Split {
+                    columns: *columns,
+                    ratio: *ratio,
+                    first: Box::new(Dock::from_saved(first)?),
+                    second: Box::new(Dock::from_saved(second)?),
+                })
+            }
+        }
     }
 }
 
@@ -329,4 +423,55 @@ pub fn nearest_row(heights: &[f32], y: f32) -> i32 {
         top += height;
     }
     best
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_default_dock_gives_the_monitor_the_right_column_top_to_bottom() {
+        let mut out = DockLayout::default();
+        lay_out(&default_dock(), (0.0, 0.0, 1920.0, 1080.0), &mut out);
+        let monitor = out
+            .seats
+            .iter()
+            .find(|seat| seat.kind == PaneKind::Preview)
+            .expect("a monitor");
+        let right = out
+            .seats
+            .iter()
+            .map(|seat| seat.x + seat.width)
+            .fold(0.0_f32, f32::max);
+        assert!((monitor.x + monitor.width - right).abs() < 0.5, "on the right edge");
+        let tallest = out.seats.iter().map(|seat| seat.y + seat.height).fold(0.0_f32, f32::max);
+        let top = out.seats.iter().map(|seat| seat.y).fold(f32::MAX, f32::min);
+        assert!((monitor.y - top).abs() < 0.5 && (monitor.y + monitor.height - tallest).abs() < 0.5, "the whole height");
+        for kind in [PaneKind::Media, PaneKind::Inspector, PaneKind::Timeline, PaneKind::Meters] {
+            let seat = out.seats.iter().find(|seat| seat.kind == kind).expect("every pane");
+            assert!(seat.x + seat.width <= monitor.x, "{kind:?} left of the monitor");
+        }
+    }
+
+    #[test]
+    fn a_kept_dock_reads_back_as_it_was() {
+        let mut dock = default_dock();
+        let path = dock.leaf_path(0).expect("a first seat");
+        dock.split_leaf(&path, PaneKind::Keyframes, DockSide::Bottom);
+        let text = serde_json::to_string(&dock.to_saved()).expect("JSON");
+        let read: SavedDock = serde_json::from_str(&text).expect("reads");
+        let back = Dock::from_saved(&read).expect("a dock");
+        assert_eq!(back.to_saved(), dock.to_saved());
+    }
+
+    #[test]
+    fn a_damaged_kept_dock_is_refused() {
+        let leaf = |pane: &str| Box::new(SavedDock::Leaf { pane: pane.to_owned() });
+        let unknown = SavedDock::Split { columns: true, ratio: 0.5, first: leaf("media"), second: leaf("nope") };
+        assert!(Dock::from_saved(&unknown).is_none());
+        for ratio in [0.0, 1.0, -0.2, f32::NAN] {
+            let bad = SavedDock::Split { columns: true, ratio, first: leaf("media"), second: leaf("preview") };
+            assert!(Dock::from_saved(&bad).is_none(), "ratio {ratio}");
+        }
+    }
 }
