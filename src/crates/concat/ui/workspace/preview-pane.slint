@@ -1048,7 +1048,7 @@ export component PreviewPane inherits Rectangle {
                     VerticalLayout {
                         alignment: center;
                         NumberField {
-                            width: 116px;
+                            width: root.width >= 480px ? 116px : 100px;
                             value <=> root.shown-frames;
                             minimum: 0;
                             maximum: root.playhead-free ? 1000000000 : root.total-frames;
@@ -1067,7 +1067,10 @@ export component PreviewPane inherits Rectangle {
                         }
                     }
 
-                    Text {
+                    // A narrow pane - the monitor in a column of its own on a
+                    // laptop - keeps the timecode and drops the total, so the
+                    // tray's quality picker still fits at the far end.
+                    if root.width >= 640px: Text {
                         text: "/ " + Fmt.frames-timecode(root.duration, root.frame-rate);
                         color: Theme.fg-dim;
                         font-family: Theme.font-technical;
@@ -1082,7 +1085,9 @@ export component PreviewPane inherits Rectangle {
                     spacing: 2px;
                     alignment: center;
 
-                    IconButton {
+                    // In a narrow pane the jumps to the ends give way (Home and
+                    // End still do them) so the tray keeps its quality picker.
+                    if root.width >= 480px: IconButton {
                         glyph: Glyph.skip-back;
                         label: I18n.t("common.goToStart");
                         enabled: !root.at-start;
@@ -1111,7 +1116,7 @@ export component PreviewPane inherits Rectangle {
                         enabled: !root.at-end;
                         clicked => { root.step(1); }
                     }
-                    IconButton {
+                    if root.width >= 480px: IconButton {
                         glyph: Glyph.skip-forward;
                         label: I18n.t("common.goToEnd");
                         enabled: !root.at-end;
@@ -1125,7 +1130,9 @@ export component PreviewPane inherits Rectangle {
                     spacing: 6px;
                     alignment: end;
 
-                    VerticalLayout {
+                    // The output's shape is set once per project; when the pane
+                    // is too narrow for the whole tray it gives way first.
+                    if root.width >= 560px: VerticalLayout {
                         alignment: center;
                         RatioPicker {
                             widths: root.ratios-w;
