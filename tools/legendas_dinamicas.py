@@ -17,9 +17,9 @@ plano.json: [{"estilo": "serifa", "linhas": [[0, 1], [2], [3]], "chave": [2]}, .
   (padrão: amarelo; Dr. Rafael: azul #2563c9).
   linhas: índices das legendas simples (na ordem da timeline), agrupados por linha;
   chave:  os índices que levam o destaque.
-Regra de leitura (do usuário): palavras PEQUENAS sempre em letra normal e reta (Helvetica /
-Montserrat), nunca fina nem cursiva; fontes finas e cursivas (Scholar Itálico, Bold Oblíqua)
-só nas palavras GRANDES de destaque.
+Regra de leitura (do usuário): tudo que não é destaque sai em fonte sóbria, normal e reta
+(Helvetica / Montserrat), nunca fina nem cursiva; o Scholar (e as cursivas) só na palavra de
+DESTAQUE (a chave).
 Estilos (inspirados em prints de legendas de reels; descritos em EDICAO.md):
   serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em Scholar Itálico amarelo, palavra final
              maior alinhada à direita embaixo da chave.
@@ -140,9 +140,10 @@ def serifa(linhas, t):
     for li, linha in enumerate(linhas):
         if any(c for _, c in linha):
             chave_li = li
-            rows.append([palavra(t[i], "scholar-italic", K, DESTAQUE) for i, _ in linha])
+            rows.append([palavra(t[i], "scholar-italic", K, DESTAQUE) if c
+                         else palavra(t[i], "helv", N * 0.84, trk=-0.02) for i, c in linha])  # Scholar só no destaque
         elif chave_li is not None and len(linha) == 1:
-            rows.append([palavra(t[i], "scholar", F) for i, _ in linha])  # a palavra final, maior
+            rows.append([palavra(t[i], "helv", F * 0.82, trk=-0.02) for i, _ in linha])  # palavra final maior, sóbria (Scholar só no destaque)
         else:
             # palavras pequenas: letra normal e reta (Helvetica), nunca fina/cursiva - senão some
             rows.append([palavra(t[i], "helv", N * 0.84, trk=-0.02) for i, _ in linha])
@@ -183,7 +184,8 @@ def classico(linhas, t):
 def elegante(linhas, t):
     S, K = 0.042 * H, 0.125 * H
     pequenas = [[palavra(t[i], "montserrat-bold", S, trk=-0.03) for i, _ in linha] for linha in linhas[:-1]]
-    grande = [palavra(t[i], "scholar-italic", K) for i, _ in linhas[-1]]
+    grande = [palavra(t[i], "scholar-italic", K) if c else palavra(t[i], "montserrat-bold", S, trk=-0.03)
+              for i, c in linhas[-1]]  # Scholar só no destaque
     wg = linha_em(grande, 0.0, 0.0)
     base = -0.68 * K  # a palavra grande sobe até encostar na linha de cima
     for ps in reversed(pequenas):

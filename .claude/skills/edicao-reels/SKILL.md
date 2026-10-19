@@ -69,6 +69,7 @@ Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e
   - `serifa` aceita escadinha de 2 a 4 linhas, com a chave numa linha só.
   - `impacto` aceita linha pequena, chave e linha pequena.
 - Remova vírgulas do fim só nas palavras-chave (o script já tira as dos blocos).
+- Scholar só aparece na palavra-chave; o resto do bloco o script põe em Helvetica/Montserrat.
 
 ## 5. Zoom seco (julgamento)
 Escreva `$W/zoom.json` (formato em `tools/planos_exemplo/zoom.json`): trechos `[índice da palavra

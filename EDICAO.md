@@ -45,8 +45,8 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 | **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Bold grande |
 | **elegante** | Montserrat Bold, centralizada | Scholar Itálico enorme, encostado |
 
-- **Regra de leitura:** palavras pequenas sempre em **letra normal e reta**; fonte fina e cursiva
-  **só nas palavras grandes**.
+- **Regra de fontes:** **Scholar só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
+  grande, sai em fonte sóbria, normal e reta (Helvetica ou Montserrat), nunca fina nem cursiva.
 - **Tamanho e posição:** 92% do tamanho, centro do bloco a **67% da altura** (abaixo do rosto),
   **contorno preto fino + sombra**.
 - **Cor do destaque:** **amarelo #f4c430**. Com o contorno, lê bem em fundo claro e escuro. Se usar

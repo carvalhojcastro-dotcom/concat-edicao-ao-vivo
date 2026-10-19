@@ -4,7 +4,7 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 py="${PY:-python3}"
-tmp="$here/../dist/verificacao/teste_dinamicas"
+tmp="$(cd "$here/.." && pwd)/dist/verificacao/teste_dinamicas"
 rm -rf "$tmp"; mkdir -p "$tmp"; cp "$1/concat.json" "$tmp/concat.json"
 "$py" "$here/legendas_dinamicas.py" "$tmp" "$2" | tail -1
 times=$(python3 - "$tmp" <<'PY'
