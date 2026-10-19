@@ -49,7 +49,9 @@ HELV = "/System/Library/Fonts/Helvetica.ttc"  # "Helvetica Neue" o Concat não a
 
 # Cada face: família no Concat, peso, itálico, arquivo e índice (para medir).
 FACES = {
-    "helv": ("Helvetica", 400, False, HELV, 0),
+    # Semibold (pedido do usuário): Helvetica Neue Medium extraída do sistema para fonts/ - o
+    # Concat não lê o HelveticaNeue.ttc e o nome com espaço vai entre aspas (sintaxe CSS).
+    "helv": ('"Helvetica Neue Medium"', 500, False, os.path.join(FONTES, "HelveticaNeue-Medium.ttf"), 0),
     "helv-bold": ("Helvetica", 700, False, HELV, 1),
     "helv-oblique": ("Helvetica", 400, True, HELV, 2),
     "helv-bold-oblique": ("Helvetica", 700, True, HELV, 3),
@@ -60,7 +62,7 @@ FACES = {
 }
 # Fontes que o projeto precisa registrar (as do sistema o Concat já acha).
 REGISTRAR = [("Scholar", "Scholar-Regular.otf"), ("Scholar", "Scholar-Italic.otf"),
-             ("Montserrat", "Montserrat-Bold.otf")]
+             ("Montserrat", "Montserrat-Bold.otf"), ("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf")]
 
 AMARELO = "#f4c430"
 DESTAQUE = AMARELO  # cor da chave no estilo serifa; o plano pode trocar pela do cliente
@@ -127,9 +129,21 @@ def cap(p):
     return metricas(p["face"])[2] * p["em"]
 
 
+def tinta(p):
+    """(quanto a palavra sobe acima da linha base, quanto desce abaixo), em px, medido no desenho
+    real das letras - números e ascendentes do Scholar Itálico sobem bem mais que a maiúscula."""
+    _, _, _, path, index = FACES[p["face"]]
+    _, topo, _, pe = ImageFont.truetype(path, size=max(1, round(p["em"])), index=index).getbbox(p["texto"], anchor="ls")
+    return -topo, max(pe, 0)
+
+
 def proxima_base(base, ant, prox, aperto):
-    """Linha base seguinte: logo abaixo da anterior, com as maiúsculas da nova encostando."""
-    return base + max(cap(p) for p in prox) + aperto * max(p["em"] for p in ant)
+    """Linha base seguinte: a tinta da nova linha começa logo abaixo da tinta da anterior, com um
+    respiro de `aperto` (em em da menor) - as linhas nunca se tocam."""
+    desce = max(tinta(p)[1] for p in ant)
+    sobe = max(tinta(p)[0] for p in prox)
+    respiro = aperto * min(min(p["em"] for p in ant), min(p["em"] for p in prox))
+    return base + desce + sobe + respiro
 
 
 # ── estilos: recebem as linhas como listas de (índice, é_chave) e devolvem palavras posicionadas ──
@@ -151,7 +165,7 @@ def serifa(linhas, t):
     base = 0.0
     for li, ps in enumerate(rows):
         if li:
-            base = proxima_base(base, rows[li - 1], ps, 0.24 if li == chave_li else 0.12)
+            base = proxima_base(base, rows[li - 1], ps, 0.38)  # respiro visível: com sombra/contorno/itálico, menos que isso parece encostar
         x = degraus[li % len(degraus)] * N
         if chave_li is not None and li > chave_li:
             dir_chave = rows[chave_li][-1]["x"] + rows[chave_li][-1]["w"]
@@ -206,7 +220,7 @@ def impacto(linhas, t):
     base = 0.0
     for li, ps in enumerate(rows):
         if li:
-            base = proxima_base(base, rows[li - 1], ps, 0.10)
+            base = proxima_base(base, rows[li - 1], ps, 0.28)
         grande = any(p["face"] == "helv-bold-oblique" for p in ps)
         recuo = 0.0 if grande else (0.35 if li == 0 else 0.55) * S
         linha_em(ps, recuo, base)

@@ -20,7 +20,9 @@ from dotenv import load_dotenv
 # de saúde aparece; e nada escrito na imagem.
 REGRAS = ("Any person shown is Brazilian, in a Brazilian setting. No doctors, no nurses, no medical staff, no white coats, no stethoscopes. "
           "Absolutely no text, no letters, no numbers, no labels, no writing, no screens with content, no logos.")
-POSITIVO = "Clean image with plain surfaces, everyday Brazilian people in casual clothes, Brazilian setting."
+# Positivo e neutro: falar de "pessoas" aqui punha gente até em cena de objeto. Quem aparece
+# (sempre brasileiros, roupa do dia a dia) vai no prompt da própria cena.
+POSITIVO = "Clean image with plain surfaces."
 MODELO = "higgsfield-ai/soul/v2/standard"   # o mais barato da API (a partir de US$ 0,003/imagem)
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env.local"))
 if not os.getenv("HF_KEY"):

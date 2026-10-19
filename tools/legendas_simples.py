@@ -4,7 +4,7 @@
 Uso: legendas_simples.py <projeto> <words.json> [trilha=T4]
   words.json: palavras do Whisper com tempos da MÍDIA DE ORIGEM (start, end, word).
   Os tempos viram tempos da timeline pelos clipes de vídeo (cortes e velocidade incluídos).
-Estilo aprovado: Helvetica 400, fontSize 0.04302, tracking -0.00224 (o "-0.3" do CapCut),
+Estilo aprovado: Helvetica Neue Medium (semibold) 500, fontSize 0.04302, tracking -0.00224 (o "-0.3" do CapCut),
 contorno preto 0.0006, sombra, branco, offsetY 0.104. Cada palavra vai até a seguinte (ou
 até o fim dela, se vier uma pausa > 0,35 s); tudo na grade de quadros.
 """
@@ -14,8 +14,8 @@ from concat_api import Concat, timeline, fps_de
 
 FPS = fps_de(sys.argv[1])  # o fps do projeto (24 ou 30)
 ESTILO = {"align": "center", "background": "", "backgroundPaddingX": 0.0315, "backgroundPaddingY": 0.018,
-          "backgroundRadius": 0.0135, "color": "#ffffff", "fontFamily": "Helvetica", "fontSize": 0.04302,
-          "fontWeight": 400.0, "italic": False, "lineHeight": 1.2, "maxHeight": 0.0, "maxWidth": 0.0,
+          "backgroundRadius": 0.0135, "color": "#ffffff", "fontFamily": '"Helvetica Neue Medium"', "fontSize": 0.04302,
+          "fontWeight": 500.0, "italic": False, "lineHeight": 1.2, "maxHeight": 0.0, "maxWidth": 0.0,
           "opacity": 1.0, "shadow": True, "strokeColor": "#000000", "strokeWidth": 0.0006, "tracking": -0.00224}
 
 path, words = sys.argv[1], json.load(open(sys.argv[2]))
@@ -29,7 +29,13 @@ ALTURA = float(opc.get("altura", 0.17))  # padrão do usuário: abaixo do rosto 
 ESTILO = dict(ESTILO, fontSize=ESTILO["fontSize"] * ESCALA, tracking=ESTILO["tracking"] * ESCALA,
               strokeWidth=ESTILO["strokeWidth"] * ESCALA)
 api = Concat(path); api.sock.settimeout(300)
-api.call("project.open", path=path)
+try:
+    api.call("project.get", path=path)   # aberto na janela? então é ela que responde
+except RuntimeError:
+    api.call("project.open", path=path)
+# Semibold: Helvetica Neue Medium (fonts/HelveticaNeue-Medium.ttf, extraída do sistema pelo setup)
+api.edit({"op": "addFont", "family": "Helvetica Neue Medium",
+          "path": os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts", "HelveticaNeue-Medium.ttf"))})
 tl = timeline(api.view())
 clips = sorted([c for c in tl["clips"] if c["kind"] == "video"], key=lambda c: c["start"])
 segs = [(c["sourceStart"], c["sourceStart"] + c["duration"] * c["speed"], c["start"], c["speed"]) for c in clips]

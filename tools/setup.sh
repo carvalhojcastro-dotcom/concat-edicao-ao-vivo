@@ -29,6 +29,20 @@ for f in Scholar-Regular.otf Scholar-Italic.otf Montserrat-Bold.otf; do
   else echo "  FALTA fonts/$f (Scholar: baixe no CapCut; Montserrat: fonts.google.com)"; fi
 done
 
+if [ ! -f fonts/HelveticaNeue-Medium.ttf ]; then
+  tools/.venv/bin/python - <<'PY'
+from fontTools.ttLib import TTCollection
+c = TTCollection("/System/Library/Fonts/HelveticaNeue.ttc")
+f = next(x for x in c.fonts if x["name"].getDebugName(2) == "Medium")
+for r in f["name"].names:
+    if r.nameID in (1, 4, 16): r.string = "Helvetica Neue Medium"
+    if r.nameID in (2, 17): r.string = "Regular"
+    if r.nameID == 6: r.string = "HelveticaNeue-Medium-Concat"
+f.save("fonts/HelveticaNeue-Medium.ttf")
+print("  HelveticaNeue-Medium.ttf extraída do sistema (semibold das legendas)")
+PY
+fi
+
 if [ "${1:-}" = "--app" ]; then
   echo "== Compilando o Concat deste fork"
   ./build-mac.sh && ./bundle-mac.sh
