@@ -50,15 +50,21 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 | Estilo | Palavras pequenas | Palavra-chave (grande) |
 |---|---|---|
 | **impacto** | Helvetica normal, bloco à esquerda | Helvetica Bold Oblíqua grande |
-| **serifa** | Helvetica normal, em escadinha | Scholar Itálico **branco** |
-| **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Bold grande |
-| **elegante** | Montserrat Bold, centralizada | Scholar Itálico enorme, encostado |
+| **serifa** | Helvetica normal, em escadinha | Scholar **reto** e apertado, **branco** |
+| **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Neue **Condensed Black** grande |
+| **elegante** | Montserrat **Light**, centralizada | Scholar reto enorme, encostado |
 
 - **Regra de fontes:** **Scholar só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
   grande, sai em fonte sóbria, normal e reta (Helvetica ou Montserrat), nunca fina nem cursiva.
-- **Destaque nem sempre em Scholar** (pedido de 2026-10-20): no serifa e no elegante, a chave pode sair
-  em **sem serifa bold** (Helvetica Bold) com `"fonte_chave": "bold"` na frase do plano. Alterne as duas
-  ao longo do vídeo; a disposição do estilo não muda.
+- **Pesos iguais aos prints de fonte** (`referencias/Legendas dinamicas`, pedido de 2026-10-20):
+  "helvetica" = Helvetica Neue **Condensed Black**; "montserrat" = Montserrat **Light**; "scholar" = Scholar
+  **Regular** reto, tracking -0,04; "coolvetica" = Coolvetica Regular. As fontes ficam em `fonts/`
+  (o `setup.sh` extrai a Condensed Black do sistema; Montserrat Light e Coolvetica são baixadas).
+- **Destaque nem sempre em Scholar**: no serifa e no elegante, `"fonte_chave"` na frase escolhe
+  `serifa` (Scholar reto, padrão), `italico`, `bold` (Condensed Black) ou `coolvetica`. **Alterne** ao
+  longo do vídeo. Uma fonte mais larga encolhe até a largura do Scholar, então o bloco não muda de forma.
+- A Montserrat Light das palavras pequenas do elegante é a exceção à regra "nunca fina": vem do print e
+  o contorno + sombra seguram a leitura.
 - **Tamanho e posição:** 92% do tamanho, centro do bloco a **67% da altura** (abaixo do rosto),
   **contorno preto fino + sombra**.
 - **Entrelinha:** ótica e igual em todas as linhas (pedido de 2026-10-20): o vão vai da base de cima ao

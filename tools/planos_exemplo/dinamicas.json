@@ -1,6 +1,6 @@
 [
  {"estilo": "impacto",  "linhas": [[0, 1, 2], [3, 4], [5]], "chave": [5]},
- {"estilo": "serifa",   "linhas": [[6, 7, 8], [9]], "chave": [9]},
+ {"estilo": "serifa",   "linhas": [[6, 7, 8], [9]], "chave": [9], "fonte_chave": "coolvetica"},
  {"estilo": "classico", "linhas": [[10, 11, 12, 13], [14]], "chave": [14]},
  {"estilo": "elegante", "linhas": [[15, 16], [17]], "chave": [17], "fonte_chave": "bold"},
  {"estilo": "impacto",  "linhas": [[18, 19, 20], [21]], "chave": [21]},

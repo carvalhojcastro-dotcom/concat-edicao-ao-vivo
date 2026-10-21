@@ -13,20 +13,21 @@ Uso:
   legendas_dinamicas.py <pasta do projeto> <plano.json>
 
 plano.json: [{"estilo": "serifa", "linhas": [[0, 1], [2], [3]], "chave": [2]}, ...]
-  "fonte_chave": "bold" na frase troca o Scholar Itálico da chave por sem serifa em negrito (serifa/elegante).
+  "fonte_chave" na frase escolhe a fonte da chave no serifa/elegante: "serifa" (Scholar Regular, padrão),
+  "italico" (Scholar Itálico), "bold" (Helvetica Neue Condensed Black) ou "coolvetica".
   ou {"destaque": "#2563c9", "frases": [...]} para usar a cor da paleta do cliente
   (padrão: branco, pedido de 2026-10-20; Dr. Rafael: azul #2563c9; amarelo #f4c430 só se pedirem).
   linhas: índices das legendas simples (na ordem da timeline), agrupados por linha;
   chave:  os índices que levam o destaque.
 Regra de leitura (do usuário): tudo que não é destaque sai em fonte sóbria, normal e reta
-(Helvetica / Montserrat), nunca fina nem cursiva; o Scholar (e as cursivas) só na palavra de
-DESTAQUE (a chave).
+(Helvetica / Montserrat), nunca fina nem cursiva (exceção: a Montserrat Light do elegante, como no
+print); o Scholar (e as cursivas) só na palavra de DESTAQUE (a chave).
 Estilos (inspirados em prints de legendas de reels; descritos em EDICAO.md):
-  serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em Scholar Itálico branco, palavra final
+  serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em Scholar branco, palavra final
              maior alinhada à direita embaixo da chave.
   classico - "Estilo 5": palavras pequenas (Helvetica) espalhadas sobre uma linha grande
-             em Helvetica Bold apertada.
-  elegante - "Estilo 6": linha pequena em negrito sobre uma palavra enorme em Scholar Itálico,
+             em Helvetica Neue Condensed Black.
+  elegante - "Estilo 6": linha pequena em Montserrat Light sobre uma palavra enorme em Scholar,
              encostadas.
   impacto  - "Estilos 1 e 2": bloco alinhado à esquerda, Helvetica normal (reta) e a chave em
              Helvetica Bold Oblíqua grande (podem dividir a mesma linha).
@@ -60,17 +61,28 @@ FACES = {
     "scholar": ("Scholar", 400, False, os.path.join(FONTES, "Scholar-Regular.otf"), 0),
     "scholar-italic": ("Scholar", 400, True, os.path.join(FONTES, "Scholar-Italic.otf"), 0),
     "montserrat-bold": ("Montserrat", 700, False, os.path.join(FONTES, "Montserrat-Bold.otf"), 0),
+    # Pesos dos prints de fonte em referencias/Legendas dinamicas (pedido de 2026-10-20):
+    "helv-cond-black": ('"Helvetica Neue Condensed Black"', 900, False, os.path.join(FONTES, "HelveticaNeue-CondensedBlack.ttf"), 0),
+    "coolvetica": ("Coolvetica", 400, False, os.path.join(FONTES, "Coolvetica-Rg.otf"), 0),
+    "montserrat-light": ("Montserrat", 300, False, os.path.join(FONTES, "Montserrat-Light.ttf"), 0),
 }
 # Fontes que o projeto precisa registrar (as do sistema o Concat já acha).
 REGISTRAR = [("Scholar", "Scholar-Regular.otf"), ("Scholar", "Scholar-Italic.otf"),
-             ("Montserrat", "Montserrat-Bold.otf"), ("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf")]
+             ("Montserrat", "Montserrat-Bold.otf"), ("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf"),
+             ("Helvetica Neue Condensed Black", "HelveticaNeue-CondensedBlack.ttf"),
+             ("Coolvetica", "Coolvetica-Rg.otf"), ("Montserrat", "Montserrat-Light.ttf")]
 
 AMARELO = "#f4c430"
 BRANCO = "#ffffff"
 DESTAQUE = BRANCO  # cor da chave no estilo serifa (branco por padrão); o plano pode trocar pela do cliente
-FONTE_CHAVE = "serifa"  # destaque do serifa/elegante: "serifa" (Scholar Itálico) ou "bold" (sem serifa, negrito);
-                        # por frase com "fonte_chave" no plano (pedido de 2026-10-20: nem sempre Scholar)
-CHAVE_BOLD = "helv-bold"  # face da chave em bold; o tamanho cai por estilo, porque a Helvetica é mais larga que o Scholar
+FONTE_CHAVE = "serifa"  # destaque do serifa/elegante, por frase com "fonte_chave" no plano (pedido de 2026-10-20)
+# fonte_chave -> (face, tracking em em). Pesos iguais aos prints de fonte do usuário.
+CHAVES = {
+    "serifa": ("scholar", -0.04),            # Scholar Regular reto e apertado (print "scholar")
+    "italico": ("scholar-italic", 0.0),      # Scholar Itálico (prints de estilo 1 e 3)
+    "bold": ("helv-cond-black", -0.01),      # Helvetica Neue Condensed Black (print "helvetica")
+    "coolvetica": ("coolvetica", -0.02),     # Coolvetica Regular (print "coolvetica")
+}
 LARGURA_MAX = 0.84 * W
 ENTRADA = 0.20           # segundos da entrada deslizando
 DESLIZE = 0.010          # quanto sobe na entrada, em fração da altura
@@ -198,11 +210,13 @@ def perfil(p):
     return _perfis[chave]
 
 
-def chave_em(texto, em, cor, fator_bold=0.92):
-    """A palavra de destaque: Scholar Itálico ou, com FONTE_CHAVE "bold", sem serifa em negrito."""
-    if FONTE_CHAVE == "bold":
-        return palavra(texto, CHAVE_BOLD, em * fator_bold, cor, trk=-0.04)
-    return palavra(texto, "scholar-italic", em, cor)
+def chave_em(texto, em, cor):
+    """A palavra de destaque na fonte de FONTE_CHAVE. `em` é o tamanho pensado para o Scholar
+    Itálico; uma fonte mais larga encolhe até ocupar a mesma largura (nunca cresce), então o
+    bloco do estilo não muda de forma com a fonte."""
+    face, trk = CHAVES[FONTE_CHAVE]
+    ref = largura("scholar-italic", em, texto)
+    return palavra(texto, face, em * min(1.0, ref / largura(face, em, texto, trk)), cor, trk=trk)
 
 
 # ── estilos: recebem as linhas como listas de (índice, é_chave) e devolvem palavras posicionadas ──
@@ -237,7 +251,7 @@ def serifa(linhas, t):
 def classico(linhas, t):
     S, B = 0.042 * H, 0.100 * H
     topo = [palavra(t[i], "helv", S, trk=-0.02) for linha in linhas[:-1] for i, _ in linha]
-    grande = [palavra(t[i], "helv-bold", B, trk=-0.05) for i, _ in linhas[-1]]
+    grande = [palavra(t[i], "helv-cond-black", B, trk=-0.01) for i, _ in linhas[-1]]  # print "helvetica"
     wb = linha_em(grande, 0.0, 0.0)
     if topo:
         base_topo = -(max(cap(p) for p in grande) + 0.10 * S)
@@ -257,13 +271,14 @@ def classico(linhas, t):
 
 def elegante(linhas, t):
     S, K = 0.042 * H, 0.125 * H
-    pequenas = [[palavra(t[i], "montserrat-bold", S, trk=-0.03) for i, _ in linha] for linha in linhas[:-1]]
-    grande = [chave_em(t[i], K, BRANCO, fator_bold=0.66) if c else palavra(t[i], "montserrat-bold", S, trk=-0.03)
+    pequenas = [[palavra(t[i], "montserrat-light", S) for i, _ in linha] for linha in linhas[:-1]]  # print "montserrat"
+    grande = [chave_em(t[i], K, BRANCO) if c else palavra(t[i], "montserrat-light", S)
               for i, c in linhas[-1]]  # Scholar só no destaque
     wg = linha_em(grande, 0.0, 0.0)
-    bold = any(p["face"] == CHAVE_BOLD for p in grande)
-    # a palavra grande sobe até encostar na linha de cima; em bold (reta, sem hastes altas) encosta pela maiúscula
-    base = -(max(cap(p) for p in grande) + APERTO * S) if bold else -0.68 * K
+    italico = any(p["face"] == "scholar-italic" for p in grande)
+    # a palavra grande sobe até encostar na linha de cima; fora o itálico (ajustado no olho), encosta pelo
+    # topo real da tinta (as hastes do Scholar reto sobem acima da maiúscula)
+    base = -0.68 * K if italico else -(max(tinta(p)[0] for p in grande) + APERTO * S)
     for ps in reversed(pequenas):
         linha_em(ps, (wg - larg_linha(ps)) / 2, base)
         base -= max(cap(p) for p in ps) + 0.18 * S

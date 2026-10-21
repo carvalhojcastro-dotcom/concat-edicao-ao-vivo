@@ -46,6 +46,25 @@ print("  HelveticaNeue-Medium.ttf extraída do sistema (semibold das legendas)")
 PY
 fi
 
+# Helvetica do print "helvetica" (referencias/Legendas dinamicas): condensada e pesada, no destaque em bold.
+if [ ! -f fonts/HelveticaNeue-CondensedBlack.ttf ]; then
+  tools/.venv/bin/python - <<'PY'
+from fontTools.ttLib import TTCollection
+c = TTCollection("/System/Library/Fonts/HelveticaNeue.ttc")
+f = next(x for x in c.fonts if x["name"].getDebugName(4) == "Helvetica Neue Condensed Black")
+for r in f["name"].names:
+    if r.nameID in (1, 4, 16): r.string = "Helvetica Neue Condensed Black"
+    if r.nameID in (2, 17): r.string = "Regular"
+    if r.nameID == 6: r.string = "HelveticaNeue-CondensedBlack-Concat"
+f.save("fonts/HelveticaNeue-CondensedBlack.ttf")
+print("  HelveticaNeue-CondensedBlack.ttf extraída do sistema (destaque em bold)")
+PY
+fi
+
+# Montserrat Light (OFL) e Coolvetica (Typodermic, grátis, sem redistribuir) não vêm no Mac.
+[ -f fonts/Montserrat-Light.ttf ] || echo "  FALTA fonts/Montserrat-Light.ttf (github.com/JulietaUla/Montserrat, fonts/ttf)"
+[ -f fonts/Coolvetica-Rg.otf ] || echo "  FALTA fonts/Coolvetica-Rg.otf (typodermicfonts.com/downloads, pacote grátis: 'Coolvetica Rg.otf')"
+
 if [ "${1:-}" = "--app" ]; then
   echo "== Compilando o Concat deste fork"
   ./build-mac.sh && ./bundle-mac.sh
