@@ -2,7 +2,7 @@
 # finalizar.sh <dir do corte> <saida.mp4>: legenda no Concat, exporta e faz a folha de conferência
 SP=${TRABALHO:?defina TRABALHO (pasta de trabalho)}
 BIN=${0:A:h}
-PY=~/Desktop/Concat/ferramentas/tools/.venv/bin/python
+PY="$(cd "$(dirname "$0")/.." && pwd)/.venv/bin/python"
 C=$1; O=$2
 $PY -I $BIN/legendar_corte.py $C/vertical.mp4 $C/words_leg.json $C/plano.json "$O" 2>&1 | grep -E "exportado|falhou|Error|Traceback"
 python3 $BIN/recentes.py

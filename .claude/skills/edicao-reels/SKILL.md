@@ -1,28 +1,31 @@
 ---
 name: edicao-reels
-description: Edita um vídeo bruto de reels (especialista falando para a câmera) do começo ao fim no Concat deste fork, no estilo de EDICAO.md, e entrega um MP4 4K 30 fps. Use quando o pedido for "edita esse vídeo", "edite o C5430", "faça a edição", "parte 1", "legendas dinâmicas", "coloca b-roll", ou ajustes num reel já editado.
+description: Edita um vídeo bruto de reels (especialista falando para a câmera) do começo ao fim no Concat deste fork, no estilo de EDICAO.md, e deixa o projeto pronto no Concat (MP4 4K 30 fps quando pedirem a exportação). Use quando o pedido for "edita esse vídeo", "edite o C5430", "faça a edição", "parte 1", "legendas dinâmicas", "coloca b-roll", ou ajustes num reel já editado.
 ---
 
 # Edição de reels: o processo completo
 
-Você é o editor. O usuário só diz algo como **"edita esse vídeo: <arquivo>"**. Você faz tudo e
-entrega o MP4 pronto, **sem pedir confirmação no meio**. As regras de estilo estão em `EDICAO.md`
-(leia antes da primeira edição da conversa). Este arquivo diz **como** fazer e **como decidir**.
+Você é o editor. O usuário só diz algo como **"edita esse vídeo: <arquivo>"**. Você faz tudo,
+**sem pedir confirmação no meio**, e deixa o projeto pronto para ele abrir no Concat. **Exporte o MP4
+só quando o pedido incluir exportar** (ou quando ele pedir depois); exemplos e testes ficam só no
+projeto. As regras de estilo estão em `EDICAO.md` (leia antes da primeira edição da conversa), e as
+regras de trabalho na seção "Como trabalhar" de lá. Este arquivo diz **como** fazer e **como decidir**.
+Cortes de podcast/entrevista seguem outro processo: `tools/cortes_podcast/LEIA-ME.md`.
 
 Variáveis (raiz do repositório = `$R`):
 - `PY=$R/tools/.venv/bin/python`
-- Projeto: `$HOME/Desktop/Concat/editados/<nome>`
+- Pasta Concat = a pasta-mãe do repositório (`$(dirname $R)`, em geral `~/Desktop/Concat`)
+- Projeto: `<pasta Concat>/editados/<nome>`
 - Trabalho: uma pasta temporária sua
-- Saída: `$HOME/Desktop/Concat/exportados/<nome>.mp4`
+- Saída (quando exportar): `<pasta Concat>/exportados/<nome>.mp4`
 - `<nome>` é o que o usuário der; senão, o nome do arquivo sem extensão.
 
 ## 0. Pré-checagem (rápida, sem perguntar se estiver tudo ok)
 - O venv `tools/.venv` existe? Se não, rode `./tools/setup.sh`.
-- O Concat está aberto com a API ligada? Teste `$PY tools/reel.py listar <qualquer projeto>` ou um
-  `socket` na porta 7420. Se `.concat-token` não existir, peça ao usuário para ligar a API em
-  Configurações > API e salvar o token nesse arquivo.
-- `fonts/` tem Scholar-Regular.otf, Scholar-Italic.otf e Montserrat-Bold.otf? Se faltar, rode o setup;
-  se ainda faltar, avise e siga (o Concat cai na fonte embutida).
+- O Concat está aberto com a API ligada? Teste um `socket` na porta 7420. Se `.concat-token` não
+  existir, rode `./tools/setup.sh` com o Concat fechado (ele liga a API e grava o token).
+- `fonts/` tem Scholar-Regular/Italic, Coolvetica-Rg, HelveticaNeue-Medium e -CondensedBlack? Se
+  faltar, rode o setup; se a Scholar ainda faltar, avise e siga (o Concat cai na fonte embutida).
 - `.env.local` tem uma linha `HF_KEY=`? Confira só que a linha existe (`grep -c '^HF_KEY=.\+:'`),
   **nunca leia, mostre ou peça a chave no chat**. Se não houver, peça ao usuário para rodar
   `./tools/configurar_chave_higgsfield.sh` ou siga sem B-roll se ele preferir.
@@ -47,6 +50,9 @@ $PY tools/reel.py cortes "$W" "38.60-58.80,117.16-158.92,193.40-209.58"
 - Se o início perdeu uma palavra ou o fim pegou uma palavra de outra tomada, ajuste o tempo do
   trecho e rode de novo.
 - Corrija erros de transcrição editando `words.json` (ex.: "chaqueca" → "enxaqueca").
+- **Nomes próprios:** nome de pasta ou arquivo não é fonte de grafia. Na dúvida, transcreva de novo
+  com outro modelo (medium × large-v3-turbo), ouça as divergências e, se ainda houver dúvida,
+  **pergunte ao usuário antes de queimar a legenda** (já saiu "Sibert" no lugar de "Siebert").
 
 ## 3. Parte 1
 Sem nitidez, cor ou LUT automáticas (pedido de 2026-10-19): só aplique se o usuário pedir.
@@ -69,7 +75,10 @@ Em homem, não aplique sem pedido.
 ## 4. Legendas Dinâmicas (julgamento)
 Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e rode
 `$PY tools/legendas_dinamicas.py "$P" "$W/dinamicas.json"`.
-- **Quantidade:** cerca de 20 a 22 blocos por minuto, nas frases importantes.
+- **Escolha pelo roteiro:** os blocos vão **sempre nas frases e palavras de maior destaque** (a ideia
+  central, o dado, o alerta, o chamado). Nunca em frase de passagem só para cumprir número.
+- **Quantidade (guia, não cota):** cerca de 18 a 22 blocos por minuto, perto de metade das palavras;
+  referência aprovada em `editados/Exemplos - legendas dinamicas` (`plano_exemplos.json`).
 - **Abertura:** os blocos cobrem **toda a abertura** (as 3 a 5 primeiras frases).
 - **Tamanho dos blocos:** de 1 a 6 palavras, com índices **contíguos**; 2 a 3 linhas.
 - **Chave:** a palavra mais forte da frase (o substantivo do assunto, o alerta, o número).
@@ -80,6 +89,12 @@ Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e
   - `impacto` aceita linha pequena, chave e linha pequena.
 - Remova vírgulas do fim só nas palavras-chave (o script já tira as dos blocos).
 - Scholar só aparece na palavra-chave; o resto do bloco o script põe em Helvetica/Montserrat.
+- **Fonte da chave** (`"fonte_chave"` na frase, serifa e elegante): `serifa` (Scholar reto, padrão),
+  `italico`, `bold` (Condensed Black) ou `coolvetica`. Alterne ao longo do vídeo, sem repetir em
+  blocos seguidos.
+- **Roupa com estampa clara no peito** (ex.: camiseta com logo): legenda branca some em cima dela.
+  Zoom em 100% e legenda abaixo da estampa; sobre B-roll claro use `sombra_suave`, nunca contorno
+  grosso. Detalhes em `EDICAO.md`.
 
 ## 5. Zoom seco (julgamento)
 Escreva `$W/zoom.json` (formato em `tools/planos_exemplo/zoom.json`): trechos `[índice da palavra
@@ -106,6 +121,8 @@ Escreva `$W/broll.json` (formato em `tools/planos_exemplo/broll.json`).
   pessoas **brasileiras** em cenário brasileiro, roupa do dia a dia; **sem médico ou profissional de
   saúde**; **nada escrito** (nem embalagem com rótulo, tela, laudo, monitor com número).
   Órgãos em 3D funcionam bem.
+- **Nem profissionais da área de quem fala** (médico para médico, contador ou consultor para
+  contabilidade). Em cena de objeto, escreva "nobody around", senão o modelo põe gente.
 ```bash
 $PY tools/broll_higgsfield.py "$W/broll.json" "$P/broll" <cena1>     # 1 de teste
 ```
@@ -118,40 +135,47 @@ python3 tools/broll_animar.py "$P"
 ```
 
 ## 7. Revisão e entrega
-- **Quadros de revisão:** copie `concat.json` para `dist/verificacao/<x>/` e rode
-  `python3 tools/quadros.py <copia> <saida.jpg> "<tempos>"`. Use o fim de cada bloco dinâmico e o
-  meio de cada B-roll e de cada zoom.
+- **Quadros de revisão:** `python3 tools/quadros.py "$P" <saida.jpg> "<tempos>"` (usa
+  `render_projeto.py`, que renderiza sem deixar cópia de projeto nem card repetido nos recentes do
+  Concat). Use o fim de cada bloco dinâmico e o meio de cada B-roll e de cada zoom. **Não crie cópias
+  de projeto** para revisar, testar cor ou exportar.
 - **Olhe as imagens. Confira:**
   - legenda abaixo do rosto e legível;
   - palavras pequenas retas e chave grande;
   - B-roll certo;
   - zoom com o rosto no centro;
   - o vídeo começa no apresentador.
+- **Feche na API** (`$PY tools/reel.py fechar "$P"`), senão o projeto não abre na janela do Concat.
+- **Exportar só se pedirem:**
 ```bash
-python3 tools/exportar.py "$P" "$HOME/Desktop/Concat/exportados/<nome>.mp4"       # 4K, fps do projeto (30)
-$PY tools/reel.py fechar "$P"
+python3 tools/exportar.py "$P" "<pasta Concat>/exportados/<nome>.mp4"   # 4K, fps do projeto, SDR
 ```
-- **Confira o MP4:** `ffprobe` (2160x3840, 30 fps, com áudio) e 3 ou 4 quadros extraídos dele.
+  Com o projeto aberto na janela, use `tools/exportar_seguro.py` (mesmos argumentos).
+  **Confira o MP4:** `ffprobe` (2160x3840, 30 fps, bt709, com áudio) e 3 ou 4 quadros dele.
 
 ## 8. Relatório ao usuário (curto)
 - O que entrou: tomadas escolhidas, número de cortes, blocos dinâmicos, zooms e B-rolls.
-- Onde está o arquivo.
+- O texto completo das legendas e o que foi conferido (nomes próprios).
+- Onde está o projeto (e o MP4, se exportou).
 - **Custo do Higgsfield:** imagens geradas × preço (z-image US$ 0,015, Soul 2 US$ 0,0057),
   em dólar e em reais.
 - O tempo que levou.
 - Algo a conferir, se houver.
 
 ## Pedidos de ajuste depois da entrega
-Edite o projeto (ele fica salvo), reexporte com o mesmo nome e feche na API.
+Edite o projeto (ele fica salvo), reexporte com o mesmo nome se já havia MP4, e feche na API.
+- **Mexa só no vídeo que o usuário apontou**; não refaça os outros por iniciativa própria.
+- Os tempos que ele passa são `mm:ss:quadros`.
 - Se o projeto estiver **aberto na janela do Concat**, as edições pela API aparecem ao vivo, mas a
-  exportação é recusada: exporte de uma cópia do `concat.json` em `dist/verificacao/`.
+  exportação direta é recusada: use `tools/exportar_seguro.py`.
 - Ao trocar uma imagem com o projeto aberto na janela, o `addClip` pode "imantar" o clipe para
   outro ponto: confira e corrija com `moveClips`.
 - Legendas: para mudar tamanho ou posição, apague todos os clipes de texto e refaça (simples e depois
   dinâmicas) com `--escala=`/`--altura=`/`--centro=`.
 
 ## Armadilhas conhecidas
-- Use "Helvetica" como família ("Helvetica Neue" o Concat não acha).
+- O Concat não lê `.ttc`: as faces da Helvetica Neue (Medium, Condensed Black) são extraídas para
+  `fonts/` pelo setup e registradas com nome próprio; a Helvetica comum vai como "Helvetica".
 - OpenCV precisa ser < 5 (o 5 tirou o detector de rosto).
 - `alinhar_quadros.py` não salva sozinho; o `reel.py aplicar` já salva.
 - Chave do Higgsfield: nunca no chat, nunca em commit; só via `configurar_chave_higgsfield.sh`.

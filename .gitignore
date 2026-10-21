@@ -64,10 +64,13 @@ desktop.ini
 # Builds montados localmente (.app) e quadros de verificação.
 /dist/
 # Fontes copiadas do cache do CapCut: licenças próprias, não redistribuir.
-/fonts/
+# Fontes: as livres (OFL) vão no repositório; ficam fora as de licença própria (Scholar, Coolvetica)
+# e as extraídas do macOS (Helvetica Neue), que o tools/setup.sh obtém em cada Mac.
+/fonts/Scholar-*
+/fonts/Coolvetica-*
+/fonts/HelveticaNeue-*
 # Ambiente Python das ferramentas e caches.
 /tools/.venv/
 /tools/__pycache__/
-/tools/modelos/
 # Planos de edição por vídeo (conteúdo de clientes).
 /tools/planos/

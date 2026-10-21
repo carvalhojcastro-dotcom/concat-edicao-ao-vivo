@@ -2,7 +2,7 @@
 import os, cv2, numpy as np, mediapipe as mp
 from mediapipe.tasks.python import BaseOptions, vision
 YUNET = "/Users/joaopedro/.claude/plugins/cache/edit-labs-ai/edit-labs-ai/1.0.0/skills/corte-viral/models/face_detection_yunet_2023mar.onnx"
-LMK = os.path.expanduser("~/Desktop/Concat/ferramentas/tools/modelos/face_landmarker.task")
+LMK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "modelos", "face_landmarker.task")
 class Rostos:
     def __init__(self, w, h):
         self.w, self.h = w, h

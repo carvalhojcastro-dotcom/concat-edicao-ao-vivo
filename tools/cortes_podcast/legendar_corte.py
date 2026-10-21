@@ -1,18 +1,18 @@
 """Legendas dinâmicas do Concat num corte vertical, exporta 4K30 SDR e não deixa projeto para trás.
 
 Uso: legendar_corte.py <vertical.mp4> <words.json> <plano.json> <saida.mp4> [--manter] [--quadros "t1 t2 ..." folha.jpg]
-Projeto temporário em ~/Desktop/Concat/ferramentas/dist/verificacao/_cortes/<nome>: criado, legendado, exportado,
+Projeto temporário em <repositório>/dist/verificacao/_cortes/<nome>: criado, legendado, exportado,
 fechado, apagado e tirado do recents.json. --manter deixa o projeto (para depurar).
 """
 import json, os, shutil, subprocess, sys, time
 
-TOOLS = os.path.expanduser("~/Desktop/Concat/ferramentas/tools")
+TOOLS = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 sys.path.insert(0, TOOLS)
 from concat_api import Concat, timeline  # noqa: E402
 from render_projeto import tirar_dos_recentes  # noqa: E402
 
 PY = os.path.join(TOOLS, ".venv/bin/python")
-BASE = os.path.expanduser("~/Desktop/Concat/ferramentas/dist/verificacao/_cortes")
+BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dist", "verificacao", "_cortes")
 
 
 def main():

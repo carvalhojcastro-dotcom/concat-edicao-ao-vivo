@@ -15,7 +15,7 @@ import shutil
 from concat_api import Concat
 
 RECENTES = os.path.expanduser("~/Library/Application Support/app.concat.editor/recents.json")
-TEMP = os.path.expanduser("~/Desktop/Concat/ferramentas/dist/verificacao/_temp_render")
+TEMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist", "verificacao", "_temp_render")
 
 
 def tirar_dos_recentes(caminho):

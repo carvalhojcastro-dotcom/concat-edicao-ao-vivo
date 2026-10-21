@@ -102,6 +102,11 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
   - **Nunca mostrar médico, enfermeiro ou profissional de saúde**, porque o especialista é quem fala.
   - **Nunca ter nada escrito:** letras, números, rótulos, telas, laudos.
   - **Pessoas brasileiras**, em cenário brasileiro.
+  - **Nem outros profissionais da área de quem fala** (médico para médico, contador ou consultor
+    para contabilidade).
+  - **Cena de objeto:** escreva "nobody around" no prompt, senão o modelo põe gente.
+- **Conta:** a API do Higgsfield com saldo pré-pago (a assinatura não compensa). Sem variações:
+  de 5 a 7 imagens por vídeo de ~1 min.
 - **Modelos:**
   - `z-image/turbo`: US$ 0,015/imagem, 2K 9:16, o padrão. Ele **lê negação ao contrário**
     ("no doctors" coloca médicos), então descreva só o que deve aparecer.
@@ -109,16 +114,42 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
     em quadros em cenas de pessoa deitada; resolva com close no rosto.
 
 ## 5. Entrega
-- Exporte em **4K 2160×3840 a 30 fps** (crie o projeto já em 30 fps).
+- O projeto fica pronto em `editados/<nome>`. **Exporte só quando pedirem** (o usuário prefere ver no
+  Concat e muitas vezes exporta ele mesmo).
+- Exportação: **4K 2160×3840 a 30 fps, SDR** (`hdr=False`; vídeo de iPhone é HLG e em HDR legenda e
+  B-roll ficavam cinza). Crie o projeto já em 30 fps.
 - Confira quadros do MP4 final: legendas, B-rolls, zoom, início e fim.
 - Feche o projeto na API (`project.close` com save), senão ele não abre na janela do Concat.
+
+## 6. Legenda sobre roupa com estampa
+Na camiseta com estampa clara no peito (ex.: "SIMPLES MEDICINA" do Dr. Leonardo), a legenda branca
+some. Antes de legendar, olhe a roupa; se houver estampa clara:
+- zoom em 100% (sem punch-in) e legenda **abaixo da estampa**, na parte escura (faixa do fim da
+  estampa + 0,025 até 0,86 da altura; largura até 0,56; linhas acima de 20 caracteres em duas,
+  preset `linha2`);
+- sobre B-roll claro, **nada de contorno grosso** ("não use traços tão fortes"): use `sombra_suave`;
+- confira todas as frases numa folha de quadros antes de entregar.
+
+## 7. Como trabalhar (regras do usuário)
+- **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
+- **Tempos** que ele passa vêm em `mm:ss:quadros`.
+- **Nomes próprios:** pasta ou arquivo não é fonte de grafia. Segunda transcrição com outro modelo
+  nas dúvidas e, se persistir, pergunte antes de queimar a legenda. No fim, liste o texto das legendas.
+- **Exemplos e testes** vão no projeto do Concat para ele ver na janela; nada de MP4 sem pedido.
+- **Sem cópias de projeto** para revisar, testar ou exportar: todo projeto aberto pela API entra nos
+  recentes do Concat e vira card repetido. Quadros com `tools/quadros.py`/`render_projeto.py`;
+  exportação com o projeto na janela via `tools/exportar_seguro.py`.
+- **Mudou uma regra de edição?** Atualize este arquivo, a skill e as ferramentas, e envie ao GitHub.
+- **Cortes de podcast/entrevista:** processo próprio em `tools/cortes_podcast/LEIA-ME.md`.
+- **Kit de edição** (SFX, transição, música do padrão vindo do CapCut): valores em
+  `referencias/kit-de-edicao/` (os arquivos de áudio e LUT ficam fora do Git, por licença).
 
 ---
 
 ## Ordem dos comandos
 ```bash
 PY=tools/.venv/bin/python          # venv com higgsfield-client, pillow, fonttools, opencv<5
-P="$HOME/Desktop/Concat/editados/<nome>"    # pasta do projeto
+P="$(dirname "$PWD")/editados/<nome>"    # pasta do projeto (pasta Concat = mãe do repositório)
 
 # 1. criar o projeto 2160x3840 a 30 fps, importar o bruto e pô-lo em T1 (project.create, media.import, addClip)
 # 2. transcrever (mlx-whisper large-v3-turbo, tempo por palavra) -> words.json e cortes.json
@@ -127,19 +158,21 @@ python3 tools/cortar_ao_vivo.py "$P" cortes.json --pausa 0
 python3 tools/alinhar_quadros.py "$P"                       # depois: project.save
 python3 tools/legendas_simples.py "$P" words.json T4        # 92%, offsetY 0.17, contorno fino
 #    (sem nitidez nem cor automáticas; só se pedirem: addLayerClip concat.adjust em T3)
-$PY tools/legendas_dinamicas.py "$P" plano_dinamicas.json   # 92%, centro 0.67
+$PY tools/legendas_dinamicas.py "$P" plano_dinamicas.json   # 92%, começa na altura da legenda simples
 python3 tools/zoom_cortes.py "$P" ref_legendas.json plano_zoom.json
 $PY tools/centralizar_zoom.py "$P"
 $PY tools/broll_higgsfield.py plano_broll.json "$P/broll" <cena-teste>   # depois as outras
 python3 tools/broll_imagens.py "$P" plano_broll.json "$P/broll"
 python3 tools/broll_animar.py "$P"
-python3 tools/exportar.py "$P" "$HOME/Desktop/Concat/exportados/<nome>.mp4"   # 4K, fps do projeto
+python3 tools/exportar.py "$P" "$(dirname "$PWD")/exportados/<nome>.mp4"   # só se pedirem; 4K, SDR
 #    por fim: project.close (save)
 ```
 Os formatos dos planos estão em `tools/planos_exemplo/`.
 
 ## Requisitos
-- Concat deste fork aberto, com a API ligada (Configurações › API, porta 7420); o token fica em `.concat-token`.
+Instalação num Mac novo: `INSTALAR.md` (o `tools/setup.sh` faz quase tudo).
+- Concat deste fork aberto, com a API ligada (porta 7420); o setup liga e grava o token em `.concat-token`.
 - Chave da API do Higgsfield em `.env.local` (`HF_KEY=id:segredo`), gravada com
   `tools/configurar_chave_higgsfield.sh`. Nunca a cole em chat nem a commite.
-- Fontes Scholar (Regular/Italic) e Montserrat Bold em `fonts/`. Não estão no repositório por licença.
+- Fontes: as livres (Montserrat, Poppins, Plus Jakarta, Playfair) vêm no repositório; Coolvetica e as
+  faces da Helvetica Neue o setup obtém; a Scholar (licença própria) vem do CapCut ou do Mac antigo.

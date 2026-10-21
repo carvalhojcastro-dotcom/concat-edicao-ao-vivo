@@ -71,3 +71,7 @@ $TRABALHO/c<EP>/destaques.txt    frases de destaque por corte (formato do edit-d
 - **Início do corte na fala de outra pessoa:** o `montar_corte` recua até 0,6 s procurando pausa e pode puxar o fim da pergunta ("também, né?"). Confira a 1ª palavra do `texto.txt` e, se precisar, grave o início certo em `fixos.json`.
 - **Nomes do episódio:** acrescente na lista `PROPRIOS` do `plano_auto.py` (ex.: Simone, Farah, Rio, Janeiro, São, Paulo, Minas, Gerais).
 - Ep. 9 levou ~25 min do bruto aos 8 MP4: transcrição turbo 6 min, lote de montagem 8 min, legendas + export no Concat 12 min.
+
+## Escopo
+Quando o usuário aponta um corte, mexa **só nele** ("só mude o vídeo que eu mencionei"); não refaça os
+outros por iniciativa própria.

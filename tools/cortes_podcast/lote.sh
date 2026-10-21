@@ -2,7 +2,7 @@
 # lote.sh <ep> <run> <id...>: monta, enquadra, renderiza e confere cada candidato
 SP=${TRABALHO:?defina TRABALHO (pasta de trabalho)}
 BIN=${0:A:h}
-PY=~/Desktop/Concat/ferramentas/tools/.venv/bin/python
+PY="$(cd "$(dirname "$0")/.." && pwd)/.venv/bin/python"
 EP=$1; R=$2; shift 2
 V=$(cat $SP/p$EP/fonte.txt)   # caminho do vídeo do episódio
 for ID in "$@"; do

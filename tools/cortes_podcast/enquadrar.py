@@ -11,7 +11,7 @@ import numpy as np
 import mediapipe as mp
 from mediapipe.tasks.python import BaseOptions, vision
 
-MODELO = os.path.expanduser("~/Desktop/Concat/ferramentas/tools/modelos/face_landmarker.task")
+MODELO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "modelos", "face_landmarker.task")
 FPS = 30
 AW, AH = 1280, 720
 PASSO = 3            # landmarker a cada 3 quadros (10 por segundo)

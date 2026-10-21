@@ -19,7 +19,7 @@ try:
     api.call("project.get", path=path); janela = True
 except RuntimeError:
     api.call("project.open", path=path); janela = False
-d = tempfile.mkdtemp(dir=os.path.expanduser("~/Desktop/Concat/ferramentas/dist/verificacao"))
+d = tempfile.mkdtemp(dir=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist", "verificacao"))
 w, h = 540, 960
 cw, ch = w, int(h * (y1 - y0))
 folha = Image.new("RGB", (cw * len(offs), ch * len(t0s)))

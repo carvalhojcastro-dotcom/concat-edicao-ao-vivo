@@ -1,0 +1,54 @@
+{
+  "origem": "Edição '6 - Ana Paula Sibert' (CapCut 9.5), lida do draft_info.json em 2026-10-17",
+  "formato": {"largura": 1080, "altura": 1920, "fps_timeline": 30, "velocidade_fala": 1.05},
+  "legenda": {
+    "tipo": "palavra por palavra: cada palavra do início dela até o início da próxima, sem animação",
+    "fonte": "Helvetica",
+    "peso": 400,
+    "cor": "#FFFFFF",
+    "capcut": {"tamanho": 12, "tamanho_sobre_imagem": 10, "espacamento": -0.05, "contorno": {"cor": "#000000", "largura": 0.0111}, "sombra": {"cor": "#000000", "opacidade": 0.16, "distancia": 5, "angulo": -45, "suavidade": 1.49}},
+    "concat": {"fontSize": 0.04302, "fontSize_sobre_imagem": 0.03585, "tracking": -0.00224, "tracking_sobre_imagem": -0.00187, "strokeWidth": 0.0006, "strokeColor": "#000000", "shadow": true},
+    "posicao": {
+      "padrao": {"capcut_y": -0.2083, "concat_offsetY": 0.1042, "altura_na_tela": 0.604},
+      "sobre_broll_com_pessoa_recortada": {"capcut_y": -0.4167, "concat_offsetY": 0.2083, "altura_na_tela": 0.708}
+    },
+    "conferencia": "Revisar o texto inteiro e os nomes próprios; cruzar com uma segunda transcrição (Whisper medium x large-v3-turbo)."
+  },
+  "transicoes": [
+    {"capcut": "Varredura leve", "duracao": 0.467, "concat": "concat.light-leak-transition", "uso": "na virada de bloco do roteiro, sempre com um whoosh começando ~0,27 s antes do corte"}
+  ],
+  "zoom": {
+    "faixa": [1.1, 1.4],
+    "padrao": "zoom base de 110%; frases de ênfase de 120% a 140%; troca de zoom só no corte",
+    "push_in": "no primeiro plano depois do B-roll: keyframes 100% -> 115% (em ~0,87 s) -> 125% no fim do trecho, deslizando 3,4% para o lado",
+    "posicao": "centralizado; em 140% desce ~3%, em 110% sobre cartão de imagem sobe ~4,7%"
+  },
+  "broll_abertura": {
+    "estrutura": "B-roll em tela cheia (escala 115%, sem som) com a pessoa recortada (fundo removido) a 85%, descida 10,4% da altura",
+    "concat": {"broll_scale": 1.15, "broll_offsetY": -0.039, "pessoa_scale": 0.85, "pessoa_offsetY": 0.104, "cutout": {"mode": "auto", "subject": "person"}}
+  },
+  "cartao_imagem": {
+    "mascara": {"largura": 0.898, "altura": 0.691, "centroY": 0.092, "cantos": 0.23},
+    "escala": 0.896, "concat_offsetY": 0.1315,
+    "animacao": {"entrada": "mini zoom 92% -> 100% em 0,5 s (ease out)", "saida": "fade-out 0,5 s"},
+    "sfx_entrada": "clique-mouse ~0,1 s antes",
+    "ferramenta": "~/Developer/Concat/tools/cartao_mascara.py"
+  },
+  "cor": {
+    "ajuste_1": {"capcut": {"saturacao": 0.04, "nitidez": 0.2023}, "concat": {"id": "concat.adjust", "params": {"saturation": 4, "sharpen": 20.23}}},
+    "ajuste_2": {"capcut": {"contraste": -0.04, "realces": -0.068, "lut": "JR2SHOOT LUTs-6 a 15,5%"}, "concat": [{"id": "concat.adjust", "params": {"contrast": -4, "highlights": -6.83}}, {"id": "user.jr2shoot-luts-6", "params": {"intensity": 15.55}}]},
+    "hsl_capcut": {"tipo_cor": 9, "matiz": -5, "saturacao": 7, "concat": "sem equivalente"},
+    "retoque_rosto_capcut": {"remover_linhas_do_sorriso": 0.99, "olheiras": 0.28, "concat": "sem equivalente"}
+  },
+  "audio": {
+    "musica": {"arquivo": "musica/lofi-chill-stylish-relaxing.mp3", "volume_linear": 0.139, "db": -17.1, "fade_in": 1.73, "fade_out": 2.40},
+    "sfx": [
+      {"arquivo": "sfx/autofoco-camera-sony.mp3", "volume": 1.0, "uso": "abertura (t=0) e entrada de foto/novo plano no B-roll", "trecho": [0.0, 0.53]},
+      {"arquivo": "sfx/obturador-camera.mp3", "volume": 1.0, "uso": "troca de foto/plano no B-roll", "trecho": [1.233, 1.833]},
+      {"arquivo": "sfx/whoosh-simples.mp3", "volume": 0.541, "db": -5.3, "uso": "antes de troca de B-roll e na transição de luz", "trecho": [0.0, 1.7]},
+      {"arquivo": "sfx/clique-mouse.mp3", "volume": 1.0, "uso": "entrada de cartão de imagem", "trecho": [0.0, 0.367]}
+    ],
+    "quantidade": "7 efeitos em 42 s: moderado, só em pontos de entrada/troca"
+  },
+  "licenca": "SFX e música vieram da biblioteca do CapCut; a licença deles cobre o uso dentro do CapCut."
+}
