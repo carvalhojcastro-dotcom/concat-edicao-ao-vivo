@@ -1,9 +1,9 @@
 import sys, json, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import plataforma  # mlx-whisper no Mac, faster-whisper no Windows
 modo, wav, out = sys.argv[1], sys.argv[2], sys.argv[3]
 if modo == "turbo":
-    import mlx_whisper
-    r = mlx_whisper.transcribe(wav, path_or_hf_repo="mlx-community/whisper-large-v3-turbo", language="pt",
-                               word_timestamps=True, condition_on_previous_text=False)
+    r = plataforma.transcrever(wav, language="pt")
     json.dump(r, open(out, "w"), ensure_ascii=False)
 else:
     from faster_whisper import WhisperModel

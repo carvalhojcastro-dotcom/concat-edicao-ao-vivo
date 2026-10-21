@@ -13,7 +13,10 @@ regras de trabalho na seção "Como trabalhar" de lá. Este arquivo diz **como**
 Cortes de podcast/entrevista seguem outro processo: `tools/cortes_podcast/LEIA-ME.md`.
 
 Variáveis (raiz do repositório = `$R`):
-- `PY=$R/tools/.venv/bin/python`
+- `PY=$R/tools/.venv/bin/python` (Mac) ou `PY=$R/tools/.venv/Scripts/python.exe` (Windows). Use `$PY` em
+  todos os comandos; no Windows o `python3` é um atalho da Microsoft Store. O Claude Code no Windows roda
+  os comandos no Git Bash, então a sintaxe abaixo é a mesma; `tools/plataforma.py` cuida das diferenças
+  (transcrição, fontes Arimo/Archivo, codificador). Ver `INSTALAR-WINDOWS.md`.
 - Pasta Concat = a pasta-mãe do repositório (`$(dirname $R)`, em geral `~/Desktop/Concat`)
 - Projeto: `<pasta Concat>/editados/<nome>`
 - Trabalho: uma pasta temporária sua
@@ -58,7 +61,7 @@ $PY tools/reel.py cortes "$W" "38.60-58.80,117.16-158.92,193.40-209.58"
 Sem nitidez, cor ou LUT automáticas (pedido de 2026-10-19): só aplique se o usuário pedir.
 ```bash
 $PY tools/reel.py aplicar "$P" "$W"                  # cortes + 1.05x + grade de quadros
-python3 tools/legendas_simples.py "$P" "$W/words.json" T4   # 92%, offsetY 0.17, contorno + sombra
+$PY tools/legendas_simples.py "$P" "$W/words.json" T4   # 92%, offsetY 0.17, contorno + sombra
 $PY tools/reel.py listar "$P"                        # índices e tempos para os planos
 ```
 
@@ -104,7 +107,7 @@ que começa a frase, escala]`.
 - Use de 15 a 18 trocas por minuto.
 ```bash
 cp "$P/concat.json" "$W/ref.json"
-python3 tools/zoom_cortes.py "$P" "$W/ref.json" "$W/zoom.json"
+$PY tools/zoom_cortes.py "$P" "$W/ref.json" "$W/zoom.json"
 $PY tools/centralizar_zoom.py "$P"
 ```
 Se algum trecho sair "limitado pela folga", suba a escala dele (ex.: 1.45) com `setClipTransform`
@@ -130,12 +133,12 @@ $PY tools/broll_higgsfield.py "$W/broll.json" "$P/broll" <cena1>     # 1 de test
   quadros divididos, mova para `$P/broll/descartadas/`, reescreva o prompt e gere de novo.
 - Depois gere as outras e:
 ```bash
-python3 tools/broll_imagens.py "$P" "$W/broll.json" "$P/broll"
-python3 tools/broll_animar.py "$P"
+$PY tools/broll_imagens.py "$P" "$W/broll.json" "$P/broll"
+$PY tools/broll_animar.py "$P"
 ```
 
 ## 7. Revisão e entrega
-- **Quadros de revisão:** `python3 tools/quadros.py "$P" <saida.jpg> "<tempos>"` (usa
+- **Quadros de revisão:** `$PY tools/quadros.py "$P" <saida.jpg> "<tempos>"` (usa
   `render_projeto.py`, que renderiza sem deixar cópia de projeto nem card repetido nos recentes do
   Concat). Use o fim de cada bloco dinâmico e o meio de cada B-roll e de cada zoom. **Não crie cópias
   de projeto** para revisar, testar cor ou exportar.
@@ -148,7 +151,7 @@ python3 tools/broll_animar.py "$P"
 - **Feche na API** (`$PY tools/reel.py fechar "$P"`), senão o projeto não abre na janela do Concat.
 - **Exportar só se pedirem:**
 ```bash
-python3 tools/exportar.py "$P" "<pasta Concat>/exportados/<nome>.mp4"   # 4K, fps do projeto, SDR
+$PY tools/exportar.py "$P" "<pasta Concat>/exportados/<nome>.mp4"   # 4K, fps do projeto, SDR
 ```
   Com o projeto aberto na janela, use `tools/exportar_seguro.py` (mesmos argumentos).
   **Confira o MP4:** `ffprobe` (2160x3840, 30 fps, bt709, com áudio) e 3 ou 4 quadros dele.

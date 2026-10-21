@@ -1,0 +1,65 @@
+# Testa a instalação do Windows do jeito que uma pessoa faria: num Windows limpo do GitHub, roda o
+# tools/setup.ps1 (programas, venv, fontes, modelo do Whisper, Concat da Release, API ligada), abre o
+# Concat e roda o tools/testar_instalacao.py, que renderiza uma legenda dinâmica pelo Concat.
+# Disparado à mão (Actions > Testar instalação no Windows > Run workflow). O quadro e o log ficam nos
+# artefatos da execução.
+name: Testar instalação no Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}   # o setup baixa o Concat da Release com o gh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup.ps1
+        shell: powershell
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools\setup.ps1 *>&1 | Tee-Object -FilePath setup.log
+          if ($LASTEXITCODE -ne 0) { throw "setup.ps1 saiu com $LASTEXITCODE" }
+
+      - name: Concat aberto e API na porta 7420
+        shell: powershell
+        run: |
+          $exe = "$env:LOCALAPPDATA\Programs\Concat\concat.exe"
+          if (-not (Test-Path $exe)) { $exe = "$env:ProgramFiles\Concat\concat.exe" }
+          if (-not (Get-Process concat -ErrorAction SilentlyContinue)) { Start-Process -FilePath $exe }
+          for ($i = 0; $i -lt 60; $i++) {
+            if ((Test-NetConnection 127.0.0.1 -Port 7420 -WarningAction SilentlyContinue).TcpTestSucceeded) { Write-Host "API ok"; exit 0 }
+            Start-Sleep -Seconds 2
+          }
+          Get-ChildItem "$env:LOCALAPPDATA\app.concat.editor\logs" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1 | Get-Content -Tail 40
+          throw "a API do Concat não abriu na porta 7420"
+
+      - name: testar_instalacao.py
+        shell: powershell
+        run: |
+          tools\.venv\Scripts\python.exe tools\testar_instalacao.py --quadro teste_instalacao_windows.png *>&1 | Tee-Object -FilePath teste.log
+          if ($LASTEXITCODE -ne 0) { throw "testar_instalacao.py falhou" }
+
+      - name: Logs do Concat
+        if: always()
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force logs | Out-Null
+          Copy-Item "$env:LOCALAPPDATA\app.concat.editor\logs\*" logs -ErrorAction SilentlyContinue
+          Copy-Item "$env:APPDATA\app.concat.editor\logs\*" logs -ErrorAction SilentlyContinue
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: teste-instalacao-windows
+          path: |
+            setup.log
+            teste.log
+            teste_instalacao_windows.png
+            logs/
+          if-no-files-found: ignore

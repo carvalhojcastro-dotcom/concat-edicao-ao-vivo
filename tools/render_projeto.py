@@ -13,8 +13,9 @@ import os
 import shutil
 
 from concat_api import Concat
+import plataforma
 
-RECENTES = os.path.expanduser("~/Library/Application Support/app.concat.editor/recents.json")
+RECENTES = plataforma.recentes()
 TEMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dist", "verificacao", "_temp_render")
 
 

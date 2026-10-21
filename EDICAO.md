@@ -153,21 +153,27 @@ P="$(dirname "$PWD")/editados/<nome>"    # pasta do projeto (pasta Concat = mãe
 
 # 1. criar o projeto 2160x3840 a 30 fps, importar o bruto e pô-lo em T1 (project.create, media.import, addClip)
 # 2. transcrever (mlx-whisper large-v3-turbo, tempo por palavra) -> words.json e cortes.json
-python3 tools/cortar_ao_vivo.py "$P" cortes.json --pausa 0
+$PY tools/cortar_ao_vivo.py "$P" cortes.json --pausa 0
 #    1.05x + empacotar (setClipSpeed + moveClips), depois:
-python3 tools/alinhar_quadros.py "$P"                       # depois: project.save
-python3 tools/legendas_simples.py "$P" words.json T4        # 92%, offsetY 0.17, contorno fino
+$PY tools/alinhar_quadros.py "$P"                       # depois: project.save
+$PY tools/legendas_simples.py "$P" words.json T4        # 92%, offsetY 0.17, contorno fino
 #    (sem nitidez nem cor automáticas; só se pedirem: addLayerClip concat.adjust em T3)
 $PY tools/legendas_dinamicas.py "$P" plano_dinamicas.json   # 92%, começa na altura da legenda simples
-python3 tools/zoom_cortes.py "$P" ref_legendas.json plano_zoom.json
+$PY tools/zoom_cortes.py "$P" ref_legendas.json plano_zoom.json
 $PY tools/centralizar_zoom.py "$P"
 $PY tools/broll_higgsfield.py plano_broll.json "$P/broll" <cena-teste>   # depois as outras
-python3 tools/broll_imagens.py "$P" plano_broll.json "$P/broll"
-python3 tools/broll_animar.py "$P"
-python3 tools/exportar.py "$P" "$(dirname "$PWD")/exportados/<nome>.mp4"   # só se pedirem; 4K, SDR
+$PY tools/broll_imagens.py "$P" plano_broll.json "$P/broll"
+$PY tools/broll_animar.py "$P"
+$PY tools/exportar.py "$P" "$(dirname "$PWD")/exportados/<nome>.mp4"   # só se pedirem; 4K, SDR
 #    por fim: project.close (save)
 ```
 Os formatos dos planos estão em `tools/planos_exemplo/`.
+
+## Windows
+O processo e o estilo são os mesmos; `tools/plataforma.py` troca só o que é do Mac (transcrição em
+faster-whisper, Arimo no lugar da Helvetica, Archivo Condensed Black no lugar da Helvetica Neue
+Condensed Black, codificador da placa). Python: `tools/.venv/Scripts/python.exe`. Instalação e tabela
+completa em `INSTALAR-WINDOWS.md`.
 
 ## Requisitos
 Instalação num Mac novo: `INSTALAR.md` (o `tools/setup.sh` faz quase tudo).

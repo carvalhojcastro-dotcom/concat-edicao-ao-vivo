@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# scripts do Windows: CRLF e o BOM do UTF-8 (o PowerShell 5 lê sem BOM como ANSI)
+*.ps1 text eol=crlf

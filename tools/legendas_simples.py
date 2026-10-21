@@ -11,10 +11,11 @@ até o fim dela, se vier uma pausa > 0,35 s); tudo na grade de quadros.
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from concat_api import Concat, timeline, fps_de
+import plataforma  # Helvetica Neue Medium no Mac, Arimo Medium no Windows
 
 FPS = fps_de(sys.argv[1])  # o fps do projeto (24 ou 30)
 ESTILO = {"align": "center", "background": "", "backgroundPaddingX": 0.0315, "backgroundPaddingY": 0.018,
-          "backgroundRadius": 0.0135, "color": "#ffffff", "fontFamily": '"Helvetica Neue Medium"', "fontSize": 0.04302,
+          "backgroundRadius": 0.0135, "color": "#ffffff", "fontFamily": plataforma.legenda_simples()[0], "fontSize": 0.04302,
           "fontWeight": 500.0, "italic": False, "lineHeight": 1.2, "maxHeight": 0.0, "maxWidth": 0.0,
           "opacity": 1.0, "shadow": True, "strokeColor": "#000000", "strokeWidth": 0.0006, "tracking": -0.00224}
 
@@ -33,9 +34,9 @@ try:
     api.call("project.get", path=path)   # aberto na janela? então é ela que responde
 except RuntimeError:
     api.call("project.open", path=path)
-# Semibold: Helvetica Neue Medium (fonts/HelveticaNeue-Medium.ttf, extraída do sistema pelo setup)
-api.edit({"op": "addFont", "family": "Helvetica Neue Medium",
-          "path": os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts", "HelveticaNeue-Medium.ttf"))})
+# Semibold: Helvetica Neue Medium extraída pelo setup (Mac) ou Arimo Medium (Windows)
+for familia, arquivo in plataforma.registrar_helvetica():
+    api.edit({"op": "addFont", "family": familia, "path": os.path.join(plataforma.FONTES, arquivo)})
 tl = timeline(api.view())
 clips = sorted([c for c in tl["clips"] if c["kind"] == "video"], key=lambda c: c["start"])
 segs = [(c["sourceStart"], c["sourceStart"] + c["duration"] * c["speed"], c["start"], c["speed"]) for c in clips]

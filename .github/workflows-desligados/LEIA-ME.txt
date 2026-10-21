@@ -1,0 +1,2 @@
+Workflows do projeto original, desligados nesta cópia (rodariam a cada push e gastariam minutos de
+macOS/Linux). O que fica ligado: workflows/build-windows.yml (à mão) e build-app.yml (só é chamado).

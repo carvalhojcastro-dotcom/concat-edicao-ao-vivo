@@ -72,6 +72,10 @@ $TRABALHO/c<EP>/destaques.txt    frases de destaque por corte (formato do edit-d
 - **Nomes do episódio:** acrescente na lista `PROPRIOS` do `plano_auto.py` (ex.: Simone, Farah, Rio, Janeiro, São, Paulo, Minas, Gerais).
 - Ep. 9 levou ~25 min do bruto aos 8 MP4: transcrição turbo 6 min, lote de montagem 8 min, legendas + export no Concat 12 min.
 
+## Windows
+Os `.sh` deste processo (lote, finalizar, final_lote, volume) são do Mac (zsh). No Windows, rode os
+passos Python um a um; transcrição, codificador e lista de recentes já passam por `tools/plataforma.py`.
+
 ## Escopo
 Quando o usuário aponta um corte, mexa **só nele** ("só mude o vídeo que eu mencionei"); não refaça os
 outros por iniciativa própria.

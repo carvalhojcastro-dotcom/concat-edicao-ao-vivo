@@ -5,6 +5,8 @@ Cada peça vira um crop fixo 9:16 em quem fala (altura cheia; zoom z>1 aperta em
 O áudio sai dos segmentos (mesmas bordas de quadro), sem ajuste.
 """
 import json, os, subprocess, sys, tempfile
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import plataforma  # noqa: E402
 
 FPS = 30
 SW, SH = 1920, 1080
@@ -41,7 +43,7 @@ def main():
             vf = (f"split[a][b];[a]scale={OW}:{OH}:force_original_aspect_ratio=increase,crop={OW}:{OH},boxblur=24:2,eq=brightness=-0.08[bg];"
                   f"[b]scale={OW}:{fh}:flags=lanczos[fg];[bg][fg]overlay=0:{int((OH - fh) * 0.36)},setsar=1,format=yuv420p")
         enc = (["-c:v", "libx264", "-preset", "ultrafast", "-crf", "23"] if prev else
-               ["-c:v", "h264_videotoolbox", "-b:v", "30M", "-maxrate", "40M", "-profile:v", "high"])
+               plataforma.h264("30M"))
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-nostdin", "-ss", f"{p['s']:.4f}", "-i", cfg["src"],
                         "-frames:v", str(nq), "-an", "-vf", vf, "-r", str(FPS), *enc,
                         "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",

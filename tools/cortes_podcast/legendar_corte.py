@@ -10,8 +10,9 @@ TOOLS = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 sys.path.insert(0, TOOLS)
 from concat_api import Concat, timeline  # noqa: E402
 from render_projeto import tirar_dos_recentes  # noqa: E402
+import plataforma  # noqa: E402
 
-PY = os.path.join(TOOLS, ".venv/bin/python")
+PY = plataforma.python_venv()
 BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dist", "verificacao", "_cortes")
 
 
@@ -22,7 +23,7 @@ def main():
     if os.path.exists(proj):
         shutil.rmtree(proj)
     os.makedirs(BASE, exist_ok=True)
-    rec = os.path.expanduser("~/Library/Application Support/app.concat.editor/recents.json")
+    rec = plataforma.recentes()
     rec_antes = open(rec).read() if os.path.exists(rec) else None
     api = Concat(proj); api.sock.settimeout(3600)
     try:

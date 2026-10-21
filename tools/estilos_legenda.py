@@ -41,6 +41,8 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from concat_api import Concat, timeline  # noqa: E402
+import plataforma  # noqa: E402
+_SIMPLES = plataforma.legenda_simples()
 
 FONTES = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts"))
 
@@ -68,7 +70,7 @@ FACES = {
     "playfair-xbold-it": ('"Playfair Display"', 800, True, "PlayfairDisplay-ExtraBoldItalic.ttf"),
     "mont-black": ("Montserrat", 900, False, "Montserrat-Black.ttf"),
     "mont-bold": ("Montserrat", 700, False, "Montserrat-Bold.otf"),
-    "helv-medium": ('"Helvetica Neue Medium"', 500, False, "HelveticaNeue-Medium.ttf"),
+    "helv-medium": (_SIMPLES[0], 500, False, os.path.basename(_SIMPLES[2])),  # Helvetica Neue Medium (Mac) / Arimo (Windows)
 }
 
 BRANCO, AMARELO = "#ffffff", "#f4c430"

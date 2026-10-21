@@ -23,6 +23,8 @@ import subprocess
 import sys
 
 import cv2
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import plataforma  # noqa: E402  (HEVC no codificador da máquina)
 import numpy as np
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -215,7 +217,7 @@ def processar(video, saida, v):
                            stdout=subprocess.PIPE)
     gravar = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24",
                                "-s", f"{w}x{h}", "-r", taxa, "-i", "-", "-i", video, "-map", "0:v", "-map", "1:a",
-                               "-c:v", "hevc_videotoolbox", "-b:v", "80M", "-tag:v", "hvc1", "-pix_fmt", "yuv420p",
+                               *plataforma.hevc("80M"), "-pix_fmt", "yuv420p",
                                "-c:a", "copy", "-shortest", saida], stdin=subprocess.PIPE)
     rosto, tam, n, sem = Rosto(fps), w * h * 3, 0, 0
     while True:

@@ -1,5 +1,5 @@
 > **Fork para edição de reels** (privado): API ao vivo na janela + ferramentas e skill de edição.
-> Instalar num Mac novo: [INSTALAR.md](INSTALAR.md) · estilo: [EDICAO.md](EDICAO.md) · mudanças no código: [FORK.md](FORK.md).
+> Instalar: [Mac](INSTALAR.md) · [Windows](INSTALAR-WINDOWS.md) (ou cole o link deste repositório no Claude Code e diga "instala isso") · estilo: [EDICAO.md](EDICAO.md) · mudanças no código: [FORK.md](FORK.md).
 
 <div align="center">
 <table width="100%">

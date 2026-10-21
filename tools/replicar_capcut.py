@@ -10,6 +10,7 @@ import sys
 import time
 
 sys.path.insert(0, __import__("os").path.dirname(__file__))
+import plataforma  # noqa: E402
 from concat_api import Concat, timeline
 
 FPS = 30
@@ -214,7 +215,7 @@ def main():
         k = size / cal["capcut_size"]
         cmds.append({"op": "addTextClip", "trackId": T_TEXT, "start": t0, "duration": t1 - t0,
                      "offsetY": -s["clip"]["transform"]["y"] / 2,
-                     "style": {"content": content["text"], "fontFamily": "Helvetica", "fontSize": cal["font_size"] * k,
+                     "style": {"content": content["text"], "fontFamily": plataforma.familia_helvetica(), "fontSize": cal["font_size"] * k,
                                "fontWeight": 400, "color": "#ffffff", "tracking": cal["tracking"] * k,
                                "strokeWidth": cal["stroke"], "strokeColor": "#000000", "shadow": True}})
     for i in range(0, len(cmds), 25):

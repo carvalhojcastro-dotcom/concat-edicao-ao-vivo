@@ -97,26 +97,12 @@ fi
 echo "== API do Concat (porta 7420) e .concat-token"
 # Liga o servidor nas preferências do Concat e grava o mesmo token em .concat-token. Com o Concat
 # aberto ele regravaria as preferências ao fechar, então isso só é feito com o app fechado.
-if pgrep -f "Concat.app/Contents/MacOS" >/dev/null; then
-  [ -f .concat-token ] || echo "  feche o Concat e rode o setup de novo para ligar a API"
+if tools/.venv/bin/python tools/ligar_api.py --checar; then
+  echo "  já ligada"
+elif pgrep -f "Concat.app/Contents/MacOS" >/dev/null; then
+  echo "  feche o Concat e rode o setup de novo para ligar a API"
 else
-  tools/.venv/bin/python - <<'PY'
-import json, os, secrets
-pasta = os.path.expanduser("~/Library/Application Support/app.concat.editor")
-os.makedirs(pasta, exist_ok=True)
-arq = os.path.join(pasta, "settings.json")
-prefs = json.load(open(arq)) if os.path.exists(arq) else {}
-srv = prefs.get("server") or {}
-if not srv.get("token"):
-    srv["token"] = secrets.token_hex(24)
-srv["enabled"] = True
-srv.setdefault("listen", "127.0.0.1:7420")
-prefs["server"] = srv
-json.dump(prefs, open(arq, "w"), indent=2)
-fd = os.open(".concat-token", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-os.write(fd, srv["token"].encode()); os.close(fd)
-print("  API ligada; token em .concat-token (fora do Git)")
-PY
+  tools/.venv/bin/python tools/ligar_api.py
 fi
 
 cat <<'FIM'

@@ -79,9 +79,8 @@ def transcrever(video, trabalho):
     os.makedirs(trabalho, exist_ok=True)
     wav = os.path.join(trabalho, "audio.wav")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", video, "-vn", "-ac", "1", "-ar", "16000", wav], check=True)
-    import mlx_whisper
-    r = mlx_whisper.transcribe(wav, path_or_hf_repo="mlx-community/whisper-large-v3-turbo", language="pt",
-                               word_timestamps=True, condition_on_previous_text=False)
+    import plataforma  # mlx-whisper no Mac, faster-whisper no Windows (mesmo modelo, mesmo formato)
+    r = plataforma.transcrever(wav, language="pt")
     json.dump(r, open(os.path.join(trabalho, "transcript.json"), "w"), ensure_ascii=False)
     rms = _rms(wav)
     np.save(os.path.join(trabalho, "rms.npy"), rms)

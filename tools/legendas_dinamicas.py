@@ -43,37 +43,31 @@ from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from concat_api import Concat, timeline, fps_de  # noqa: E402
+import plataforma  # noqa: E402  (Helvetica no Mac, Arimo/Archivo no Windows)
 
 W, H = 2160, 3840
 FPS = fps_de(sys.argv[1])  # o fps do projeto (24 ou 30)
 FONTES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts")
-HELV = "/System/Library/Fonts/Helvetica.ttc"  # "Helvetica Neue" o Concat não acha; "Helvetica" sim
 
 # Cada face: família no Concat, peso, itálico, arquivo e índice (para medir).
 FACES = {
-    # Semibold (pedido do usuário): Helvetica Neue Medium extraída do sistema para fonts/ - o
-    # Concat não lê o HelveticaNeue.ttc e o nome com espaço vai entre aspas (sintaxe CSS).
-    "helv": ('"Helvetica Neue Medium"', 500, False, os.path.join(FONTES, "HelveticaNeue-Medium.ttf"), 0),
-    "helv-regular": ("Helvetica", 400, False, HELV, 0),  # legendas simples antigas
-    "helv-bold": ("Helvetica", 700, False, HELV, 1),
-    "helv-oblique": ("Helvetica", 400, True, HELV, 2),
-    "helv-bold-oblique": ("Helvetica", 700, True, HELV, 3),
-    "helv-light-oblique": ("Helvetica", 300, True, HELV, 5),
+    # Semibold (pedido do usuário) e Condensed Black (print "helvetica"): no Mac, faces da Helvetica
+    # Neue extraídas do sistema para fonts/ (o Concat não lê .ttc; nome com espaço vai entre aspas,
+    # sintaxe CSS); no Windows, Arimo e Archivo Condensed Black (OFL). Ver plataforma.py.
+    **plataforma.faces_helvetica(),
     # Serifada do destaque: DM Serif Display (OFL, vai no repositório), no lugar da Scholar desde 2026-10-21
     # (a Scholar só tinha licença dentro do CapCut).
     "serif": ("DM Serif Display", 400, False, os.path.join(FONTES, "DMSerifDisplay-Regular.ttf"), 0),
     "serif-italic": ("DM Serif Display", 400, True, os.path.join(FONTES, "DMSerifDisplay-Italic.ttf"), 0),
     "montserrat-bold": ("Montserrat", 700, False, os.path.join(FONTES, "Montserrat-Bold.otf"), 0),
     # Pesos dos prints de fonte em referencias/Legendas dinamicas (pedido de 2026-10-20):
-    "helv-cond-black": ('"Helvetica Neue Condensed Black"', 900, False, os.path.join(FONTES, "HelveticaNeue-CondensedBlack.ttf"), 0),
     "coolvetica": ("Coolvetica", 400, False, os.path.join(FONTES, "Coolvetica-Rg.otf"), 0),
     "montserrat-light": ("Montserrat", 300, False, os.path.join(FONTES, "Montserrat-Light.ttf"), 0),
 }
 # Fontes que o projeto precisa registrar (as do sistema o Concat já acha).
 REGISTRAR = [("DM Serif Display", "DMSerifDisplay-Regular.ttf"), ("DM Serif Display", "DMSerifDisplay-Italic.ttf"),
-             ("Montserrat", "Montserrat-Bold.otf"), ("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf"),
-             ("Helvetica Neue Condensed Black", "HelveticaNeue-CondensedBlack.ttf"),
-             ("Coolvetica", "Coolvetica-Rg.otf"), ("Montserrat", "Montserrat-Light.ttf")]
+             ("Montserrat", "Montserrat-Bold.otf"), ("Coolvetica", "Coolvetica-Rg.otf"),
+             ("Montserrat", "Montserrat-Light.ttf")] + plataforma.registrar_helvetica()
 
 AMARELO = "#f4c430"
 BRANCO = "#ffffff"
