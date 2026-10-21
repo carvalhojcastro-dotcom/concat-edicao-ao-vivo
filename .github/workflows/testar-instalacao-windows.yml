@@ -18,7 +18,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}   # o setup baixa o Concat da Release com o gh
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: setup.ps1
         shell: powershell
@@ -53,7 +53,7 @@ jobs:
           Copy-Item "$env:LOCALAPPDATA\app.concat.editor\logs\*" logs -ErrorAction SilentlyContinue
           Copy-Item "$env:APPDATA\app.concat.editor\logs\*" logs -ErrorAction SilentlyContinue
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: teste-instalacao-windows
