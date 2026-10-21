@@ -9,7 +9,7 @@ path, out = sys.argv[1], os.path.abspath(sys.argv[2])
 w, h = (int(sys.argv[3]), int(sys.argv[4])) if len(sys.argv) > 4 else (2160, 3840)  # sempre 4K (pedido do usuário)
 api = Concat(path); api.sock.settimeout(3600)
 api.call("project.open", path=path)
-job = api.call("export.run", path=path, output=out, width=w, height=h, crf=18, preset="medium")
+job = api.call("export.run", path=path, output=out, width=w, height=h, crf=18, preset="medium", hdr=False)  # SDR como a prévia (vídeo de iPhone é HLG; HDR deixa legenda e B-roll cinza)
 print("exportando", job, flush=True)
 ultimo = -1
 while True:

@@ -11,9 +11,9 @@ entrega o MP4 pronto, **sem pedir confirmação no meio**. As regras de estilo e
 
 Variáveis (raiz do repositório = `$R`):
 - `PY=$R/tools/.venv/bin/python`
-- Projeto: `$HOME/Desktop/Concat/<nome>`
+- Projeto: `$HOME/Desktop/Concat/editados/<nome>`
 - Trabalho: uma pasta temporária sua
-- Saída: `$HOME/Desktop/<nome>.mp4`
+- Saída: `$HOME/Desktop/Concat/exportados/<nome>.mp4`
 - `<nome>` é o que o usuário der; senão, o nome do arquivo sem extensão.
 
 ## 0. Pré-checagem (rápida, sem perguntar se estiver tudo ok)
@@ -49,12 +49,22 @@ $PY tools/reel.py cortes "$W" "38.60-58.80,117.16-158.92,193.40-209.58"
 - Corrija erros de transcrição editando `words.json` (ex.: "chaqueca" → "enxaqueca").
 
 ## 3. Parte 1
+Sem nitidez, cor ou LUT automáticas (pedido de 2026-10-19): só aplique se o usuário pedir.
 ```bash
 $PY tools/reel.py aplicar "$P" "$W"                  # cortes + 1.05x + grade de quadros
 python3 tools/legendas_simples.py "$P" "$W/words.json" T4   # 92%, offsetY 0.17, contorno + sombra
-$PY tools/reel.py nitidez "$P"
 $PY tools/reel.py listar "$P"                        # índices e tempos para os planos
 ```
+
+### Retoque de rosto (sempre em vídeo de mulher)
+Se quem fala é mulher, retoque o rosto. Os padrões vêm da predefinição do CapCut do usuário. A
+ferramenta processa o bruto em 4K (leva alguns minutos, então rode em segundo plano) e troca a mídia
+dos clipes sem mexer em cortes, legendas e zoom:
+```bash
+$PY tools/retoque.py "<video>" "$W/ret" --quadros "20 45"      # antes/depois em JPG: confira
+$PY tools/retoque.py "<video>" "$P/midia/<nome>_retoque.mov" --projeto "$P"
+```
+Em homem, não aplique sem pedido.
 
 ## 4. Legendas Dinâmicas (julgamento)
 Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e rode
@@ -118,7 +128,7 @@ python3 tools/broll_animar.py "$P"
   - zoom com o rosto no centro;
   - o vídeo começa no apresentador.
 ```bash
-python3 tools/exportar.py "$P" "$HOME/Desktop/<nome>.mp4"       # 4K, fps do projeto (30)
+python3 tools/exportar.py "$P" "$HOME/Desktop/Concat/exportados/<nome>.mp4"       # 4K, fps do projeto (30)
 $PY tools/reel.py fechar "$P"
 ```
 - **Confira o MP4:** `ffprobe` (2160x3840, 30 fps, com áudio) e 3 ou 4 quadros extraídos dele.

@@ -16,8 +16,11 @@ command -v python3 >/dev/null || brew install python
 echo "== Ambiente Python das ferramentas (tools/.venv)"
 [ -d tools/.venv ] || python3 -m venv tools/.venv
 tools/.venv/bin/pip install -q --upgrade pip
-tools/.venv/bin/pip install -q mlx-whisper higgsfield-client python-dotenv pillow fonttools \
-  "opencv-python-headless<5" "numpy<2.1"
+tools/.venv/bin/pip install -q mlx-whisper higgsfield-client python-dotenv pillow fonttools mediapipe \
+  "numpy<2.1"
+# o mediapipe puxa o opencv 5, que tirou o detector de rosto do zoom: fica o contrib 4.x
+tools/.venv/bin/pip uninstall -y -q opencv-python-headless 2>/dev/null || true
+tools/.venv/bin/pip install -q --force-reinstall --no-deps "opencv-contrib-python<5"
 
 echo "== Fontes das Legendas Dinâmicas (fonts/)"
 mkdir -p fonts

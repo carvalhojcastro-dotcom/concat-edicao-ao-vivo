@@ -13,15 +13,16 @@ Uso:
   legendas_dinamicas.py <pasta do projeto> <plano.json>
 
 plano.json: [{"estilo": "serifa", "linhas": [[0, 1], [2], [3]], "chave": [2]}, ...]
+  "fonte_chave": "bold" na frase troca o Scholar Itálico da chave por sem serifa em negrito (serifa/elegante).
   ou {"destaque": "#2563c9", "frases": [...]} para usar a cor da paleta do cliente
-  (padrão: amarelo; Dr. Rafael: azul #2563c9).
+  (padrão: branco, pedido de 2026-10-20; Dr. Rafael: azul #2563c9; amarelo #f4c430 só se pedirem).
   linhas: índices das legendas simples (na ordem da timeline), agrupados por linha;
   chave:  os índices que levam o destaque.
 Regra de leitura (do usuário): tudo que não é destaque sai em fonte sóbria, normal e reta
 (Helvetica / Montserrat), nunca fina nem cursiva; o Scholar (e as cursivas) só na palavra de
 DESTAQUE (a chave).
 Estilos (inspirados em prints de legendas de reels; descritos em EDICAO.md):
-  serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em Scholar Itálico amarelo, palavra final
+  serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em Scholar Itálico branco, palavra final
              maior alinhada à direita embaixo da chave.
   classico - "Estilo 5": palavras pequenas (Helvetica) espalhadas sobre uma linha grande
              em Helvetica Bold apertada.
@@ -37,7 +38,7 @@ import os
 import sys
 
 from fontTools.ttLib import TTFont
-from PIL import ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from concat_api import Concat, timeline, fps_de  # noqa: E402
@@ -65,8 +66,11 @@ REGISTRAR = [("Scholar", "Scholar-Regular.otf"), ("Scholar", "Scholar-Italic.otf
              ("Montserrat", "Montserrat-Bold.otf"), ("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf")]
 
 AMARELO = "#f4c430"
-DESTAQUE = AMARELO  # cor da chave no estilo serifa; o plano pode trocar pela do cliente
 BRANCO = "#ffffff"
+DESTAQUE = BRANCO  # cor da chave no estilo serifa (branco por padrão); o plano pode trocar pela do cliente
+FONTE_CHAVE = "serifa"  # destaque do serifa/elegante: "serifa" (Scholar Itálico) ou "bold" (sem serifa, negrito);
+                        # por frase com "fonte_chave" no plano (pedido de 2026-10-20: nem sempre Scholar)
+CHAVE_BOLD = "helv-bold"  # face da chave em bold; o tamanho cai por estilo, porque a Helvetica é mais larga que o Scholar
 LARGURA_MAX = 0.84 * W
 ENTRADA = 0.20           # segundos da entrada deslizando
 DESLIZE = 0.010          # quanto sobe na entrada, em fração da altura
@@ -77,6 +81,7 @@ SEM_CONTORNO = "--sem-contorno" in sys.argv  # só a sombra leve
 _opc = dict(a[2:].split("=", 1) for a in sys.argv[3:] if a.startswith("--") and "=" in a)
 ESCALA = float(_opc.get("escala", 0.92))   # padrão do usuário: 92% do tamanho
 CENTRO_Y = float(_opc.get("centro", 0.67)) * H  # padrão do usuário: abaixo do rosto (antes 0.60)
+APERTO = float(_opc.get("aperto", 0.30))  # vão entre linhas (base de cima → topo das minúsculas), em em da letra pequena
 
 _metricas = {}
 
@@ -137,13 +142,67 @@ def tinta(p):
     return -topo, max(pe, 0)
 
 
-def proxima_base(base, ant, prox, aperto):
-    """Linha base seguinte: a tinta da nova linha começa logo abaixo da tinta da anterior, com um
-    respiro de `aperto` (em em da menor) - as linhas nunca se tocam."""
-    desce = max(tinta(p)[1] for p in ant)
-    sobe = max(tinta(p)[0] for p in prox)
-    respiro = aperto * min(min(p["em"] for p in ant), min(p["em"] for p in prox))
-    return base + desce + sobe + respiro
+_xalt = {}
+
+
+def xalt(p):
+    """Altura das minúsculas (x-height) da palavra, em px."""
+    if p["face"] not in _xalt:
+        _, _, _, path, index = FACES[p["face"]]
+        os2 = TTFont(path, fontNumber=index)["OS/2"]
+        _xalt[p["face"]] = (getattr(os2, "sxHeight", 0) / TTFont(path, fontNumber=index)["head"].unitsPerEm) or 0.5
+    return _xalt[p["face"]] * p["em"]
+
+
+def proxima_base(base, ant, prox, aperto, folga=0.08, ref=None):
+    """Linha base seguinte, por espaçamento ótico (pedido de 2026-10-20: o vão era grande e mudava de
+    uma linha para outra). O vão vai da linha base de cima ao topo das minúsculas de baixo e é o
+    mesmo em todas as linhas (`aperto` em em de `ref`); hastes e perninhas (l, d, g, ç) entram nos
+    vãos, como no print. Só desce mais se a tinta de duas palavras sobrepostas na horizontal se
+    tocaria, deixando `folga`."""
+    ref = ref or min(min(p["em"] for p in ant), min(p["em"] for p in prox))
+    nova = base + max(xalt(p) for p in prox) + aperto * ref
+    for a in ant:
+        pa = perfil(a)
+        for b in prox:
+            pb = perfil(b)
+            # coluna a coluna: só conta onde a letra de cima está de fato sobre a de baixo
+            for x in range(int(max(a["x"], b["x"])), int(min(a["x"] + len(pa[1]), b["x"] + len(pb[0])))):
+                d, s = pa[1][x - int(a["x"])], pb[0][x - int(b["x"])]
+                if d is not None and s is not None:
+                    nova = max(nova, base + d + s + folga * ref)
+    return nova
+
+
+_perfis = {}
+
+
+def perfil(p):
+    """Tinta da palavra coluna a coluna: (quanto sobe acima da base, quanto desce abaixo) por coluna
+    de px, ou None onde não há tinta."""
+    chave = (p["face"], round(p["em"]), p["texto"])
+    if chave not in _perfis:
+        _, _, _, path, index = FACES[p["face"]]
+        f = ImageFont.truetype(path, size=max(1, round(p["em"])), index=index)
+        sobe = int(p["em"] * 1.5)
+        img = Image.new("L", (int(f.getlength(p["texto"])) + 4, sobe + int(p["em"])), 0)
+        ImageDraw.Draw(img).text((0, sobe), p["texto"], font=f, anchor="ls", fill=255)
+        larg, alt = img.size
+        px = img.load()
+        topo, pe = [], []
+        for x in range(larg):
+            ys = [y for y in range(alt) if px[x, y] > 40]
+            topo.append(sobe - ys[0] if ys else None)
+            pe.append(max(ys[-1] - sobe, 0) if ys else None)
+        _perfis[chave] = (topo, pe)
+    return _perfis[chave]
+
+
+def chave_em(texto, em, cor, fator_bold=0.92):
+    """A palavra de destaque: Scholar Itálico ou, com FONTE_CHAVE "bold", sem serifa em negrito."""
+    if FONTE_CHAVE == "bold":
+        return palavra(texto, CHAVE_BOLD, em * fator_bold, cor, trk=-0.04)
+    return palavra(texto, "scholar-italic", em, cor)
 
 
 # ── estilos: recebem as linhas como listas de (índice, é_chave) e devolvem palavras posicionadas ──
@@ -154,7 +213,7 @@ def serifa(linhas, t):
     for li, linha in enumerate(linhas):
         if any(c for _, c in linha):
             chave_li = li
-            rows.append([palavra(t[i], "scholar-italic", K, DESTAQUE) if c
+            rows.append([chave_em(t[i], K, DESTAQUE) if c
                          else palavra(t[i], "helv", N * 0.84, trk=-0.02) for i, c in linha])  # Scholar só no destaque
         elif chave_li is not None and len(linha) == 1:
             rows.append([palavra(t[i], "helv", F * 0.82, trk=-0.02) for i, _ in linha])  # palavra final maior, sóbria (Scholar só no destaque)
@@ -164,13 +223,14 @@ def serifa(linhas, t):
     degraus = [0.6, 0.0, 1.3, 0.3]  # escadinha, em em da linha normal
     base = 0.0
     for li, ps in enumerate(rows):
-        if li:
-            base = proxima_base(base, rows[li - 1], ps, 0.38)  # respiro visível: com sombra/contorno/itálico, menos que isso parece encostar
         x = degraus[li % len(degraus)] * N
         if chave_li is not None and li > chave_li:
             dir_chave = rows[chave_li][-1]["x"] + rows[chave_li][-1]["w"]
             x = dir_chave - larg_linha(ps) + 0.15 * N  # embaixo da chave, encostada à direita
-        linha_em(ps, x, base)
+        linha_em(ps, x, base)  # x primeiro: o espaçamento olha quais palavras ficam uma sobre a outra
+        if li:
+            base = proxima_base(base, rows[li - 1], ps, APERTO, ref=N * 0.84)
+            linha_em(ps, x, base)
     return [p for ps in rows for p in ps]
 
 
@@ -198,10 +258,12 @@ def classico(linhas, t):
 def elegante(linhas, t):
     S, K = 0.042 * H, 0.125 * H
     pequenas = [[palavra(t[i], "montserrat-bold", S, trk=-0.03) for i, _ in linha] for linha in linhas[:-1]]
-    grande = [palavra(t[i], "scholar-italic", K) if c else palavra(t[i], "montserrat-bold", S, trk=-0.03)
+    grande = [chave_em(t[i], K, BRANCO, fator_bold=0.66) if c else palavra(t[i], "montserrat-bold", S, trk=-0.03)
               for i, c in linhas[-1]]  # Scholar só no destaque
     wg = linha_em(grande, 0.0, 0.0)
-    base = -0.68 * K  # a palavra grande sobe até encostar na linha de cima
+    bold = any(p["face"] == CHAVE_BOLD for p in grande)
+    # a palavra grande sobe até encostar na linha de cima; em bold (reta, sem hastes altas) encosta pela maiúscula
+    base = -(max(cap(p) for p in grande) + APERTO * S) if bold else -0.68 * K
     for ps in reversed(pequenas):
         linha_em(ps, (wg - larg_linha(ps)) / 2, base)
         base -= max(cap(p) for p in ps) + 0.18 * S
@@ -219,11 +281,12 @@ def impacto(linhas, t):
         depois_da_chave = depois_da_chave or tem_chave
     base = 0.0
     for li, ps in enumerate(rows):
-        if li:
-            base = proxima_base(base, rows[li - 1], ps, 0.28)
         grande = any(p["face"] == "helv-bold-oblique" for p in ps)
         recuo = 0.0 if grande else (0.35 if li == 0 else 0.55) * S
         linha_em(ps, recuo, base)
+        if li:
+            base = proxima_base(base, rows[li - 1], ps, APERTO, ref=S * 0.92)
+            linha_em(ps, recuo, base)
     return [p for ps in rows for p in ps]
 
 
@@ -283,7 +346,7 @@ def keys_entrada(cid, dur, oy):
 
 
 def main():
-    global DESTAQUE
+    global DESTAQUE, FONTE_CHAVE
     path, plano = sys.argv[1], json.load(open(sys.argv[2]))
     if isinstance(plano, dict):
         DESTAQUE = plano.get("destaque", DESTAQUE)
@@ -304,6 +367,7 @@ def main():
         ultimo = idx[-1]
         fim = legendas[ultimo + 1]["start"] if ultimo + 1 < len(legendas) else legendas[ultimo]["start"] + legendas[ultimo]["duration"]
         fim = round(fim * FPS) / FPS
+        FONTE_CHAVE = bloco.get("fonte_chave", "serifa")
         palavras = montar(bloco["estilo"], bloco["linhas"], set(bloco["chave"]), textos)
         antes = {c["id"] for c in timeline(api.view())["clips"]}
         cmds = [{"op": "removeClips", "clipIds": [legendas[i]["id"] for i in idx], "ripple": False}]

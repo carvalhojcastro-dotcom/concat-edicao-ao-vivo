@@ -8,7 +8,8 @@ Rode com o python do venv: tools/.venv/bin/python tools/reel.py <comando> ...
                                          imprime as frases com tempo, para escolher as tomadas
   cortes <trabalho> <trechos>            trechos = "ini-fim,ini-fim" (início da 1ª palavra e fim da
                                          última, tempos do Whisper, da tomada boa de cada trecho).
-                                         Gera keep.json, words.json (legendas) e cortes.json
+                                         Gera keep.json, words.json (legendas) e cortes.json.
+                                         "ini-fim!" usa a borda exata (fim de frase falado baixinho)
   aplicar <projeto> <trabalho>           corta, 1.05x sem folgas, alinha à grade de quadros e salva
   nitidez <projeto>                      camada concat.adjust (sharpen 20.23) em T3
   listar <projeto>                       legendas com índice (para montar os planos)
@@ -110,9 +111,13 @@ def cortes(trabalho, trechos):
     sil = json.load(open(os.path.join(trabalho, "sil_rms.json")))
     rms = np.load(os.path.join(trabalho, "rms.npy"))
     dur = json.load(open(os.path.join(trabalho, "info.json")))["duracao"]
-    escolhas = [tuple(float(x) for x in t.split("-")) for t in trechos.split(",")]
+    # "ini-fim!" = borda exata (sem procurar a voz): para fim de frase falado baixinho, abaixo do limiar
+    escolhas = [(tuple(float(x) for x in t.rstrip("!").split("-")), t.endswith("!")) for t in trechos.split(",")]
     keep = []
-    for a, b in escolhas:
+    for (a, b), exato in escolhas:
+        if exato:
+            keep.append([round(a - FOLGA_BORDA, 3), round(b + FOLGA_BORDA, 3)])
+            continue
         # não invade a palavra de antes nem a de depois (outra tomada), mesmo que o Whisper erre
         antes = [w["end"] for w in palavras if w["end"] <= a + 0.05]
         depois = [w["start"] for w in palavras if w["start"] >= b - 0.05]

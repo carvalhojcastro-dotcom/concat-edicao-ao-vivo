@@ -6,7 +6,7 @@ reels verticais. Veja `FORK.md` (o que mudou no código) e `EDICAO.md` (o estilo
 ## Quando o usuário pedir para editar um vídeo
 "edita esse vídeo", "edite o C5430 e salve como X", "faça a parte 1", "põe legendas dinâmicas",
 "coloca b-roll": **use a skill `edicao-reels`** (`.claude/skills/edicao-reels/SKILL.md`) e faça o
-processo completo sem pedir confirmação no meio. Entregue o MP4 4K 30 fps na Mesa e informe o custo do
+processo completo sem pedir confirmação no meio. Entregue o MP4 4K 30 fps em `~/Desktop/Concat/exportados` e informe o custo do
 Higgsfield.
 
 ## Regras fixas

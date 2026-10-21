@@ -68,5 +68,6 @@ desktop.ini
 # Ambiente Python das ferramentas e caches.
 /tools/.venv/
 /tools/__pycache__/
+/tools/modelos/
 # Planos de edição por vídeo (conteúdo de clientes).
 /tools/planos/

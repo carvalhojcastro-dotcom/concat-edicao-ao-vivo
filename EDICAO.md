@@ -5,7 +5,7 @@ falando para a câmera (talking head). Ele vai do **bruto da câmera** ao **MP4 
 usando o Concat deste fork pela API (porta 7420) e as ferramentas de `tools/`.
 
 > Com o Claude Code aberto nesta pasta, a skill `.claude/skills/edicao-reels` faz todo o
-> processo sozinha: "edite o C5430 dos Downloads e salve na Mesa como 10 - Título".
+> processo sozinha: "edite o C5430 dos Downloads e salve como 10 - Título".
 
 ---
 
@@ -26,10 +26,19 @@ movimento lento. A exportação é em 4K a 30 fps.
 | **Velocidade** | 1.05x em todos os clipes, sem folgas, alinhados à grade de quadros (`alinhar_quadros.py`). |
 | **Legenda simples** | Uma palavra por vez, Helvetica 400 branca, **92% do tamanho base** (0.04302), tracking -0.05 em (o "-0.3" do CapCut), **contorno preto fino + sombra**, offsetY **0.17** (abaixo do rosto). |
 | **Texto da legenda** | Sem ponto final; maiúscula só no início de frase; "?" e vírgulas ficam. Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
-| **Nitidez** | Camada `concat.adjust` com `sharpen` 20.23 em T3, entre o vídeo e as legendas. |
+| **Nitidez e cor** | **Não aplicar automaticamente** (pedido de 2026-10-19). Só quando pedirem: camada `concat.adjust` em T3 (nitidez antiga: `sharpen` 20.23). |
+| **Retoque de rosto** | **Sempre em vídeo de mulher.** `tools/retoque.py` copia a predefinição do CapCut: remover rugas 13, uniforme 12, linhas do sorriso 93, olheiras 17 e maquiagem "Naturais" 56. Gera uma cópia retocada do bruto e troca a mídia no projeto (`--projeto`). |
 | **Cor** | Nenhuma correção, até haver uma LUT definida para o cliente. |
 
 ## 2. Legendas Dinâmicas
+Referências do cliente (prints dos estilos e das fontes e o vídeo "Como fazer as legendas"):
+`~/Desktop/Concat/referencias/Legendas dinamicas`.
+
+**São as legendas favoritas do usuário**, chamadas por quem pede de "legendas dinâmicas": o valor está na
+tipografia mista **somada à animação de entrada** de cada palavra. Sem a animação, não é o estilo.
+Do print 1 vale **a disposição das palavras** (escadinha); a fonte serifada vai só em uma ou outra
+palavra de destaque, nunca na frase toda. Prints → estilos: 1 = serifa, 2 = classico, 3 = elegante, 5 e 6 = impacto.
+
 Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **entra quando é dita**
 (sobe e aparece em 0,2 s) e **todas saem juntas** quando a frase acaba.
 
@@ -41,16 +50,23 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 | Estilo | Palavras pequenas | Palavra-chave (grande) |
 |---|---|---|
 | **impacto** | Helvetica normal, bloco à esquerda | Helvetica Bold Oblíqua grande |
-| **serifa** | Helvetica normal, em escadinha | Scholar Itálico **amarelo** |
+| **serifa** | Helvetica normal, em escadinha | Scholar Itálico **branco** |
 | **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Bold grande |
 | **elegante** | Montserrat Bold, centralizada | Scholar Itálico enorme, encostado |
 
 - **Regra de fontes:** **Scholar só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
   grande, sai em fonte sóbria, normal e reta (Helvetica ou Montserrat), nunca fina nem cursiva.
+- **Destaque nem sempre em Scholar** (pedido de 2026-10-20): no serifa e no elegante, a chave pode sair
+  em **sem serifa bold** (Helvetica Bold) com `"fonte_chave": "bold"` na frase do plano. Alterne as duas
+  ao longo do vídeo; a disposição do estilo não muda.
 - **Tamanho e posição:** 92% do tamanho, centro do bloco a **67% da altura** (abaixo do rosto),
   **contorno preto fino + sombra**.
-- **Cor do destaque:** **amarelo #f4c430**. Com o contorno, lê bem em fundo claro e escuro. Se usar
-  uma cor escura, rode `contraste_destaques.py`, que troca para branco quando o fundo atrás é escuro.
+- **Entrelinha:** ótica e igual em todas as linhas (pedido de 2026-10-20): o vão vai da base de cima ao
+  topo das minúsculas de baixo (0,30 em da letra pequena, `--aperto=`); hastes e perninhas entram nos
+  vãos e as linhas só se afastam onde uma letra fosse de fato encostar na outra.
+- **Cor do destaque:** **branco** por padrão (pedido de 2026-10-20). O destaque se diferencia pela
+  fonte (Scholar Itálico) e pelo tamanho, não pela cor. Amarelo #f4c430 ou a cor do cliente só quando
+  pedirem, pelo `"destaque"` do plano. Se usar uma cor escura, rode `contraste_destaques.py`, que troca para branco quando o fundo atrás é escuro.
 
 ## 3. Zoom seco (punch-in)
 - **Sem animação.** O enquadramento muda no começo das frases: 100%, 118% e **132% nas frases de
@@ -86,7 +102,7 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 ## Ordem dos comandos
 ```bash
 PY=tools/.venv/bin/python          # venv com higgsfield-client, pillow, fonttools, opencv<5
-P="$HOME/Desktop/Concat/<nome>"    # pasta do projeto
+P="$HOME/Desktop/Concat/editados/<nome>"    # pasta do projeto
 
 # 1. criar o projeto 2160x3840 a 30 fps, importar o bruto e pô-lo em T1 (project.create, media.import, addClip)
 # 2. transcrever (mlx-whisper large-v3-turbo, tempo por palavra) -> words.json e cortes.json
@@ -94,14 +110,14 @@ python3 tools/cortar_ao_vivo.py "$P" cortes.json --pausa 0
 #    1.05x + empacotar (setClipSpeed + moveClips), depois:
 python3 tools/alinhar_quadros.py "$P"                       # depois: project.save
 python3 tools/legendas_simples.py "$P" words.json T4        # 92%, offsetY 0.17, contorno fino
-#    camada de nitidez: addLayerClip concat.adjust em T3 + sharpen 20.23
+#    (sem nitidez nem cor automáticas; só se pedirem: addLayerClip concat.adjust em T3)
 $PY tools/legendas_dinamicas.py "$P" plano_dinamicas.json   # 92%, centro 0.67
 python3 tools/zoom_cortes.py "$P" ref_legendas.json plano_zoom.json
 $PY tools/centralizar_zoom.py "$P"
 $PY tools/broll_higgsfield.py plano_broll.json "$P/broll" <cena-teste>   # depois as outras
 python3 tools/broll_imagens.py "$P" plano_broll.json "$P/broll"
 python3 tools/broll_animar.py "$P"
-python3 tools/exportar.py "$P" "$HOME/Desktop/<nome>.mp4"   # 4K, fps do projeto
+python3 tools/exportar.py "$P" "$HOME/Desktop/Concat/exportados/<nome>.mp4"   # 4K, fps do projeto
 #    por fim: project.close (save)
 ```
 Os formatos dos planos estão em `tools/planos_exemplo/`.
