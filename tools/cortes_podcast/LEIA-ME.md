@@ -53,7 +53,7 @@ $TRABALHO/c<EP>/destaques.txt    frases de destaque por corte (formato do edit-d
   - Câmera aberta (3 ou mais rostos) → quadro inteiro sobre fundo desfocado.
   - Não há tela dividida: o podcast já vem editado com uma câmera por vez.
 - **Legenda:**
-  - Branca. Composições (escada/chave) nas frases de destaque, com a chave em Scholar; amarelo #f4c430 em 1 ou 2 por corte. `sombra_suave` + contorno 0,02.
+  - Branca. Composições (escada/chave) nas frases de destaque, com a chave em serifada (DM Serif Display, antes Scholar); amarelo #f4c430 em 1 ou 2 por corte. `sombra_suave` + contorno 0,02.
   - Primeira palavra do vídeo em maiúscula. No resto, maiúscula só depois de "?"/"!" e em nome próprio/sigla (lista `PROPRIOS` em plano_auto.py).
   - Revisão ortográfica sem mudar palavra nem ordem. Palavra que ninguém entende sai do corte (áudio e legenda).
   - A última legenda termina antes do fim do vídeo. O Concat exportava 1 quadro preto com a legenda; o `finalizar.sh` agora confere e tira.

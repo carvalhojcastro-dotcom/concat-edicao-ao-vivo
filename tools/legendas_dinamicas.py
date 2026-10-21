@@ -13,21 +13,21 @@ Uso:
   legendas_dinamicas.py <pasta do projeto> <plano.json>
 
 plano.json: [{"estilo": "serifa", "linhas": [[0, 1], [2], [3]], "chave": [2]}, ...]
-  "fonte_chave" na frase escolhe a fonte da chave no serifa/elegante: "serifa" (Scholar Regular, padrão),
-  "italico" (Scholar Itálico), "bold" (Helvetica Neue Condensed Black) ou "coolvetica".
+  "fonte_chave" na frase escolhe a fonte da chave no serifa/elegante: "serifa" (DM Serif Display, padrão),
+  "italico" (DM Serif Display Itálico), "bold" (Helvetica Neue Condensed Black) ou "coolvetica".
   ou {"destaque": "#2563c9", "frases": [...]} para usar a cor da paleta do cliente
   (padrão: branco, pedido de 2026-10-20; Dr. Rafael: azul #2563c9; amarelo #f4c430 só se pedirem).
   linhas: índices das legendas simples (na ordem da timeline), agrupados por linha;
   chave:  os índices que levam o destaque.
 Regra de leitura (do usuário): tudo que não é destaque sai em fonte sóbria, normal e reta
 (Helvetica / Montserrat), nunca fina nem cursiva (exceção: a Montserrat Light do elegante, como no
-print); o Scholar (e as cursivas) só na palavra de DESTAQUE (a chave).
+print); a serifada (e as cursivas) só na palavra de DESTAQUE (a chave).
 Estilos (inspirados em prints de legendas de reels; descritos em EDICAO.md):
-  serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em Scholar branco, palavra final
+  serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em DM Serif Display branca, palavra final
              maior alinhada à direita embaixo da chave.
   classico - "Estilo 5": palavras pequenas (Helvetica) espalhadas sobre uma linha grande
              em Helvetica Neue Condensed Black.
-  elegante - "Estilo 6": linha pequena em Montserrat Light sobre uma palavra enorme em Scholar,
+  elegante - "Estilo 6": linha pequena em Montserrat Light sobre uma palavra enorme em DM Serif Display,
              encostadas.
   impacto  - "Estilos 1 e 2": bloco alinhado à esquerda, Helvetica normal (reta) e a chave em
              Helvetica Bold Oblíqua grande (podem dividir a mesma linha).
@@ -59,8 +59,10 @@ FACES = {
     "helv-oblique": ("Helvetica", 400, True, HELV, 2),
     "helv-bold-oblique": ("Helvetica", 700, True, HELV, 3),
     "helv-light-oblique": ("Helvetica", 300, True, HELV, 5),
-    "scholar": ("Scholar", 400, False, os.path.join(FONTES, "Scholar-Regular.otf"), 0),
-    "scholar-italic": ("Scholar", 400, True, os.path.join(FONTES, "Scholar-Italic.otf"), 0),
+    # Serifada do destaque: DM Serif Display (OFL, vai no repositório), no lugar da Scholar desde 2026-10-21
+    # (a Scholar só tinha licença dentro do CapCut).
+    "serif": ("DM Serif Display", 400, False, os.path.join(FONTES, "DMSerifDisplay-Regular.ttf"), 0),
+    "serif-italic": ("DM Serif Display", 400, True, os.path.join(FONTES, "DMSerifDisplay-Italic.ttf"), 0),
     "montserrat-bold": ("Montserrat", 700, False, os.path.join(FONTES, "Montserrat-Bold.otf"), 0),
     # Pesos dos prints de fonte em referencias/Legendas dinamicas (pedido de 2026-10-20):
     "helv-cond-black": ('"Helvetica Neue Condensed Black"', 900, False, os.path.join(FONTES, "HelveticaNeue-CondensedBlack.ttf"), 0),
@@ -68,7 +70,7 @@ FACES = {
     "montserrat-light": ("Montserrat", 300, False, os.path.join(FONTES, "Montserrat-Light.ttf"), 0),
 }
 # Fontes que o projeto precisa registrar (as do sistema o Concat já acha).
-REGISTRAR = [("Scholar", "Scholar-Regular.otf"), ("Scholar", "Scholar-Italic.otf"),
+REGISTRAR = [("DM Serif Display", "DMSerifDisplay-Regular.ttf"), ("DM Serif Display", "DMSerifDisplay-Italic.ttf"),
              ("Montserrat", "Montserrat-Bold.otf"), ("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf"),
              ("Helvetica Neue Condensed Black", "HelveticaNeue-CondensedBlack.ttf"),
              ("Coolvetica", "Coolvetica-Rg.otf"), ("Montserrat", "Montserrat-Light.ttf")]
@@ -79,8 +81,8 @@ DESTAQUE = BRANCO  # cor da chave no estilo serifa (branco por padrão); o plano
 FONTE_CHAVE = "serifa"  # destaque do serifa/elegante, por frase com "fonte_chave" no plano (pedido de 2026-10-20)
 # fonte_chave -> (face, tracking em em). Pesos iguais aos prints de fonte do usuário.
 CHAVES = {
-    "serifa": ("scholar", -0.04),            # Scholar Regular reto e apertado (print "scholar")
-    "italico": ("scholar-italic", 0.0),      # Scholar Itálico (prints de estilo 1 e 3)
+    "serifa": ("serif", -0.02),            # DM Serif Display reta, levemente apertada (print "scholar")
+    "italico": ("serif-italic", 0.0),      # DM Serif Display Itálico (prints de estilo 1 e 3)
     "bold": ("helv-cond-black", -0.01),      # Helvetica Neue Condensed Black (print "helvetica")
     "coolvetica": ("coolvetica", -0.02),     # Coolvetica Regular (print "coolvetica")
 }
@@ -152,7 +154,7 @@ def cap(p):
 
 def tinta(p):
     """(quanto a palavra sobe acima da linha base, quanto desce abaixo), em px, medido no desenho
-    real das letras - números e ascendentes do Scholar Itálico sobem bem mais que a maiúscula."""
+    real das letras - números e ascendentes da serifada itálica sobem bem mais que a maiúscula."""
     _, _, _, path, index = FACES[p["face"]]
     _, topo, _, pe = ImageFont.truetype(path, size=max(1, round(p["em"])), index=index).getbbox(p["texto"], anchor="ls")
     return -topo, max(pe, 0)
@@ -215,11 +217,11 @@ def perfil(p):
 
 
 def chave_em(texto, em, cor):
-    """A palavra de destaque na fonte de FONTE_CHAVE. `em` é o tamanho pensado para o Scholar
-    Itálico; uma fonte mais larga encolhe até ocupar a mesma largura (nunca cresce), então o
+    """A palavra de destaque na fonte de FONTE_CHAVE. `em` é o tamanho pensado para a serifada
+    itálica; uma fonte mais larga encolhe até ocupar a mesma largura (nunca cresce), então o
     bloco do estilo não muda de forma com a fonte."""
     face, trk = CHAVES[FONTE_CHAVE]
-    ref = largura("scholar-italic", em, texto)
+    ref = largura("serif-italic", em, texto)
     return palavra(texto, face, em * min(1.0, ref / largura(face, em, texto, trk)), cor, trk=trk)
 
 
@@ -232,9 +234,9 @@ def serifa(linhas, t):
         if any(c for _, c in linha):
             chave_li = li
             rows.append([chave_em(t[i], K, DESTAQUE) if c
-                         else palavra(t[i], "helv", N * 0.84, trk=-0.02) for i, c in linha])  # Scholar só no destaque
+                         else palavra(t[i], "helv", N * 0.84, trk=-0.02) for i, c in linha])  # serifada só no destaque
         elif chave_li is not None and len(linha) == 1:
-            rows.append([palavra(t[i], "helv", F * 0.82, trk=-0.02) for i, _ in linha])  # palavra final maior, sóbria (Scholar só no destaque)
+            rows.append([palavra(t[i], "helv", F * 0.82, trk=-0.02) for i, _ in linha])  # palavra final maior, sóbria (serifada só no destaque)
         else:
             # palavras pequenas: letra normal e reta (Helvetica), nunca fina/cursiva - senão some
             rows.append([palavra(t[i], "helv", N * 0.84, trk=-0.02) for i, _ in linha])
@@ -277,12 +279,11 @@ def elegante(linhas, t):
     S, K = 0.042 * H, 0.125 * H
     pequenas = [[palavra(t[i], "montserrat-light", S) for i, _ in linha] for linha in linhas[:-1]]  # print "montserrat"
     grande = [chave_em(t[i], K, BRANCO) if c else palavra(t[i], "montserrat-light", S)
-              for i, c in linhas[-1]]  # Scholar só no destaque
+              for i, c in linhas[-1]]  # serifada só no destaque
     wg = linha_em(grande, 0.0, 0.0)
-    italico = any(p["face"] == "scholar-italic" for p in grande)
-    # a palavra grande sobe até encostar na linha de cima; fora o itálico (ajustado no olho), encosta pelo
-    # topo real da tinta (as hastes do Scholar reto sobem acima da maiúscula)
-    base = -0.68 * K if italico else -(max(tinta(p)[0] for p in grande) + APERTO * S)
+    # a palavra grande sobe até encostar na linha de cima, medida pelo topo real da tinta (as hastes da
+    # serifada sobem acima da maiúscula; o -0,68 em fixo de antes só servia para o itálico da Scholar)
+    base = -(max(tinta(p)[0] for p in grande) + APERTO * S)
     for ps in reversed(pequenas):
         linha_em(ps, (wg - larg_linha(ps)) / 2, base)
         base -= max(cap(p) for p in ps) + 0.18 * S

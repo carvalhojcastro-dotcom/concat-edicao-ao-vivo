@@ -58,19 +58,19 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 | Estilo | Palavras pequenas | Palavra-chave (grande) |
 |---|---|---|
 | **impacto** | Helvetica normal, bloco à esquerda | Helvetica Bold Oblíqua grande |
-| **serifa** | Helvetica normal, em escadinha | Scholar **reto** e apertado, **branco** |
+| **serifa** | Helvetica normal, em escadinha | DM Serif Display **reta**, **branca** |
 | **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Neue **Condensed Black** grande |
-| **elegante** | Montserrat **Light**, centralizada | Scholar reto enorme, encostado |
+| **elegante** | Montserrat **Light**, centralizada | DM Serif Display enorme, encostada |
 
-- **Regra de fontes:** **Scholar só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
+- **Regra de fontes:** **a serifada (DM Serif Display) só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
   grande, sai em fonte sóbria, normal e reta (Helvetica ou Montserrat), nunca fina nem cursiva.
 - **Pesos iguais aos prints de fonte** (`referencias/Legendas dinamicas`, pedido de 2026-10-20):
-  "helvetica" = Helvetica Neue **Condensed Black**; "montserrat" = Montserrat **Light**; "scholar" = Scholar
-  **Regular** reto, tracking -0,04; "coolvetica" = Coolvetica Regular. As fontes ficam em `fonts/`
+  "helvetica" = Helvetica Neue **Condensed Black**; "montserrat" = Montserrat **Light**; "scholar" = **DM Serif Display**
+  reta, tracking -0,02 (no lugar da Scholar, que só tinha licença no CapCut; 2026-10-21); "coolvetica" = Coolvetica Regular. As fontes ficam em `fonts/`
   (o `setup.sh` extrai a Condensed Black do sistema; Montserrat Light e Coolvetica são baixadas).
-- **Destaque nem sempre em Scholar**: no serifa e no elegante, `"fonte_chave"` na frase escolhe
-  `serifa` (Scholar reto, padrão), `italico`, `bold` (Condensed Black) ou `coolvetica`. **Alterne** ao
-  longo do vídeo. Uma fonte mais larga encolhe até a largura do Scholar, então o bloco não muda de forma.
+- **Destaque nem sempre serifado**: no serifa e no elegante, `"fonte_chave"` na frase escolhe
+  `serifa` (DM Serif Display reta, padrão), `italico`, `bold` (Condensed Black) ou `coolvetica`. **Alterne** ao
+  longo do vídeo. Uma fonte mais larga encolhe até a largura da serifada, então o bloco não muda de forma.
 - A Montserrat Light das palavras pequenas do elegante é a exceção à regra "nunca fina": vem do print e
   o contorno + sombra seguram a leitura.
 - **Tamanho e posição:** 92% do tamanho, **contorno preto fino + sombra**. O bloco **começa na mesma
@@ -81,7 +81,7 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
   topo das minúsculas de baixo (0,30 em da letra pequena, `--aperto=`); hastes e perninhas entram nos
   vãos e as linhas só se afastam onde uma letra fosse de fato encostar na outra.
 - **Cor do destaque:** **branco** por padrão (pedido de 2026-10-20). O destaque se diferencia pela
-  fonte (Scholar Itálico) e pelo tamanho, não pela cor. Amarelo #f4c430 ou a cor do cliente só quando
+  fonte (serifada) e pelo tamanho, não pela cor. Amarelo #f4c430 ou a cor do cliente só quando
   pedirem, pelo `"destaque"` do plano. Se usar uma cor escura, rode `contraste_destaques.py`, que troca para branco quando o fundo atrás é escuro.
 
 ## 3. Zoom seco (punch-in)
@@ -175,4 +175,4 @@ Instalação num Mac novo: `INSTALAR.md` (o `tools/setup.sh` faz quase tudo).
 - Chave da API do Higgsfield em `.env.local` (`HF_KEY=id:segredo`), gravada com
   `tools/configurar_chave_higgsfield.sh`. Nunca a cole em chat nem a commite.
 - Fontes: as livres (Montserrat, Poppins, Plus Jakarta, Playfair) vêm no repositório; Coolvetica e as
-  faces da Helvetica Neue o setup obtém; a Scholar (licença própria) vem do CapCut ou do Mac antigo.
+  faces da Helvetica Neue o setup obtém.

@@ -57,8 +57,8 @@ Scripts que falam com a API (porta 7420; o token fica em `.concat-token`, fora d
 | `setup.sh` | instala dependências, venv, fontes e (com `--app`) compila o Concat |
 
 As ferramentas usam um venv próprio (`tools/.venv`) com `higgsfield-client`, `python-dotenv`,
-`pillow`, `fonttools` e `opencv-python-headless<5`. As fontes Scholar e Montserrat **não**
-estão no repositório: coloque os arquivos em `fonts/`.
+`pillow`, `fonttools` e `opencv-python-headless<5`. As fontes livres (Montserrat,
+DM Serif Display e outras OFL) estão em `fonts/`; Coolvetica e Helvetica Neue o `tools/setup.sh` obtém.
 
 ## Compilar (macOS)
 ```bash

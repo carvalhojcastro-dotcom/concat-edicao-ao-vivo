@@ -26,14 +26,7 @@ tools/.venv/bin/pip install -q --force-reinstall --no-deps "opencv-contrib-pytho
 echo "== Fontes das Legendas Dinâmicas (fonts/)"
 mkdir -p fonts
 cache="$HOME/Movies/CapCut/User Data/Cache"
-# Montserrat, Poppins, Plus Jakarta e Playfair (OFL) já vêm no repositório. A Scholar tem licença
-# própria: vem do cache do CapCut (baixe a fonte uma vez dentro do CapCut) ou copie do Mac antigo.
-for f in Scholar-Regular.otf Scholar-Italic.otf; do
-  [ -f "fonts/$f" ] && continue
-  achado="$(find "$cache" -name "$f" 2>/dev/null | head -1 || true)"
-  if [ -n "$achado" ]; then cp "$achado" "fonts/$f"; echo "  $f copiada do cache do CapCut"
-  else echo "  FALTA fonts/$f: copie do Mac antigo (ferramentas/fonts) ou use a fonte Scholar uma vez no CapCut"; fi
-done
+# Montserrat, Poppins, Plus Jakarta, Playfair e DM Serif Display (OFL) já vêm no repositório.
 
 # Coolvetica (Typodermic): grátis, mas sem redistribuir; baixa do site oficial, só os arquivos dela.
 if [ ! -f fonts/Coolvetica-Rg.otf ]; then
@@ -131,6 +124,5 @@ cat <<'FIM'
 == Falta fazer à mão (uma vez)
 - Chave da API do Higgsfield (B-roll): ./tools/configurar_chave_higgsfield.sh
   (a chave é digitada sem aparecer e fica em .env.local, fora do Git).
-- Se o setup avisou FALTA na Scholar: copie Scholar-Regular.otf e Scholar-Italic.otf para fonts/.
 Pronto: abra o Claude Code nesta pasta e diga "edita esse vídeo: <arquivo>".
 FIM

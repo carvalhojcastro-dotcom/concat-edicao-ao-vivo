@@ -8,7 +8,7 @@ Reproduz no Concat três referências que o usuário mandou:
 | Vitrine Vimeo 1189819698: 24 animações em Poppins Black | 24 animações de entrada (lista abaixo) |
 | Imagens "MODELOS PRONTOS", "PADRÃO com DINAMISMO", "CHAMATIVOS com ESTILO", "elegantes que IMPRESSIONAM" | modelos `modelo:modelos`, `modelo:padrao`, `modelo:chamativos`, `modelo:elegantes` |
 
-**Regra do usuário:** a cursiva fina rosa do reel **não** entra. O destaque usa **Scholar Itálico branco** por padrão (pedido de 2026-10-20); amarelo (#f4c430) só se pedirem.
+**Regra do usuário:** a cursiva fina rosa do reel **não** entra. O destaque usa **serifada itálica branca** (DM Serif Display, no lugar da Scholar desde 2026-10-21) por padrão (pedido de 2026-10-20); amarelo (#f4c430) só se pedirem.
 
 ## Arquivos
 
@@ -50,7 +50,7 @@ tools/.venv/bin/python tools/legendas_estilos.py "<projeto>" words.json plano.js
 - `centro: [x, y]`: posição do bloco em frações do quadro. O padrão é 0,5 × 0,6, abaixo do rosto.
 
 **Marcação no texto:**
-- `*palavra*`: destaque em Scholar Itálico grande, sobreposto.
+- `*palavra*`: destaque em serifada itálica (DM Serif Display) grande, sobreposto.
 - `palavra{#hex}`: cor própria. Palavras escuras ganham um halo claro sozinhas.
 - `palavra^g`: tamanho próprio dentro da linha (`p`, `m`, `g`, `gg`).
 

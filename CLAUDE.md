@@ -20,7 +20,7 @@ atalho para `ferramentas/referencias`) e `ferramentas/` (este repositório). Num
   o Git nem para o chat. Não leia nem imprima seus valores. A chave é gravada pelo usuário com
   `tools/configurar_chave_higgsfield.sh`.
 - Não commite `dist/`, `tools/.venv/`, `tools/planos/` (conteúdo de clientes) nem as fontes de licença
-  própria (Scholar, Coolvetica, Helvetica Neue extraída); o `.gitignore` já cuida disso.
+  própria (Coolvetica, Helvetica Neue extraída; a Scholar não é mais usada); o `.gitignore` já cuida disso.
 - Primeira vez numa máquina: `INSTALAR.md` (`./tools/setup.sh` baixa o Concat da Release do GitHub;
   `--compilar` compila do código).
 - Mudou uma regra de edição: atualize `EDICAO.md`, a skill e as ferramentas, e envie ao GitHub.

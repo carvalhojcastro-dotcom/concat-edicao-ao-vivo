@@ -24,8 +24,8 @@ Variáveis (raiz do repositório = `$R`):
 - O venv `tools/.venv` existe? Se não, rode `./tools/setup.sh`.
 - O Concat está aberto com a API ligada? Teste um `socket` na porta 7420. Se `.concat-token` não
   existir, rode `./tools/setup.sh` com o Concat fechado (ele liga a API e grava o token).
-- `fonts/` tem Scholar-Regular/Italic, Coolvetica-Rg, HelveticaNeue-Medium e -CondensedBlack? Se
-  faltar, rode o setup; se a Scholar ainda faltar, avise e siga (o Concat cai na fonte embutida).
+- `fonts/` tem Coolvetica-Rg, HelveticaNeue-Medium e -CondensedBlack? Se faltar, rode o setup (a DM
+  Serif Display e as outras livres já vêm no repositório).
 - `.env.local` tem uma linha `HF_KEY=`? Confira só que a linha existe (`grep -c '^HF_KEY=.\+:'`),
   **nunca leia, mostre ou peça a chave no chat**. Se não houver, peça ao usuário para rodar
   `./tools/configurar_chave_higgsfield.sh` ou siga sem B-roll se ele preferir.
@@ -88,8 +88,8 @@ Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e
   - `serifa` aceita escadinha de 2 a 4 linhas, com a chave numa linha só.
   - `impacto` aceita linha pequena, chave e linha pequena.
 - Remova vírgulas do fim só nas palavras-chave (o script já tira as dos blocos).
-- Scholar só aparece na palavra-chave; o resto do bloco o script põe em Helvetica/Montserrat.
-- **Fonte da chave** (`"fonte_chave"` na frase, serifa e elegante): `serifa` (Scholar reto, padrão),
+- A serifada (DM Serif Display) só aparece na palavra-chave; o resto do bloco o script põe em Helvetica/Montserrat.
+- **Fonte da chave** (`"fonte_chave"` na frase, serifa e elegante): `serifa` (DM Serif Display reta, padrão),
   `italico`, `bold` (Condensed Black) ou `coolvetica`. Alterne ao longo do vídeo, sem repetir em
   blocos seguidos.
 - **Roupa com estampa clara no peito** (ex.: camiseta com logo): legenda branca some em cima dela.

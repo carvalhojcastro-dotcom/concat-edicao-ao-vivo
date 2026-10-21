@@ -60,8 +60,8 @@ FACES = {
     "jak": ('"Plus Jakarta Sans"', 600, False, "PlusJakartaSans-SemiBold.ttf"),
     "jak-bold": ('"Plus Jakarta Sans"', 700, False, "PlusJakartaSans-Bold.ttf"),
     "jak-xbold": ('"Plus Jakarta Sans"', 800, False, "PlusJakartaSans-ExtraBold.ttf"),
-    "scholar": ("Scholar", 400, False, "Scholar-Regular.otf"),
-    "scholar-it": ("Scholar", 400, True, "Scholar-Italic.otf"),
+    "scholar": ("DM Serif Display", 400, False, "DMSerifDisplay-Regular.ttf"),  # no lugar da Scholar (licença), 2026-10-21
+    "scholar-it": ("DM Serif Display", 400, True, "DMSerifDisplay-Italic.ttf"),
     "playfair-bold": ('"Playfair Display"', 700, False, "PlayfairDisplay-Bold.ttf"),
     "playfair-black": ('"Playfair Display"', 900, False, "PlayfairDisplay-Black.ttf"),
     "playfair-it": ('"Playfair Display"', 600, True, "PlayfairDisplay-SemiBoldItalic.ttf"),

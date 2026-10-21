@@ -30,7 +30,7 @@ Ele faz sozinho:
 - baixa o **Concat deste fork** da Release do GitHub para `/Applications` (ou compila do código com
   `./tools/setup.sh --compilar`, ~10 min);
 - **liga a API do Concat** (porta 7420) e grava o token em `.concat-token`;
-- prepara as fontes: as livres já vêm no repositório, a Coolvetica é baixada do site oficial e as
+- prepara as fontes: as livres (inclusive a DM Serif Display do destaque) já vêm no repositório, a Coolvetica é baixada do site oficial e as
   faces da Helvetica Neue são extraídas do macOS;
 - cria `~/Desktop/Concat/editados`, `exportados` e o atalho `referencias`.
 
@@ -39,12 +39,7 @@ Ele faz sozinho:
 ./tools/configurar_chave_higgsfield.sh
 ```
 
-**4. Fonte Scholar.** É a única com licença própria que não dá para baixar automaticamente. Se o
-setup avisou `FALTA fonts/Scholar-...`, copie `Scholar-Regular.otf` e `Scholar-Italic.otf` do Mac
-antigo (`~/Desktop/Concat/ferramentas/fonts/`) para a mesma pasta no novo. Se o CapCut estiver
-instalado e a Scholar já tiver sido usada nele, o setup a encontra sozinho.
-
-**5. Usar.** Abra o Concat, abra o Claude Code na pasta `~/Desktop/Concat/ferramentas` e diga:
+**4. Usar.** Abra o Concat, abra o Claude Code na pasta `~/Desktop/Concat/ferramentas` e diga:
 > edita esse vídeo: ~/Downloads/C5430.MP4 e salve como 13 - Título
 
 ## O que fica onde
@@ -52,7 +47,7 @@ instalado e a Scholar já tiver sido usada nele, o setup a encontra sozinho.
 |---|---|
 | GitHub (este repositório) | código do Concat modificado (`src/`), ferramentas (`tools/`), estilo (`EDICAO.md`), skill (`.claude/skills/edicao-reels`), referências (`referencias/`), fontes livres, modelo de rosto |
 | GitHub, aba Releases | o `Concat.app` já compilado (`Concat-<versão>-mac-arm64.zip`) |
-| Só em cada Mac | `.env.local` (chave do Higgsfield), `.concat-token`, Scholar, Coolvetica, Helvetica Neue extraída, `tools/.venv`, projetos e vídeos |
+| Só em cada Mac | `.env.local` (chave do Higgsfield), `.concat-token`, Coolvetica e Helvetica Neue extraída (o setup obtém), `tools/.venv`, projetos e vídeos |
 
 ## Publicar uma versão nova do Concat
 Depois de mudar o código em `src/`:
