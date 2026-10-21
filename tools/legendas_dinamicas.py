@@ -54,6 +54,7 @@ FACES = {
     # Semibold (pedido do usuário): Helvetica Neue Medium extraída do sistema para fonts/ - o
     # Concat não lê o HelveticaNeue.ttc e o nome com espaço vai entre aspas (sintaxe CSS).
     "helv": ('"Helvetica Neue Medium"', 500, False, os.path.join(FONTES, "HelveticaNeue-Medium.ttf"), 0),
+    "helv-regular": ("Helvetica", 400, False, HELV, 0),  # legendas simples antigas
     "helv-bold": ("Helvetica", 700, False, HELV, 1),
     "helv-oblique": ("Helvetica", 400, True, HELV, 2),
     "helv-bold-oblique": ("Helvetica", 700, True, HELV, 3),
@@ -92,7 +93,10 @@ LINEAR = [0.0, 0.0, 1.0, 1.0]
 SEM_CONTORNO = "--sem-contorno" in sys.argv  # só a sombra leve
 _opc = dict(a[2:].split("=", 1) for a in sys.argv[3:] if a.startswith("--") and "=" in a)
 ESCALA = float(_opc.get("escala", 0.92))   # padrão do usuário: 92% do tamanho
-CENTRO_Y = float(_opc.get("centro", 0.67)) * H  # padrão do usuário: abaixo do rosto (antes 0.60)
+CENTRO_Y = float(_opc.get("centro", 0.67)) * H  # só sem legendas simples no projeto (ou com --centro=)
+# Pedido de 2026-10-21: o bloco começa na mesma altura da legenda simples (topo das letras da 1ª linha
+# no topo das letras da simples) e cresce para baixo. main() mede a simples do projeto; None = centrar.
+TOPO_Y = None
 APERTO = float(_opc.get("aperto", 0.30))  # vão entre linhas (base de cima → topo das minúsculas), em em da letra pequena
 
 _metricas = {}
@@ -308,6 +312,17 @@ def impacto(linhas, t):
 ESTILOS = {"serifa": serifa, "classico": classico, "elegante": elegante, "impacto": impacto}
 
 
+def topo_da_simples(clip):
+    """Altura (px) do topo das maiúsculas de uma legenda simples, como o Concat a desenha."""
+    st = clip["text"]
+    face = next((f for f, v in FACES.items() if v[0].strip('"') == st["fontFamily"].strip('"')
+                 and v[1] == int(st["fontWeight"]) and v[2] == bool(st.get("italic"))), "helv-regular")
+    em = st["fontSize"] * H
+    asc, desc, capa = metricas(face)
+    base = H / 2 + clip.get("offsetY", 0.0) * H + (asc - desc) / 2 * em
+    return base - capa * em
+
+
 def montar(estilo, linhas, chave, textos):
     """Posição (offsetX, offsetY) e estilo de cada palavra do bloco, já centrado no quadro."""
     marcadas = [[(i, i in chave) for i in linha] for linha in linhas]
@@ -324,6 +339,8 @@ def montar(estilo, linhas, chave, textos):
     pe = max(p["base"] + 0.15 * p["em"] for p in ps)
     k = min(1.0, LARGURA_MAX / (dir_ - esq)) * ESCALA
     cx, cy = (esq + dir_) / 2, (topo + pe) / 2
+    if TOPO_Y is not None:  # o topo do bloco cai no topo da legenda simples
+        cy = topo + (CENTRO_Y - TOPO_Y) / k
     out = []
     for p in ps:
         em = p["em"] * k
@@ -372,6 +389,10 @@ def main():
     tl = timeline(api.view())
     legendas = sorted([c for c in tl["clips"] if c["kind"] == "text"], key=lambda c: c["start"])
     textos = [c["text"]["content"].rstrip(",") for c in legendas]
+    global TOPO_Y
+    if legendas and "centro" not in _opc:
+        TOPO_Y = topo_da_simples(legendas[0])
+        print(f"bloco começa na altura da legenda simples: {TOPO_Y / H:.3f} da altura", flush=True)
 
     for familia, arquivo in REGISTRAR:
         api.edit({"op": "addFont", "family": familia, "path": os.path.abspath(os.path.join(FONTES, arquivo))})

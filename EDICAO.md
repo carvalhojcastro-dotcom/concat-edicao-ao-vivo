@@ -65,8 +65,10 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
   longo do vídeo. Uma fonte mais larga encolhe até a largura do Scholar, então o bloco não muda de forma.
 - A Montserrat Light das palavras pequenas do elegante é a exceção à regra "nunca fina": vem do print e
   o contorno + sombra seguram a leitura.
-- **Tamanho e posição:** 92% do tamanho, centro do bloco a **67% da altura** (abaixo do rosto),
-  **contorno preto fino + sombra**.
+- **Tamanho e posição:** 92% do tamanho, **contorno preto fino + sombra**. O bloco **começa na mesma
+  altura da legenda simples** (pedido de 2026-10-21): o topo das letras da 1ª linha fica no topo das
+  letras da simples, e o bloco cresce para baixo. A altura é lida das legendas do próprio projeto;
+  `--centro=0.67` volta ao bloco centrado.
 - **Entrelinha:** ótica e igual em todas as linhas (pedido de 2026-10-20): o vão vai da base de cima ao
   topo das minúsculas de baixo (0,30 em da letra pequena, `--aperto=`); hastes e perninhas entram nos
   vãos e as linhas só se afastam onde uma letra fosse de fato encostar na outra.
