@@ -15,16 +15,16 @@ function Tem($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 function RecarregarPath {
   $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
 }
-function Winget($id) {
+function InstalarComWinget($id) {   # (não pode se chamar "Winget": o PowerShell ignora maiúsculas e ela chamaria a si mesma)
   winget install -e --id $id --silent --accept-source-agreements --accept-package-agreements | Out-Null
 }
 
 Write-Host "== Programas: Git, Python 3.11, FFmpeg, GitHub CLI (winget)"
 if (-not (Tem winget)) { throw "Instale o 'App Installer' (winget) pela Microsoft Store e rode de novo." }
-if (-not (Tem git))    { Winget Git.Git }
-if (-not (Tem py))     { Winget Python.Python.3.11 }
-if (-not (Tem ffmpeg)) { Winget Gyan.FFmpeg }
-if (-not (Tem gh))     { Winget GitHub.cli }
+if (-not (Tem git))    { InstalarComWinget Git.Git }
+if (-not (Tem py))     { InstalarComWinget Python.Python.3.11 }
+if (-not (Tem ffmpeg)) { InstalarComWinget Gyan.FFmpeg }
+if (-not (Tem gh))     { InstalarComWinget GitHub.cli }
 RecarregarPath   # o winget só põe os programas novos no PATH de janelas novas
 foreach ($c in @("git", "py", "ffmpeg", "gh")) {
   if (-not (Tem $c)) { throw "$c foi instalado mas não está no PATH: feche e abra o PowerShell e rode de novo." }

@@ -23,7 +23,8 @@ jobs:
       - name: setup.ps1
         shell: powershell
         run: |
-          powershell -ExecutionPolicy Bypass -File tools\setup.ps1 *>&1 | Tee-Object -FilePath setup.log
+          # sem redirecionar a saída: no PowerShell 5.1, "2>&1" transforma qualquer aviso no erro em exceção
+          powershell -ExecutionPolicy Bypass -File tools\setup.ps1
           if ($LASTEXITCODE -ne 0) { throw "setup.ps1 saiu com $LASTEXITCODE" }
 
       - name: Concat aberto e API na porta 7420
@@ -42,7 +43,8 @@ jobs:
       - name: testar_instalacao.py
         shell: powershell
         run: |
-          tools\.venv\Scripts\python.exe tools\testar_instalacao.py --quadro teste_instalacao_windows.png *>&1 | Tee-Object -FilePath teste.log
+          $ErrorActionPreference = "Continue"   # o mediapipe escreve avisos no stderr
+          tools\.venv\Scripts\python.exe tools\testar_instalacao.py --quadro teste_instalacao_windows.png
           if ($LASTEXITCODE -ne 0) { throw "testar_instalacao.py falhou" }
 
       - name: Logs do Concat
@@ -58,8 +60,6 @@ jobs:
         with:
           name: teste-instalacao-windows
           path: |
-            setup.log
-            teste.log
             teste_instalacao_windows.png
             logs/
           if-no-files-found: ignore
