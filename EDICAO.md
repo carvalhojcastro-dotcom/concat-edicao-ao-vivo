@@ -42,7 +42,15 @@ palavra de destaque, nunca na frase toda. Prints → estilos: 1 = serifa, 2 = cl
 Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **entra quando é dita**
 (sobe e aparece em 0,2 s) e **todas saem juntas** quando a frase acaba.
 
-- **Quantidade:** cerca de **20 a 22 frases por minuto**, nas frases importantes.
+- **Quantidade:** cerca de **18 a 22 frases por minuto**, nas frases importantes. Referência aprovada
+  ("bem fluido e prendendo bastante a atenção", 2026-10-21): o projeto `editados/Exemplos - legendas
+  dinamicas`, com 11 frases em 36 s (~18/min), **cerca de metade das palavras** em dinâmica e metade em
+  legenda simples, frases de 2 a 4 linhas, uma nova a cada 1 a 6 s com legenda simples entre elas, sem
+  repetir estilo nem fonte de destaque em frases seguidas. O plano está em `plano_exemplos.json` lá.
+- **A proporção é um guia, não uma cota** (2026-10-21): varia conforme o vídeo pede. O que manda é o
+  roteiro: a dinâmica vai **sempre nas frases e palavras de maior destaque** (a ideia central, o dado, o
+  alerta, o chamado). Nunca use frase de passagem só para chegar ao número; se o trecho não tem frase
+  forte, fica em legenda simples.
 - **Abertura:** **as primeiras frases do vídeo são sempre dinâmicas**, como gancho.
 - **Variedade:** alterne os 4 estilos, nunca o mesmo em duas frases seguidas.
 - **Proibido:** o efeito "falha" (palavra piscando).
