@@ -168,6 +168,29 @@ def recentes():
     return os.path.join(pasta_concat_app(), "recents.json")
 
 
+def _garantir_ffmpeg():
+    """O winget põe o ffmpeg no PATH só de janelas novas: um terminal (ou o Claude Code) aberto antes da
+    instalação não o acharia. Procura nas pastas do winget e põe no PATH deste processo."""
+    if not WINDOWS or shutil.which("ffmpeg"):
+        return
+    local = os.environ.get("LOCALAPPDATA", "")
+    candidatas = [os.path.join(local, "Microsoft", "WinGet", "Links")]
+    pacotes = os.path.join(local, "Microsoft", "WinGet", "Packages")
+    if os.path.isdir(pacotes):
+        for nome in os.listdir(pacotes):
+            if nome.lower().startswith("gyan.ffmpeg"):
+                for raiz, _, arquivos in os.walk(os.path.join(pacotes, nome)):
+                    if "ffmpeg.exe" in arquivos:
+                        candidatas.append(raiz)
+    for pasta in candidatas:
+        if os.path.exists(os.path.join(pasta, "ffmpeg.exe")):
+            os.environ["PATH"] = pasta + os.pathsep + os.environ.get("PATH", "")
+            return
+
+
+_garantir_ffmpeg()
+
+
 def python_venv():
     sub = ("Scripts", "python.exe") if WINDOWS else ("bin", "python")
     return os.path.join(RAIZ, "tools", ".venv", *sub)

@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 import mediapipe as mp
 from mediapipe.tasks.python import BaseOptions, vision
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..")); import plataforma  # noqa: E401,E402 (acha o ffmpeg no Windows)
 
 MODELO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "modelos", "face_landmarker.task")
 FPS = 30

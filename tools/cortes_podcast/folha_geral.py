@@ -1,5 +1,6 @@
 """Folha única: 5 quadros por corte (gancho, peças de enquadramento distintas, composições). Uso: folha_geral.py <saida.jpg> <dir>=<mp4> ..."""
 import json, os, subprocess, sys, tempfile
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..")); import plataforma  # noqa: E401,E402 (acha o ffmpeg no Windows)
 out = sys.argv[1]; d = tempfile.mkdtemp(); linhas = []
 for par in sys.argv[2:]:
     pasta, mp4 = par.split("=", 1)

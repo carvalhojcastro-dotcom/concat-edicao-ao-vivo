@@ -1,6 +1,7 @@
 """Folha de conferência do MP4 final: um quadro no meio de cada peça de enquadramento e um no fim
 de cada composição de legenda. Uso: folha.py <dir do corte> <final.mp4> <saida.jpg>"""
 import json, os, subprocess, sys, tempfile
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..")); import plataforma  # noqa: E401,E402 (acha o ffmpeg no Windows)
 pasta, mp4, out = sys.argv[1:4]
 cfg = json.load(open(os.path.join(pasta, "corte.json")))
 plano = json.load(open(os.path.join(pasta, "plano.json")))

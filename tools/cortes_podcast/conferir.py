@@ -1,6 +1,7 @@
 """Segunda transcrição (faster-whisper medium) só do áudio de um corte, e as divergências com o turbo.
 Uso: conferir.py <dir do corte> <audio16k.wav da fonte>   -> grava medium.json e imprime as diferenças."""
 import difflib, json, os, re, subprocess, sys, tempfile
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..")); import plataforma  # noqa: E401,E402 (acha o ffmpeg no Windows)
 pasta, wav = sys.argv[1], sys.argv[2]
 cfg = json.load(open(os.path.join(pasta, "corte.json")))
 words = json.load(open(os.path.join(pasta, "words.json")))

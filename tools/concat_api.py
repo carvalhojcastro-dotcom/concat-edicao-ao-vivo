@@ -2,6 +2,10 @@
 import json
 import os
 import socket
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import plataforma  # noqa: E402,F401  (no Windows, acha o ffmpeg mesmo num terminal aberto antes da instalação)
 
 # O token da API do Concat (Configurações › API), na raiz do repositório e fora do Git.
 TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".concat-token")

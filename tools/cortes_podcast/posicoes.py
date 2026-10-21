@@ -1,4 +1,5 @@
 import sys, subprocess, numpy as np
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..")); import plataforma  # noqa: E401,E402 (acha o ffmpeg no Windows)
 sys.path.insert(0, sys.argv[0].rsplit('/',1)[0]); from rostos import Rostos
 src = sys.argv[1]; R = Rostos(1280, 720)
 for t in [float(x) for x in sys.argv[2:]]:

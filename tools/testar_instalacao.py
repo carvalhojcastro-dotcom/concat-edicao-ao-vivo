@@ -54,7 +54,8 @@ def main():
 
     from concat_api import Concat, timeline
     from render_projeto import tirar_dos_recentes
-    base = os.path.join(plataforma.RAIZ, "dist", "verificacao")
+    # o Concat só grava dentro da pasta do usuário: o projeto de teste vai para lá (o repositório pode estar fora)
+    base = os.path.join(os.path.expanduser("~"), ".concat-teste-instalacao")
     os.makedirs(base, exist_ok=True)
     nome = "_teste_instalacao"
     proj = os.path.join(base, nome)
@@ -88,7 +89,10 @@ def main():
         api.batch([{"op": "setClipTransform", "clipId": c["id"], "offsetX": p["ox"], "offsetY": p["oy"]}
                    for c, p in zip(novos, palavras)])
         saida = sys.argv[sys.argv.index("--quadro") + 1] if "--quadro" in sys.argv else os.path.join(base, "teste_instalacao.png")
-        api.call("preview.frame", path=proj, time=1.0, output=os.path.abspath(saida), width=540, height=960)
+        quadro = os.path.join(base, "quadro.png")
+        api.call("preview.frame", path=proj, time=1.0, output=quadro, width=540, height=960)
+        if os.path.exists(quadro):
+            shutil.move(quadro, saida)
         item("Concat renderiza a legenda dinâmica", os.path.exists(saida) and os.path.getsize(saida) > 1000, saida)
     except Exception as e:  # noqa: BLE001
         item("Concat renderiza a legenda dinâmica", False, str(e)[:200])
