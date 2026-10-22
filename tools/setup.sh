@@ -94,6 +94,11 @@ else
   echo "  já instalado em /Applications/Concat.app"
 fi
 
+echo "== Efeitos próprios do Concat (efeitos/ -> preferências do Concat)"
+mkdir -p "$HOME/Library/Application Support/app.concat.editor/effects"
+cp -R efeitos/* "$HOME/Library/Application Support/app.concat.editor/effects/"
+echo "  $(ls efeitos | tr '\n' ' ')(reabra o Concat para ele ler efeitos novos)"
+
 echo "== API do Concat (porta 7420) e .concat-token"
 # Liga o servidor nas preferências do Concat e grava o mesmo token em .concat-token. Com o Concat
 # aberto ele regravaria as preferências ao fechar, então isso só é feito com o app fechado.

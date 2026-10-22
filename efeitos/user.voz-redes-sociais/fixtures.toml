@@ -1,0 +1,13 @@
+[[case]]
+name = "default"
+chain = "highpass=f=70,acompressor=threshold=0.125:ratio=3:attack=8:release=120,volume=13.0dB,alimiter=limit=0.84:attack=3:release=60:level=disabled"
+
+[[case]]
+name = "minimum"
+at = "min"
+chain = "highpass=f=70,acompressor=threshold=0.125:ratio=3:attack=8:release=120,volume=0.0dB,alimiter=limit=0.84:attack=3:release=60:level=disabled"
+
+[[case]]
+name = "maximum"
+at = "max"
+chain = "highpass=f=70,acompressor=threshold=0.125:ratio=3:attack=8:release=120,volume=24.0dB,alimiter=limit=0.84:attack=3:release=60:level=disabled"

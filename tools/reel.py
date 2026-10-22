@@ -35,6 +35,7 @@ JANELA = 0.025         # s
 PAUSA_MIN = 0.21       # s de fonte (~0,2 s na timeline a 1.05x)
 RESPIRO = 0.0525       # s deixados de cada lado de um corte de pausa
 FOLGA_BORDA = 0.06     # s antes/depois da voz na borda de um trecho
+FOLGA_FIM_FALA = 0.12  # s depois do fim da última palavra (o fim de frase é falado baixo)
 
 
 def api_de(projeto):
@@ -128,7 +129,14 @@ def cortes(trabalho, trechos):
         j = min(int(fim_busca / JANELA), len(rms) - 1)
         while j > i and rms[j] <= LIMIAR_VOZ:
             j -= 1
-        keep.append([round(i * JANELA - FOLGA_BORDA, 3), round((j + 1) * JANELA + FOLGA_BORDA, 3)])
+        fim = (j + 1) * JANELA + FOLGA_BORDA
+        # O fim de frase sai baixinho ("pe-so", "u-so": -36 a -40 dB, quase o ruído), abaixo do limiar de
+        # voz: o corte comia o fim da palavra (Ozempic, 2026-10-21). Vai até 0,12 s depois do fim da
+        # última palavra do trecho, sem passar da palavra seguinte.
+        ult = [w["end"] for w in palavras if w["start"] < b and w["end"] > b - 0.4]
+        if ult:
+            fim = max(fim, min(max(ult) + FOLGA_FIM_FALA, fim_busca))
+        keep.append([round(i * JANELA - FOLGA_BORDA, 3), round(fim, 3)])
     # palavras que cruzam os trechos; a 1ª costuma vir marcada cedo, então o corte de borda vale
     kw = []
     for w in palavras:

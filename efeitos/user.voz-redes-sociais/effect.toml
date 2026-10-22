@@ -1,0 +1,25 @@
+format = 2
+
+# Voz no padrão das redes (Instagram, TikTok, YouTube: ~-14 LUFS, pico abaixo de -1 dB).
+# Compressor leve, ganho e limitador DENTRO do efeito, nessa ordem: o volume do clipe vem depois dos
+# efeitos no Concat, então só assim o ganho alto não estoura. Calibrado no Ozempic (2026-10-21):
+# com o Noise Reduction a 15% antes, 13,3 dB levam a fala de -26,7 a -14 LUFS, pico -1,5 dB.
+[effect]
+id = "user.voz-redes-sociais"
+name = "Voz para redes sociais"
+kind = "audio"
+category = "Clean"
+intensity = "ganho"
+description = "Compressor leve, ganho e limitador: a fala no volume padrão das redes sociais sem estourar."
+
+[[param]]
+key = "ganho"
+label = "Ganho"
+min = 0
+max = 24
+default = 13
+step = 0.5
+unit = "dB"
+
+[ffmpeg]
+chain = "highpass=f=70,acompressor=threshold=0.125:ratio=3:attack=8:release=120,volume={fixed(ganho, 1)}dB,alimiter=limit=0.84:attack=3:release=60:level=disabled"

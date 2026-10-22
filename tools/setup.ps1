@@ -113,6 +113,12 @@ if ($SemConcat) {
   Write-Host "  instalado: $exe"
 }
 
+Write-Host "== Efeitos próprios do Concat (efeitos\ -> preferências do Concat)"
+$efeitos = Join-Path $env:APPDATA "app.concat.editor\effects"
+New-Item -ItemType Directory -Force $efeitos | Out-Null
+Copy-Item (Join-Path $raiz "efeitos\*") $efeitos -Recurse -Force
+Write-Host "  copiados para $efeitos (reabra o Concat para ele ler efeitos novos)"
+
 Write-Host "== API do Concat (porta 7420) e .concat-token"
 # Liga o servidor nas preferências do Concat e grava o mesmo token em .concat-token. Com o Concat
 # aberto ele regravaria as preferências ao sair: só fecha o Concat se ainda precisar ligar.

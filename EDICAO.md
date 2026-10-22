@@ -21,8 +21,9 @@ movimento lento. A exportação é em 4K a 30 fps.
 | Item | Padrão |
 |---|---|
 | **Tomadas** | Fica sempre a última tomada completa e limpa de cada trecho. Saem bastidor e falas de produção ("ficou ruim", "desculpa", "vamos de novo", "pode soltar"). |
-| **Bordas dos trechos** | Começa e termina na 1ª e na última batida de voz acima de -30 dB, com 0,06 s de folga. O Whisper marca a 1ª palavra até 0,7 s cedo, então não confie nele para a borda. |
+| **Bordas dos trechos** | Começa e termina na 1ª e na última batida de voz acima de -30 dB, com 0,06 s de folga; **o fim vai pelo menos 0,12 s além do fim da última palavra** (fim de frase é falado baixo e era cortado: "peso", "uso", 2026-10-21). O Whisper marca a 1ª palavra até 0,7 s cedo, então não confie nele para a borda. |
 | **Pausas** | Corta toda pausa ≥0,2 s, **respirações incluídas**: RMS em janelas de 25 ms, abaixo de -36 dB por ≥0,15 s, deixando 0,05 s de respiro de cada lado. |
+| **Áudio para redes** | Quando pedirem volume "padrão de rede social": Noise Reduction 15% + efeito `user.voz-redes-sociais` (compressor leve, ganho, limitador; pasta `efeitos/`, o setup instala) com ganho calibrado para ~-14 LUFS e pico ≤ -1 dB, volume do clipe 1,0. No Ozempic: 13,3 dB. Mais de 30% de redução de ruído soa abafado. |
 | **Velocidade** | 1.05x em todos os clipes, sem folgas, alinhados à grade de quadros (`alinhar_quadros.py`). |
 | **Legenda simples** | Uma palavra por vez, Helvetica 400 branca, **92% do tamanho base** (0.04302), tracking -0.05 em (o "-0.3" do CapCut), **contorno preto fino + sombra**, offsetY **0.17** (abaixo do rosto). |
 | **Texto da legenda** | Sem ponto final; maiúscula só no início de frase; "?" e vírgulas ficam. Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
@@ -129,6 +130,10 @@ some. Antes de legendar, olhe a roupa; se houver estampa clara:
   preset `linha2`);
 - sobre B-roll claro, **nada de contorno grosso** ("não use traços tão fortes"): use `sombra_suave`;
 - confira todas as frases numa folha de quadros antes de entregar.
+- **Com zoom pedido** (Ozempic, 2026-10-21): zoom in que segura a estampa no lugar e sobe o rosto —
+  `centralizar_zoom.py <projeto> 0.25` com escala 1,12 —, então a faixa da legenda abaixo da estampa
+  vale para todos os takes. Legenda simples com `--altura=` calculada para o topo das letras ficar em
+  fim da estampa + 0,025; dinâmicas com `--escala=0.85`, blocos de 2 linhas (base até ~0,88).
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
