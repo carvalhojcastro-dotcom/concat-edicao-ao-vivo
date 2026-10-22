@@ -41,6 +41,9 @@ $ErrorActionPreference = "Continue"
 & $py -m pip uninstall -y -q opencv-python-headless 2>$null | Out-Null
 $ErrorActionPreference = "Stop"
 & $py -m pip install -q --force-reinstall --no-deps "opencv-contrib-python<5"
+# limpeza do ruído de fundo (tools\limpar_audio.py): DeepFilterNet + PyTorch; o numpy volta para 2.0.2 por último
+& $py -m pip install -q deepfilternet torch torchaudio
+& $py -m pip install -q --no-deps "numpy==2.0.2"
 if (Tem nvidia-smi) {
   Write-Host "  placa NVIDIA: bibliotecas CUDA para a transcrição"
   & $py -m pip install -q nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"

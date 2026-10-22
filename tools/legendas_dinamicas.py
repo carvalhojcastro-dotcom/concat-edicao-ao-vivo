@@ -397,6 +397,11 @@ def main():
         assert idx == list(range(idx[0], idx[-1] + 1)), f"frase {n}: índices fora de ordem {idx}"
         ultimo = idx[-1]
         fim = legendas[ultimo + 1]["start"] if ultimo + 1 < len(legendas) else legendas[ultimo]["start"] + legendas[ultimo]["duration"]
+        # A legenda simples da última palavra já sai num corte longo (legendas_simples.py); se entre ela
+        # e a próxima há uma troca de take, o bloco sai junto, no corte, e não invade o take seguinte.
+        fim_ult = legendas[ultimo]["start"] + legendas[ultimo]["duration"]
+        if fim_ult < fim - 1e-3 and any(fim_ult - 1.5 / FPS <= c["start"] < fim for c in tl["clips"] if c["kind"] == "video"):
+            fim = fim_ult
         fim = round(fim * FPS) / FPS
         FONTE_CHAVE = bloco.get("fonte_chave", "serifa")
         palavras = montar(bloco["estilo"], bloco["linhas"], set(bloco["chave"]), textos)

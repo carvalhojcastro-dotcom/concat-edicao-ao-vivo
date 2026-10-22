@@ -60,7 +60,8 @@ $PY tools/reel.py cortes "$W" "38.60-58.80,117.16-158.92,193.40-209.58"
 ## 3. Parte 1
 Sem nitidez, cor ou LUT automáticas (pedido de 2026-10-19): só aplique se o usuário pedir.
 ```bash
-$PY tools/reel.py aplicar "$P" "$W"                  # cortes + 1.05x + grade de quadros
+$PY tools/reel.py aplicar "$P" "$W"                  # cortes + 1.10x + grade de quadros
+$PY tools/limpar_audio.py "<video>" "$P/midia/<nome>_audio_limpo.mov" --projeto "$P"   # ruído de fundo (DeepFilterNet)
 $PY tools/legendas_simples.py "$P" "$W/words.json" T4   # 92%, offsetY 0.17, contorno + sombra
 $PY tools/reel.py listar "$P"                        # índices e tempos para os planos
 ```
@@ -101,17 +102,21 @@ Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e
 
 ## 5. Zoom seco (julgamento)
 Escreva `$W/zoom.json` (formato em `tools/planos_exemplo/zoom.json`): trechos `[índice da palavra
-que começa a frase, escala]`.
-- Comece em 1.0 e alterne 1.0 e 1.18; use **1.32 nas frases de impacto** ("Salve este vídeo",
-  "Atenção", a conclusão).
-- Use de 15 a 18 trocas por minuto.
+que começa a frase, escala]`. O zoom só troca num corte que já existe (o `zoom_cortes.py` dá a escala
+de cada take pelo trecho onde ele começa); nunca corte uma fala contínua só para trocar o zoom.
+- **Conjuntos que seguem as frases:** cada conjunto é uma frase curta ou duas, ou uma ideia (pergunta,
+  dado, exemplo, conclusão), em geral 2 a 4 s; o tamanho varia com a frase, para fazer sentido. Cerca de
+  16 a 18 trocas por minuto, sem exagero.
+- Alterne aberto (`1.0` no plano) e zoom in (`1.18`); `1.32` só numa frase de impacto ("Salve este vídeo").
+- Depois, o `centralizar_zoom.py` enquadra **cada take**: pessoa centralizada, cabeça a ~13% do topo
+  (nunca menos de 10%), abertos a 108% (sobra imagem para centralizar). Com estampa clara no peito,
+  `--estampa` impede que ela desça sobre a legenda (limitando o zoom quando precisa).
 ```bash
 cp "$P/concat.json" "$W/ref.json"
 $PY tools/zoom_cortes.py "$P" "$W/ref.json" "$W/zoom.json"
-$PY tools/centralizar_zoom.py "$P"
+$PY tools/centralizar_zoom.py "$P"            # ou --estampa
 ```
-Se algum trecho sair "limitado pela folga", suba a escala dele (ex.: 1.45) com `setClipTransform`
-e rode `centralizar_zoom.py` de novo.
+Ele avisa os takes em que a pessoa ficou de lado por falta de folga; confira esses nos quadros.
 
 ## 6. B-roll (julgamento + custo)
 Escreva `$W/broll.json` (formato em `tools/planos_exemplo/broll.json`).

@@ -10,7 +10,7 @@ Rode com o python do venv: tools/.venv/bin/python tools/reel.py <comando> ...
                                          última, tempos do Whisper, da tomada boa de cada trecho).
                                          Gera keep.json, words.json (legendas) e cortes.json.
                                          "ini-fim!" usa a borda exata (fim de frase falado baixinho)
-  aplicar <projeto> <trabalho>           corta, 1.05x sem folgas, alinha à grade de quadros e salva
+  aplicar <projeto> <trabalho>           corta, 1.10x sem folgas, alinha à grade de quadros e salva
   nitidez <projeto>                      camada concat.adjust (sharpen 20.23) em T3
   listar <projeto>                       legendas com índice (para montar os planos)
   fechar <projeto>                       salva e solta o projeto da API (senão a janela não abre)
@@ -28,11 +28,11 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 from concat_api import Concat, timeline  # noqa: E402
 
-VELOCIDADE = 1.05
+VELOCIDADE = 1.10    # padrão do usuário desde 2026-10-21 (antes 1.05)
 LIMIAR_PAUSA = -36.0   # dB RMS: abaixo disso por >= 0,15 s é pausa (respiração incluída)
 LIMIAR_VOZ = -30.0     # dB RMS: a 1ª/última batida de voz de um trecho
 JANELA = 0.025         # s
-PAUSA_MIN = 0.21       # s de fonte (~0,2 s na timeline a 1.05x)
+PAUSA_MIN = 0.21       # s de fonte (~0,19 s na timeline a 1.10x)
 RESPIRO = 0.0525       # s deixados de cada lado de um corte de pausa
 FOLGA_BORDA = 0.06     # s antes/depois da voz na borda de um trecho
 FOLGA_FIM_FALA = 0.12  # s depois do fim da última palavra (o fim de frase é falado baixo)
@@ -126,6 +126,13 @@ def cortes(trabalho, trechos):
         i = int(ini_busca / JANELA)
         while i < len(rms) and rms[i] <= LIMIAR_VOZ:
             i += 1
+        # Palavra falada baixo ("Então", -34 a -37 dB) fica abaixo do limiar de voz e o trecho começava
+        # tarde (ou na palavra seguinte). Vale o 1º ponto com 50 ms acima do limiar de pausa, se for antes.
+        k = int(max(ini_busca, a - 0.15) / JANELA)   # sem ir atrás de respiração antes do trecho pedido
+        while k + 1 < len(rms) and k < i and not (rms[k] > LIMIAR_PAUSA and rms[k + 1] > LIMIAR_PAUSA):
+            k += 1
+        if k < i and k * JANELA < b:
+            i = k
         j = min(int(fim_busca / JANELA), len(rms) - 1)
         while j > i and rms[j] <= LIMIAR_VOZ:
             j -= 1
@@ -137,6 +144,17 @@ def cortes(trabalho, trechos):
         if ult:
             fim = max(fim, min(max(ult) + FOLGA_FIM_FALA, fim_busca))
         keep.append([round(i * JANELA - FOLGA_BORDA, 3), round(fim, 3)])
+    # Trechos que ficam colados no bruto (o fim esticado até o fim da palavra encosta no próximo, ou se
+    # sobrepõem) viram um só: senão sobra um corte que não tira nada e só faz a imagem pular no meio da
+    # frase (Ozempic, 32;28, 2026-10-21). Uma troca de zoom no meio de fala contínua é do zoom, não daqui.
+    keep.sort()
+    junto_keep = [keep[0]]
+    for s_, e_ in keep[1:]:
+        if s_ - junto_keep[-1][1] < 0.08:
+            junto_keep[-1][1] = max(junto_keep[-1][1], e_)
+        else:
+            junto_keep.append([s_, e_])
+    keep = junto_keep
     # palavras que cruzam os trechos; a 1ª costuma vir marcada cedo, então o corte de borda vale
     kw = []
     for w in palavras:

@@ -30,7 +30,7 @@ def item(nome, passou, detalhe=""):
 def main():
     print(f"Sistema: {'Mac' if plataforma.MAC else 'Windows' if plataforma.WINDOWS else sys.platform}")
     item("ffmpeg e ffprobe no PATH", plataforma.ffmpeg_ok())
-    libs = ["PIL", "fontTools", "numpy", "cv2", "mediapipe", "dotenv", "higgsfield_client"]
+    libs = ["PIL", "fontTools", "numpy", "cv2", "mediapipe", "dotenv", "higgsfield_client", "df"]
     libs.append("mlx_whisper" if plataforma.MAC else "faster_whisper")
     for lib in libs:
         try:

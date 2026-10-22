@@ -51,6 +51,23 @@ def tmap(src, prefer):
     return next((st + (b - a) / sp for a, b, st, sp in reversed(segs) if b < src), 0.0)
 
 snap = lambda t: round(t * FPS) / FPS
+
+
+def take_de(src):
+    """Índice do take (na ordem da timeline) que mostra este instante do bruto, ou None."""
+    return next((k for k, (a, b, st, sp) in enumerate(segs) if a - 1e-6 <= src <= b + 1e-6), None)
+
+
+def corte_longo_depois(k):
+    """Fim do take k, na timeline, se o próximo take não continua a fala (pulou > 0,25 s do bruto:
+    fim de frase ou trecho descartado). A palavra sai aí: não fica na tela no take seguinte
+    esperando a próxima palavra (pedido de 2026-10-21, "uso" sobrando no take do "Então")."""
+    if k is None or k + 1 >= len(segs):
+        return None
+    a, b, st, sp = segs[k]
+    return st + (b - a) / sp if segs[k + 1][0] - b > 0.25 else None
+
+
 itens = []
 for i, w in enumerate(words):
     s = snap(tmap(w["start"], "next"))
@@ -58,6 +75,9 @@ for i, w in enumerate(words):
     if i + 1 < len(words):
         nxt = snap(tmap(words[i + 1]["start"], "next"))
         e = min(nxt if nxt - e_w < 0.35 else snap(max(e_w, s + 2 / FPS)), nxt)
+        corte = corte_longo_depois(take_de(w["start"]))
+        if corte is not None and take_de(words[i + 1]["start"]) != take_de(w["start"]):
+            e = max(min(e, snap(corte)), s + 2 / FPS)
     else:
         e = min(snap(max(e_w, s + 2 / FPS)), snap(fim_tl))
     itens.append([w["word"].strip().rstrip("."), s, e])

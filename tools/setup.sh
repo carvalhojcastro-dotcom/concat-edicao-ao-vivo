@@ -22,6 +22,10 @@ tools/.venv/bin/pip install -q mlx-whisper higgsfield-client python-dotenv pillo
 # o mediapipe puxa o opencv 5, que tirou o detector de rosto do zoom: fica o contrib 4.x
 tools/.venv/bin/pip uninstall -y -q opencv-python-headless 2>/dev/null || true
 tools/.venv/bin/pip install -q --force-reinstall --no-deps "opencv-contrib-python<5"
+# limpeza do ruído de fundo (tools/limpar_audio.py): DeepFilterNet, que puxa o PyTorch (~600 MB). Ele pede
+# numpy < 2, mas roda com o 2.0 que o OpenCV 4.14 exige: o numpy volta para 2.0.2 por último.
+tools/.venv/bin/pip install -q deepfilternet torch torchaudio
+tools/.venv/bin/pip install -q --no-deps "numpy==2.0.2"
 
 echo "== Fontes das Legendas Dinâmicas (fonts/)"
 mkdir -p fonts

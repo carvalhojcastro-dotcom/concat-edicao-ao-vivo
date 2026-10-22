@@ -10,7 +10,7 @@ usando o Concat deste fork pela API (porta 7420) e as ferramentas de `tools/`.
 ---
 
 ## O resultado, em uma frase
-O vídeo começa no apresentador já falando, sem pausas nem tomadas ruins, a 1.05x. Tem legenda
+O vídeo começa no apresentador já falando, sem pausas nem tomadas ruins, a 1.10x. Tem legenda
 palavra por palavra, frases de destaque montadas palavra a palavra em fontes mistas, zoom seco
 centralizado por frase e B-rolls de imagem gerados por IA que entram e saem nos cortes com
 movimento lento. A exportação é em 4K a 30 fps.
@@ -23,8 +23,9 @@ movimento lento. A exportação é em 4K a 30 fps.
 | **Tomadas** | Fica sempre a última tomada completa e limpa de cada trecho. Saem bastidor e falas de produção ("ficou ruim", "desculpa", "vamos de novo", "pode soltar"). |
 | **Bordas dos trechos** | Começa e termina na 1ª e na última batida de voz acima de -30 dB, com 0,06 s de folga; **o fim vai pelo menos 0,12 s além do fim da última palavra** (fim de frase é falado baixo e era cortado: "peso", "uso", 2026-10-21). O Whisper marca a 1ª palavra até 0,7 s cedo, então não confie nele para a borda. |
 | **Pausas** | Corta toda pausa ≥0,2 s, **respirações incluídas**: RMS em janelas de 25 ms, abaixo de -36 dB por ≥0,15 s, deixando 0,05 s de respiro de cada lado. |
-| **Áudio para redes** | Quando pedirem volume "padrão de rede social": Noise Reduction 15% + efeito `user.voz-redes-sociais` (compressor leve, ganho, limitador; pasta `efeitos/`, o setup instala) com ganho calibrado para ~-14 LUFS e pico ≤ -1 dB, volume do clipe 1,0. No Ozempic: 13,3 dB. Mais de 30% de redução de ruído soa abafado. |
-| **Velocidade** | 1.05x em todos os clipes, sem folgas, alinhados à grade de quadros (`alinhar_quadros.py`). |
+| **Ruído de fundo** | `tools/limpar_audio.py <bruto> <projeto>/midia/<nome>_audio_limpo.mov --projeto <projeto>` (DeepFilterNet, teto 24 dB): limpa o chiado sem abafar a voz e troca a mídia dos clipes (vídeo só copiado). **Não use o Noise Reduction do Concat** (afftdn: abafa e deixa metálico). Pedido de 2026-10-21. |
+| **Áudio para redes** | Quando pedirem volume "padrão de rede social": áudio já limpo pelo `limpar_audio.py` + efeito `user.voz-redes-sociais` (compressor leve, ganho, limitador; pasta `efeitos/`, o setup instala) com ganho calibrado para ~-14 LUFS e pico ≤ -1 dB, volume do clipe 1,0. No Ozempic (áudio limpo): 14,2 dB → -14,0 LUFS, pico -1,4 dB. |
+| **Velocidade** | **1.10x** em todos os clipes (padrão desde 2026-10-21; antes 1.05x), sem folgas, alinhados à grade de quadros (`alinhar_quadros.py`). |
 | **Legenda simples** | Uma palavra por vez, Helvetica 400 branca, **92% do tamanho base** (0.04302), tracking -0.05 em (o "-0.3" do CapCut), **contorno preto fino + sombra**, offsetY **0.17** (abaixo do rosto). |
 | **Texto da legenda** | Sem ponto final; maiúscula só no início de frase; "?" e vírgulas ficam. Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
 | **Nitidez e cor** | **Não aplicar automaticamente** (pedido de 2026-10-19). Só quando pedirem: camada `concat.adjust` em T3 (nitidez antiga: `sharpen` 20.23). |
@@ -86,10 +87,15 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
   pedirem, pelo `"destaque"` do plano. Se usar uma cor escura, rode `contraste_destaques.py`, que troca para branco quando o fundo atrás é escuro.
 
 ## 3. Zoom seco (punch-in)
-- **Sem animação.** O enquadramento muda no começo das frases: 100%, 118% e **132% nas frases de
-  impacto** (como "Salve este vídeo").
-- **Um enquadramento fixo por trecho de zoom**, centralizado na posição média do rosto no trecho
-  (`centralizar_zoom.py`, OpenCV). Nunca recentralize a cada take.
+- **A pessoa sempre centralizada e com margem no topo** (pedido de 2026-10-21): enquadre cada take,
+  inclusive os abertos (por isso o aberto é 108%, não 100%: sobra imagem para centralizar). O centro é a
+  média de rosto e peito; a cabeça fica a ~13% do topo em todos os takes, para a margem não pular.
+  Quem decide é o enquadramento, não um "enquadramento fixo por trecho".
+- **Conjuntos que seguem as frases:** cada conjunto de zoom é uma frase curta ou duas, ou uma ideia (2 a 4 s,
+  variando com a frase), ~16 a 18 trocas por minuto; troca só em corte que já existe. `tools/centralizar_zoom.py`
+  faz o enquadramento take a take (`--estampa` com estampa clara no peito).
+- **Sem animação.** O enquadramento muda no começo das frases: aberto (108% depois de centralizar), 118%
+  e **132% nas frases de impacto** (como "Salve este vídeo").
 - Se o rosto ficar fora do centro por falta de folga, suba a escala do trecho (ex.: 145%).
 
 ## 4. B-roll de imagem (Higgsfield)
@@ -125,15 +131,14 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 ## 6. Legenda sobre roupa com estampa
 Na camiseta com estampa clara no peito (ex.: "SIMPLES MEDICINA" do Dr. Leonardo), a legenda branca
 some. Antes de legendar, olhe a roupa; se houver estampa clara:
-- zoom em 100% (sem punch-in) e legenda **abaixo da estampa**, na parte escura (faixa do fim da
+- zoom normal (enquadrado com `--estampa`, ver abaixo) e legenda **abaixo da estampa**, na parte escura (faixa do fim da
   estampa + 0,025 até 0,86 da altura; largura até 0,56; linhas acima de 20 caracteres em duas,
   preset `linha2`);
 - sobre B-roll claro, **nada de contorno grosso** ("não use traços tão fortes"): use `sombra_suave`;
 - confira todas as frases numa folha de quadros antes de entregar.
-- **Com zoom pedido** (Ozempic, 2026-10-21): zoom in que segura a estampa no lugar e sobe o rosto —
-  `centralizar_zoom.py <projeto> 0.25` com escala 1,12 —, então a faixa da legenda abaixo da estampa
-  vale para todos os takes. Legenda simples com `--altura=` calculada para o topo das letras ficar em
-  fim da estampa + 0,025; dinâmicas com `--escala=0.85`, blocos de 2 linhas (base até ~0,88).
+- **Com zoom** (Ozempic, 2026-10-21): `centralizar_zoom.py <projeto> --estampa` (cabeça ≥ 10% do topo, estampa
+  ≤ 0,745); legenda simples com o topo das letras em 0,769 (`--altura=` calculada) e dinâmicas com
+  `--escala=0.85`, blocos de 2 linhas.
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
@@ -159,13 +164,13 @@ P="$(dirname "$PWD")/editados/<nome>"    # pasta do projeto (pasta Concat = mãe
 # 1. criar o projeto 2160x3840 a 30 fps, importar o bruto e pô-lo em T1 (project.create, media.import, addClip)
 # 2. transcrever (mlx-whisper large-v3-turbo, tempo por palavra) -> words.json e cortes.json
 $PY tools/cortar_ao_vivo.py "$P" cortes.json --pausa 0
-#    1.05x + empacotar (setClipSpeed + moveClips), depois:
+#    1.10x + empacotar (setClipSpeed + moveClips), depois:
 $PY tools/alinhar_quadros.py "$P"                       # depois: project.save
 $PY tools/legendas_simples.py "$P" words.json T4        # 92%, offsetY 0.17, contorno fino
 #    (sem nitidez nem cor automáticas; só se pedirem: addLayerClip concat.adjust em T3)
 $PY tools/legendas_dinamicas.py "$P" plano_dinamicas.json   # 92%, começa na altura da legenda simples
 $PY tools/zoom_cortes.py "$P" ref_legendas.json plano_zoom.json
-$PY tools/centralizar_zoom.py "$P"
+$PY tools/centralizar_zoom.py "$P"          # take a take; --estampa se houver estampa no peito
 $PY tools/broll_higgsfield.py plano_broll.json "$P/broll" <cena-teste>   # depois as outras
 $PY tools/broll_imagens.py "$P" plano_broll.json "$P/broll"
 $PY tools/broll_animar.py "$P"
