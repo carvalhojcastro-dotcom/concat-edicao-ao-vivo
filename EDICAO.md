@@ -91,9 +91,13 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
   inclusive os abertos (por isso o aberto é 108%, não 100%: sobra imagem para centralizar). O centro é a
   média de rosto e peito; a cabeça fica a ~13% do topo em todos os takes, para a margem não pular.
   Quem decide é o enquadramento, não um "enquadramento fixo por trecho".
-- **Conjuntos que seguem as frases:** cada conjunto de zoom é uma frase curta ou duas, ou uma ideia (2 a 4 s,
-  variando com a frase), ~16 a 18 trocas por minuto; troca só em corte que já existe. `tools/centralizar_zoom.py`
-  faz o enquadramento take a take (`--estampa` com estampa clara no peito).
+- **Conjuntos que seguem as frases:** cada conjunto de zoom é uma frase curta ou duas, ou uma ideia (1,5 a 4 s,
+  variando com a frase), ~12 a 16 trocas por minuto; troca só em corte que já existe, e take de fala contínua
+  com mais de 4 s é dividido num começo de frase. `tools/zoom_por_frases.py` monta os conjuntos pelas
+  legendas (`--min=1.5 --ideia=2.5` deu o ritmo do Ozempic) e `tools/centralizar_zoom.py` faz o
+  enquadramento take a take (`--estampa` com estampa no peito).
+- **Centralizar vem primeiro:** pessoa a mais de 3% do centro faz o conjunto ganhar o zoom que dá folga
+  (até 130%), mesmo que a estampa desça um pouco; e a margem da cabeça vence a estampa.
 - **Sem animação.** O enquadramento muda no começo das frases: aberto (108% depois de centralizar), 118%
   e **132% nas frases de impacto** (como "Salve este vídeo").
 - Se o rosto ficar fora do centro por falta de folga, suba a escala do trecho (ex.: 145%).
@@ -123,8 +127,11 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 ## 5. Entrega
 - O projeto fica pronto em `editados/<nome>`. **Exporte só quando pedirem** (o usuário prefere ver no
   Concat e muitas vezes exporta ele mesmo).
-- Exportação: **4K 2160×3840 a 30 fps, SDR** (`hdr=False`; vídeo de iPhone é HLG e em HDR legenda e
+- Exportação: **4K 2160×3840 a 30 fps, SDR** (Dr. Leonardo: **2K 1440×2560**, `exportar_seguro.py <P> <mp4> 1440 2560`) (`hdr=False`; vídeo de iPhone é HLG e em HDR legenda e
   B-roll ficavam cinza). Crie o projeto já em 30 fps.
+- **Confira o MP4 antes de entregar** (pedido de 2026-10-21: "sempre confira ... para garantir que não fez
+  cortes errados"): `tools/conferir_video.py <P> <mp4>` transcreve o MP4, compara com as legendas e aponta
+  palavra faltando, sobrando ou pouco clara perto de corte. Ouça cada ponto e corrija antes de entregar.
 - Confira quadros do MP4 final: legendas, B-rolls, zoom, início e fim.
 - Feche o projeto na API (`project.close` com save), senão ele não abre na janela do Concat.
 
@@ -136,6 +143,11 @@ some. Antes de legendar, olhe a roupa; se houver estampa clara:
   preset `linha2`);
 - sobre B-roll claro, **nada de contorno grosso** ("não use traços tão fortes"): use `sombra_suave`;
 - confira todas as frases numa folha de quadros antes de entregar.
+- **Roupa clara** (camiseta branca/creme, Dr. Leonardo vídeos 5 a 8): a legenda branca some no tecido.
+  `tools/sombra_legenda.py <projeto>` põe uma sombra em degradê (PNG transparente numa trilha entre o vídeo
+  e as legendas, escurecendo ~70% de 0,70 até 0,80 da altura e até a base), sem mudar o estilo das
+  legendas. Placa atrás da palavra (`legendas_simples.py --fundo=#000000a6`) existe, mas não serve aos
+  blocos dinâmicos. A estampa escura em roupa clara também é achada pelo `--estampa`.
 - **Com zoom** (Ozempic, 2026-10-21): `centralizar_zoom.py <projeto> --estampa` (cabeça ≥ 10% do topo, estampa
   ≤ 0,745); legenda simples com o topo das letras em 0,769 (`--altura=` calculada) e dinâmicas com
   `--escala=0.85`, blocos de 2 linhas.

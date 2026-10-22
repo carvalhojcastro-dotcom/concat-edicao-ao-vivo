@@ -143,7 +143,8 @@ def cortes(trabalho, trechos):
         ult = [w["end"] for w in palavras if w["start"] < b and w["end"] > b - 0.4]
         if ult:
             fim = max(fim, min(max(ult) + FOLGA_FIM_FALA, fim_busca))
-        keep.append([round(i * JANELA - FOLGA_BORDA, 3), round(fim, 3)])
+        # a folga nunca entra na palavra vizinha (de outra tomada): sobrava um "e…" no corte (2026-10-22)
+        keep.append([round(max(i * JANELA - FOLGA_BORDA, ini_busca), 3), round(min(fim, fim_busca), 3)])
     # Trechos que ficam colados no bruto (o fim esticado até o fim da palavra encosta no próximo, ou se
     # sobrepõem) viram um só: senão sobra um corte que não tira nada e só faz a imagem pular no meio da
     # frase (Ozempic, 32;28, 2026-10-21). Uma troca de zoom no meio de fala contínua é do zoom, não daqui.

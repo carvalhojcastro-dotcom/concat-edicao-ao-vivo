@@ -7,7 +7,7 @@ Regras do usuário (2026-10-21, Ozempic):
   - sempre uma margem entre o topo do vídeo e a cabeça: a cabeça fica em --topo (0,13) e nunca acima de
     --topo-min (0,10), para a margem não pular de um take para o outro;
   - o zoom de cada conjunto vem do plano (zoom_cortes.py): clipes seguidos com a mesma escala.
-Com --estampa (camiseta com estampa clara no peito), a estampa nunca desce abaixo de 0,745 (ou do valor
+Com --estampa (camiseta com estampa no peito: clara em roupa escura ou escura em roupa clara), a estampa nunca desce abaixo de 0,745 (ou do valor
 dado), para não cair sobre a legenda; se cabeça e estampa não cabem juntas, o zoom do conjunto diminui.
 
 As medidas vêm de quadros que o próprio Concat renderiza com os takes a 100% (a cor do bruto HLG não
@@ -34,6 +34,8 @@ ABERTO = float(opc.get("aberto", 1.08))
 TOPO = float(opc.get("topo", 0.13))
 TOPO_MIN = float(opc.get("topo-min", 0.10))
 EST_MAX = float(opc["estampa"] or 0.745) if "estampa" in opc else None
+CENTRO_TOL = 0.03   # pessoa até 3% fora do centro passa; além disso o zoom do conjunto sobe para centralizar
+ZOOM_MAX = 1.30
 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
 
@@ -57,15 +59,25 @@ def medir(img):
     rosto = None
     if faces:
         x, y, fw, fh = max(faces, key=lambda f: f[2])
-        col = g[:, x + fw // 4:x + 3 * fw // 4]
-        cabelo = np.nonzero((col < 90).mean(1) > 0.3)[0]
-        cabelo = cabelo[cabelo < y]
-        rosto = ((x + fw / 2) / w, (cabelo.min() / h) if len(cabelo) else (y - 0.35 * fh) / h)
+        # cabelo: escuro e sem cor (azulejo azul escuro atrás não conta), linhas seguidas subindo do rosto
+        hsv_c = cv2.cvtColor(img[:, x + fw // 4:x + 3 * fw // 4], cv2.COLOR_BGR2HSV)
+        linha = ((hsv_c[..., 2] < 90) & (hsv_c[..., 1] < 110)).mean(1) > 0.3
+        topo = None
+        for yy in range(min(y + fh // 4, h - 1), -1, -1):
+            if linha[yy]:
+                topo = yy
+            elif topo is not None and topo - yy > 4:
+                break
+        rosto = ((x + fw / 2) / w, (topo / h) if topo is not None and topo < y else (y - 0.35 * fh) / h)
     estampa = None
     if EST_MAX is not None:
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         escuro = cv2.blur(((hsv[..., 2] < 150) & (hsv[..., 1] > 40)).astype(np.float32), (31, 31)) > 0.35
         m = (hsv[..., 2] > 170) & (hsv[..., 1] < 70) & escuro
+        if m[int(0.5 * h):int(0.82 * h), int(0.25 * w):int(0.75 * w)].sum() < 300:
+            # camiseta clara com estampa escura: letra quase preta (sem cor, ao contrário do azulejo)
+            claro = cv2.blur(((hsv[..., 2] > 150) & (hsv[..., 1] < 60)).astype(np.float32), (31, 31)) > 0.35
+            m = (hsv[..., 2] < 90) & (hsv[..., 1] < 90) & claro
         # só a faixa do peito: tira chão, parede dos lados e mãos lá embaixo
         m[:int(0.5 * h)] = False
         m[int(0.82 * h):] = False
@@ -82,11 +94,8 @@ def medir(img):
 
 api = Concat(path)
 api.sock.settimeout(600)
-medidas = []
-with projeto_para_render(path, transformar=natural) as (api_r, alvo):
-    takes_r = sorted([c for c in timeline(api_r.call("project.get", path=alvo))["clips"] if c["kind"] == "video"],
-                     key=lambda c: c["start"])
-    tmp = tempfile.mkdtemp(dir=os.path.expanduser("~"), prefix=".concat-medidas-")  # o Concat só grava na pasta do usuário
+def medir_takes(api_r, alvo, takes_r, tmp):
+    out = []
     for k, c in enumerate(takes_r):
         rs, es = [], []
         for f in (0.2, 0.5, 0.8):
@@ -95,12 +104,22 @@ with projeto_para_render(path, transformar=natural) as (api_r, alvo):
             r, e = medir(cv2.imread(png))
             rs += [r] if r else []
             es += [e] if e else []
-        medidas.append({"fx": float(np.median([r[0] for r in rs])) if rs else None,
-                        "topo": float(min(r[1] for r in rs)) if rs else None,
-                        "ex": float(np.median([e[0] for e in es])) if es else None,
-                        "est": float(max(e[1] for e in es)) if es else None})
+        out.append({"fx": float(np.median([r[0] for r in rs])) if rs else None,
+                    "topo": float(min(r[1] for r in rs)) if rs else None,
+                    "ex": float(np.median([e[0] for e in es])) if es else None,
+                    "est": float(max(e[1] for e in es)) if es else None})
+    return out
 
-shutil.rmtree(tmp, ignore_errors=True)
+
+with projeto_para_render(path, transformar=natural) as (api_r, alvo):
+    takes_r = sorted([c for c in timeline(api_r.call("project.get", path=alvo))["clips"] if c["kind"] == "video"],
+                     key=lambda c: c["start"])
+    tmp = tempfile.mkdtemp(dir=os.path.expanduser("~"), prefix=".concat-medidas-")  # o Concat só grava na pasta do usuário
+    try:
+        medidas = medir_takes(api_r, alvo, takes_r, tmp)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
 # o que um take não mostrou vem do vizinho mais próximo
 for chave in ("topo", "est"):
     for k, m in enumerate(medidas):
@@ -121,22 +140,27 @@ for k, c in enumerate(clips):
         conjuntos.append((s, [k]))
 
 cl = lambda v, f: max(-f, min(f, v))  # noqa: E731
+cx_de = lambda m: m["fx"] if m["fx"] is not None else (m["ex"] if m["ex"] is not None else 0.5)  # noqa: E731  rosto; peito se não houver
 cmds, log, finais = [], [], []
 for s_plano, ks in conjuntos:
     s = max(s_plano, ABERTO)
     if EST_MAX is not None:  # cabeça a TOPO_MIN do topo e estampa até EST_MAX só cabem até esta escala
         s = min(s, min((EST_MAX - TOPO_MIN) / max(medidas[k]["est"] - medidas[k]["topo"], 1e-3) for k in ks))
+    # centralizar vem antes da estampa (pedido do usuário; a regra da estampa é nossa): se a pessoa
+    # está de lado mais que CENTRO_TOL, o conjunto ganha o zoom que dá folga para trazê-la ao centro
+    lado = max(max(abs(cx_de(medidas[k]) - 0.5) - CENTRO_TOL, 0.0) for k in ks)
+    s = max(s, min(1 / (1 - 2 * lado), ZOOM_MAX))
     s = round(max(1.0, s), 3)
     f = (s - 1) / 2
     for k in ks:
         m = medidas[k]
-        cx = m["fx"] if m["fx"] is not None else (m["ex"] if m["ex"] is not None else 0.5)   # rosto; peito se não houver
+        cx = cx_de(m)
         ox = cl(-(cx - 0.5) * s, f)
         y = lambda v, o: 0.5 + (v - 0.5) * s + o  # noqa: E731
         oy = TOPO - y(m["topo"], 0.0)
         oy = max(oy, TOPO_MIN - y(m["topo"], 0.0))
         if EST_MAX is not None and y(m["est"], oy) > EST_MAX:
-            oy = EST_MAX - y(m["est"], 0.0)
+            oy = max(EST_MAX - y(m["est"], 0.0), TOPO_MIN - y(m["topo"], 0.0))   # a margem da cabeça vence
         oy = cl(oy, f)
         cmds.append({"op": "setClipTransform", "clipId": clips[k]["id"], "scale": s,
                      "offsetX": round(ox, 4), "offsetY": round(oy, 4)})
@@ -149,5 +173,5 @@ print("\n".join(log))
 print("centro da pessoa entre %.2f e %.2f | cabeça entre %.2f e %.2f do topo" % (
     min(f[1] for f in finais), max(f[1] for f in finais), min(f[2] for f in finais), max(f[2] for f in finais)))
 for k, cx, _ in finais:
-    if abs(cx - 0.5) > 0.03:
+    if abs(cx - 0.5) > CENTRO_TOL + 0.005:
         print(f"  take {k + 1}: centro em {cx:.2f} (a pessoa está muito de lado; o zoom não dá folga para mais)")

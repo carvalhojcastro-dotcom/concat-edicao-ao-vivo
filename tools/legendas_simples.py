@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Legendas simples da Parte 1: uma palavra por vez, Helvetica, sem animação, sem ponto final.
 
-Uso: legendas_simples.py <projeto> <words.json> [trilha=T4]
+Uso: legendas_simples.py <projeto> <words.json> [trilha=T4] [--escala=0.92] [--altura=0.17] [--fundo=#00000080]
   words.json: palavras do Whisper com tempos da MÍDIA DE ORIGEM (start, end, word).
   Os tempos viram tempos da timeline pelos clipes de vídeo (cortes e velocidade incluídos).
 Estilo aprovado: Helvetica Neue Medium (semibold) 500, fontSize 0.04302, tracking -0.00224 (o "-0.3" do CapCut),
@@ -25,6 +25,8 @@ trilha = args[0] if args else "T4"
 if "--sem-contorno" in sys.argv:  # só a sombra leve, sem contorno
     ESTILO = dict(ESTILO, strokeWidth=0.0)
 opc = dict(a[2:].split("=", 1) for a in sys.argv[3:] if a.startswith("--") and "=" in a)
+if "fundo" in opc:  # placa atrás da palavra (#RRGGBBAA), para legenda branca sobre roupa ou fundo claro
+    ESTILO = dict(ESTILO, background=opc["fundo"])
 ESCALA = float(opc.get("escala", 0.92))    # padrão do usuário: 92% do tamanho original
 ALTURA = float(opc.get("altura", 0.17))  # padrão do usuário: abaixo do rosto (antes 0.104)
 ESTILO = dict(ESTILO, fontSize=ESTILO["fontSize"] * ESCALA, tracking=ESTILO["tracking"] * ESCALA,

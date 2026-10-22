@@ -96,21 +96,26 @@ Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e
 - **Fonte da chave** (`"fonte_chave"` na frase, serifa e elegante): `serifa` (DM Serif Display reta, padrão),
   `italico`, `bold` (Condensed Black) ou `coolvetica`. Alterne ao longo do vídeo, sem repetir em
   blocos seguidos.
-- **Roupa com estampa clara no peito** (ex.: camiseta com logo): legenda branca some em cima dela.
-  Zoom em 100% e legenda abaixo da estampa; sobre B-roll claro use `sombra_suave`, nunca contorno
-  grosso. Detalhes em `EDICAO.md`.
+- **Roupa com estampa no peito** (ex.: camiseta com logo): legenda abaixo da estampa (simples com
+  `--altura=` calculada, dinâmicas com `--escala=0.85`); sobre B-roll claro use `sombra_suave`, nunca
+  contorno grosso. **Roupa clara:** `$PY tools/sombra_legenda.py "$P"` (degradê escuro atrás das
+  legendas). Detalhes em `EDICAO.md`.
 
 ## 5. Zoom seco (julgamento)
-Escreva `$W/zoom.json` (formato em `tools/planos_exemplo/zoom.json`): trechos `[índice da palavra
-que começa a frase, escala]`. O zoom só troca num corte que já existe (o `zoom_cortes.py` dá a escala
-de cada take pelo trecho onde ele começa); nunca corte uma fala contínua só para trocar o zoom.
+Padrão: `$PY tools/zoom_por_frases.py "$P" --min=1.5 --ideia=2.5` monta os conjuntos pelas legendas
+(troca em começo de frase, ou de ideia depois de 2,5 s; divide take contínuo com mais de 4 s num começo
+de frase). Para escolher à mão, escreva `$W/zoom.json` (formato em `tools/planos_exemplo/zoom.json`):
+trechos `[índice da palavra que começa a frase, escala]`. O zoom só troca num corte que já existe (o
+`zoom_cortes.py` dá a escala de cada take pelo trecho onde ele começa); nunca corte uma fala contínua só
+para trocar o zoom.
 - **Conjuntos que seguem as frases:** cada conjunto é uma frase curta ou duas, ou uma ideia (pergunta,
   dado, exemplo, conclusão), em geral 2 a 4 s; o tamanho varia com a frase, para fazer sentido. Cerca de
-  16 a 18 trocas por minuto, sem exagero.
+  12 a 16 trocas por minuto, sem exagero.
 - Alterne aberto (`1.0` no plano) e zoom in (`1.18`); `1.32` só numa frase de impacto ("Salve este vídeo").
 - Depois, o `centralizar_zoom.py` enquadra **cada take**: pessoa centralizada, cabeça a ~13% do topo
-  (nunca menos de 10%), abertos a 108% (sobra imagem para centralizar). Com estampa clara no peito,
-  `--estampa` impede que ela desça sobre a legenda (limitando o zoom quando precisa).
+  (nunca menos de 10%), abertos a 108% (sobra imagem para centralizar). Com estampa no peito,
+  `--estampa` impede que ela desça sobre a legenda (limitando o zoom quando precisa); centralizar vem
+  antes: pessoa de lado faz o conjunto subir o zoom (até 130%).
 ```bash
 cp "$P/concat.json" "$W/ref.json"
 $PY tools/zoom_cortes.py "$P" "$W/ref.json" "$W/zoom.json"
@@ -147,6 +152,8 @@ $PY tools/broll_animar.py "$P"
   `render_projeto.py`, que renderiza sem deixar cópia de projeto nem card repetido nos recentes do
   Concat). Use o fim de cada bloco dinâmico e o meio de cada B-roll e de cada zoom. **Não crie cópias
   de projeto** para revisar, testar cor ou exportar.
+- **Antes de entregar o MP4:** `$PY tools/conferir_video.py "$P" <mp4>` (palavra faltando, sobrando ou
+  cortada perto de corte); ouça cada ponto e corrija.
 - **Olhe as imagens. Confira:**
   - legenda abaixo do rosto e legível;
   - palavras pequenas retas e chave grande;
