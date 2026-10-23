@@ -9,6 +9,8 @@ Regras do usuário (2026-10-21, Ozempic):
   - o zoom de cada conjunto vem do plano (zoom_cortes.py): clipes seguidos com a mesma escala.
 Com --estampa (camiseta com estampa no peito: clara em roupa escura ou escura em roupa clara), a estampa nunca desce abaixo de 0,745 (ou do valor
 dado), para não cair sobre a legenda; se cabeça e estampa não cabem juntas, o zoom do conjunto diminui.
+Pessoa de lado faz o zoom subir (até 1,30) para dar folga, mas a estampa vence: a legenda nunca fica em
+cima dela (2026-10-23); para isso a cabeça pode subir até 0,06 do topo.
 
 As medidas vêm de quadros que o próprio Concat renderiza com os takes a 100% (a cor do bruto HLG não
 serve para achar a estampa). O centro da pessoa é o rosto; quando o rosto não aparece, o peito (estampa).
@@ -36,6 +38,7 @@ TOPO_MIN = float(opc.get("topo-min", 0.10))
 EST_MAX = float(opc["estampa"] or 0.745) if "estampa" in opc else None
 CENTRO_TOL = 0.03   # pessoa até 3% fora do centro passa; além disso o zoom do conjunto sobe para centralizar
 ZOOM_MAX = 1.30
+TOPO_DURO = 0.06    # para tirar a estampa de baixo da legenda, a cabeça pode subir até aqui
 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
 
@@ -72,12 +75,16 @@ def medir(img):
     estampa = None
     if EST_MAX is not None:
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        escuro = cv2.blur(((hsv[..., 2] < 150) & (hsv[..., 1] > 40)).astype(np.float32), (31, 31)) > 0.35
-        m = (hsv[..., 2] > 170) & (hsv[..., 1] < 70) & escuro
-        if m[int(0.5 * h):int(0.82 * h), int(0.25 * w):int(0.75 * w)].sum() < 300:
-            # camiseta clara com estampa escura: letra quase preta (sem cor, ao contrário do azulejo)
+        peito = hsv[int(0.5 * h):int(0.82 * h), int(0.3 * w):int(0.7 * w)]
+        if np.median(peito[..., 2]) < 150:   # camiseta escura com estampa clara
+            escuro = cv2.blur(((hsv[..., 2] < 150) & (hsv[..., 1] > 40)).astype(np.float32), (31, 31)) > 0.35
+            m = (hsv[..., 2] > 170) & (hsv[..., 1] < 70) & escuro
+        else:
+            # camiseta clara com estampa escura: letra escura, preta ou verde-escura ("MEDICINA"), mas não o
+            # azul do azulejo atrás
             claro = cv2.blur(((hsv[..., 2] > 150) & (hsv[..., 1] < 60)).astype(np.float32), (31, 31)) > 0.35
-            m = (hsv[..., 2] < 90) & (hsv[..., 1] < 90) & claro
+            azul = (hsv[..., 0] > 95) & (hsv[..., 0] < 135) & (hsv[..., 1] > 60)
+            m = (hsv[..., 2] < 110) & ~azul & claro
         # só a faixa do peito: tira chão, parede dos lados e mãos lá embaixo
         m[:int(0.5 * h)] = False
         m[int(0.82 * h):] = False
@@ -85,7 +92,8 @@ def medir(img):
         m[:, int(0.75 * w):] = False
         linhas = np.nonzero(m.sum(1) > 6)[0]
         if len(linhas):
-            blocos = np.split(linhas, np.nonzero(np.diff(linhas) > 12)[0] + 1)
+            # SIMPLES e MEDICINA são um bloco só (a linha de baixo é a que encosta na legenda)
+            blocos = np.split(linhas, np.nonzero(np.diff(linhas) > 30)[0] + 1)
             bloco = max(blocos, key=lambda b: int(m[b[0]:b[-1] + 1].sum()))   # o de mais "letra"
             ys, xs = np.nonzero(m[bloco[0]:bloco[-1] + 1])
             estampa = ((np.percentile(xs, 5) + np.percentile(xs, 95)) / 2 / w, bloco[-1] / h)
@@ -144,12 +152,14 @@ cx_de = lambda m: m["fx"] if m["fx"] is not None else (m["ex"] if m["ex"] is not
 cmds, log, finais = [], [], []
 for s_plano, ks in conjuntos:
     s = max(s_plano, ABERTO)
-    if EST_MAX is not None:  # cabeça a TOPO_MIN do topo e estampa até EST_MAX só cabem até esta escala
-        s = min(s, min((EST_MAX - TOPO_MIN) / max(medidas[k]["est"] - medidas[k]["topo"], 1e-3) for k in ks))
-    # centralizar vem antes da estampa (pedido do usuário; a regra da estampa é nossa): se a pessoa
-    # está de lado mais que CENTRO_TOL, o conjunto ganha o zoom que dá folga para trazê-la ao centro
+    # pessoa de lado mais que CENTRO_TOL: o conjunto ganha o zoom que dá folga para trazê-la ao centro
     lado = max(max(abs(cx_de(medidas[k]) - 0.5) - CENTRO_TOL, 0.0) for k in ks)
     s = max(s, min(1 / (1 - 2 * lado), ZOOM_MAX))
+    # mas a legenda nunca em cima da estampa (pedido de 2026-10-23: "posicionando-as bem para não ficarem
+    # em cima da estampa da camisa"): cabeça a TOPO_DURO do topo e estampa até EST_MAX só cabem até esta
+    # escala, e ela vence o centralizar
+    if EST_MAX is not None:
+        s = min(s, min((EST_MAX - TOPO_DURO) / max(medidas[k]["est"] - medidas[k]["topo"], 1e-3) for k in ks))
     s = round(max(1.0, s), 3)
     f = (s - 1) / 2
     for k in ks:
@@ -160,11 +170,13 @@ for s_plano, ks in conjuntos:
         oy = TOPO - y(m["topo"], 0.0)
         oy = max(oy, TOPO_MIN - y(m["topo"], 0.0))
         if EST_MAX is not None and y(m["est"], oy) > EST_MAX:
-            oy = max(EST_MAX - y(m["est"], 0.0), TOPO_MIN - y(m["topo"], 0.0))   # a margem da cabeça vence
+            oy = max(EST_MAX - y(m["est"], 0.0), TOPO_DURO - y(m["topo"], 0.0))   # estampa vence, até TOPO_DURO
         oy = cl(oy, f)
         cmds.append({"op": "setClipTransform", "clipId": clips[k]["id"], "scale": s,
                      "offsetX": round(ox, 4), "offsetY": round(oy, 4)})
         finais.append((k, 0.5 + (cx - 0.5) * s + ox, y(m["topo"], oy)))
+        if EST_MAX is not None and y(m["est"], oy) > EST_MAX + 0.01:
+            print(f"  take {k + 1}: estampa desce até {y(m['est'], oy):.2f} (encosta na legenda)")
     log.append(f"{clips[ks[0]]['start']:6.2f}s  takes {ks[0] + 1}-{ks[-1] + 1}: {round(s * 100)}%"
                + ("" if abs(s - max(s_plano, ABERTO)) < 1e-3 else f" (plano {round(s_plano * 100)}%: limitado)"))
 api.batch(cmds)
@@ -172,6 +184,8 @@ api.call("project.save", path=path)
 print("\n".join(log))
 print("centro da pessoa entre %.2f e %.2f | cabeça entre %.2f e %.2f do topo" % (
     min(f[1] for f in finais), max(f[1] for f in finais), min(f[2] for f in finais), max(f[2] for f in finais)))
-for k, cx, _ in finais:
+for k, cx, cab in finais:
+    if cab < TOPO_MIN - 0.015:
+        print(f"  take {k + 1}: cabeça a {cab:.2f} do topo (sem folga para descer a imagem)")
     if abs(cx - 0.5) > CENTRO_TOL + 0.005:
         print(f"  take {k + 1}: centro em {cx:.2f} (a pessoa está muito de lado; o zoom não dá folga para mais)")

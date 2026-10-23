@@ -14,21 +14,22 @@ Uso:
 
 plano.json: [{"estilo": "serifa", "linhas": [[0, 1], [2], [3]], "chave": [2]}, ...]
   "fonte_chave" na frase escolhe a fonte da chave no serifa/elegante: "serifa" (DM Serif Display, padrão),
-  "italico" (DM Serif Display Itálico), "bold" (Helvetica Neue Condensed Black) ou "coolvetica".
+  "italico" (DM Serif Display Itálico), "bold" (Helvetica Neue Condensed Black) ou "coolvetica"; no classico,
+  "reta" troca a Condensed Black por Helvetica Bold reta.
   ou {"destaque": "#2563c9", "frases": [...]} para usar a cor da paleta do cliente
   (padrão: branco, pedido de 2026-10-20; Dr. Rafael: azul #2563c9; amarelo #f4c430 só se pedirem).
   linhas: índices das legendas simples (na ordem da timeline), agrupados por linha;
   chave:  os índices que levam o destaque.
 Regra de leitura (do usuário): tudo que não é destaque sai em fonte sóbria, normal e reta
-(Helvetica / Montserrat), nunca fina nem cursiva (exceção: a Montserrat Light do elegante, como no
-print); a serifada (e as cursivas) só na palavra de DESTAQUE (a chave).
+(Helvetica Neue Medium, semibold), nunca fina nem cursiva (desde 2026-10-23 sem exceção: "evitando pesos
+mais finos"); a serifada (e as cursivas) só na palavra de DESTAQUE (a chave).
 Estilos (inspirados em prints de legendas de reels; descritos em EDICAO.md):
   serifa   - "Estilo 3": escadinha; linhas pequenas em Helvetica normal, chave em DM Serif Display branca, palavra final
              maior alinhada à direita embaixo da chave.
   classico - "Estilo 5": palavras pequenas (Helvetica) espalhadas sobre uma linha grande
              em Helvetica Neue Condensed Black.
-  elegante - "Estilo 6": linha pequena em Montserrat Light sobre uma palavra enorme em DM Serif Display,
-             encostadas.
+  elegante - "Estilo 6": linha pequena em Helvetica Neue Medium (semibold; era Montserrat Light, fina
+             demais) sobre uma palavra enorme em DM Serif Display, encostadas.
   impacto  - "Estilos 1 e 2": bloco alinhado à esquerda, Helvetica normal (reta) e a chave em
              Helvetica Bold Oblíqua grande (podem dividir a mesma linha).
 
@@ -251,7 +252,9 @@ def serifa(linhas, t):
 def classico(linhas, t):
     S, B = 0.042 * H, 0.100 * H
     topo = [palavra(t[i], "helv", S, trk=-0.02) for linha in linhas[:-1] for i, _ in linha]
-    grande = [palavra(t[i], "helv-cond-black", B, trk=-0.01) for i, _ in linhas[-1]]  # print "helvetica"
+    # print "helvetica": Condensed Black; com "fonte_chave": "reta", Helvetica Bold reta (print "como que / eu faço")
+    face = ("helv-bold", -0.03) if FONTE_CHAVE == "reta" else ("helv-cond-black", -0.01)
+    grande = [palavra(t[i], face[0], B * (0.92 if face[0] == "helv-bold" else 1.0), trk=face[1]) for i, _ in linhas[-1]]
     wb = linha_em(grande, 0.0, 0.0)
     if topo:
         base_topo = -(max(cap(p) for p in grande) + 0.10 * S)
@@ -271,8 +274,10 @@ def classico(linhas, t):
 
 def elegante(linhas, t):
     S, K = 0.042 * H, 0.125 * H
-    pequenas = [[palavra(t[i], "montserrat-light", S) for i, _ in linha] for linha in linhas[:-1]]  # print "montserrat"
-    grande = [chave_em(t[i], K, BRANCO) if c else palavra(t[i], "montserrat-light", S)
+    # pequenas em semibold (pedido de 2026-10-23: "priorize fontes mais semibold ou bold, evitando pesos mais
+    # finos"; print "as minhas / legendas"). Antes era Montserrat Light.
+    pequenas = [[palavra(t[i], "helv", S, trk=-0.02) for i, _ in linha] for linha in linhas[:-1]]
+    grande = [chave_em(t[i], K, BRANCO) if c else palavra(t[i], "helv", S, trk=-0.02)
               for i, c in linhas[-1]]  # serifada só no destaque
     wg = linha_em(grande, 0.0, 0.0)
     # a palavra grande sobe até encostar na linha de cima, medida pelo topo real da tinta (as hastes da

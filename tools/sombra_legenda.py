@@ -57,7 +57,16 @@ video = [c for c in tl["clips"] if c["kind"] == "video"]
 fim = max(c["start"] + c["duration"] for c in video)
 baixo = video[0]["trackId"]
 ocupadas = {c["trackId"] for c in tl["clips"] if c["kind"] != "image" or c["id"] in velhas}
-trilha = next(t["id"] for t in tl["tracks"] if t["id"] != baixo and t["id"] not in ocupadas)
+trilha = next((t["id"] for t in tl["tracks"] if t["id"] != baixo and t["id"] not in ocupadas), None)
+if trilha is None:
+    # as legendas ocupam todas as trilhas de cima: o vídeo desce para uma trilha nova embaixo e a sombra
+    # fica na dele, entre o vídeo e as legendas
+    antes = {t["id"] for t in tl["tracks"]}
+    tl = timeline(api.edit({"op": "addTrack", "bottom": True}))
+    nova = next(t["id"] for t in tl["tracks"] if t["id"] not in antes)
+    api.edit({"op": "moveClips", "moves": [{"clipId": c["id"], "start": c["start"], "trackId": nova} for c in video]})
+    trilha = baixo
+    tl = timeline(api.view())
 
 mid = next((m["id"] for m in proj["media"] if os.path.basename(m.get("path", "")) == NOME), None)
 if mid is None:

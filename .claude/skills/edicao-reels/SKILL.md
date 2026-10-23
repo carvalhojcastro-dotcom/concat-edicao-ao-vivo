@@ -11,6 +11,9 @@ só quando o pedido incluir exportar** (ou quando ele pedir depois); exemplos e 
 projeto. As regras de estilo estão em `EDICAO.md` (leia antes da primeira edição da conversa), e as
 regras de trabalho na seção "Como trabalhar" de lá. Este arquivo diz **como** fazer e **como decidir**.
 Cortes de podcast/entrevista seguem outro processo: `tools/cortes_podcast/LEIA-ME.md`.
+Vídeo que **já vem cortado** pelo usuário (CAP do CapCut): não corte de novo; siga `EDICAO.md` seção 6b
+(cortes lidos do draft do CapCut, 1,10x, zoom nos cortes dele, nitidez 20 sem cor, lofi com
+`tools/musica_fundo.py`).
 
 Variáveis (raiz do repositório = `$R`):
 - `PY=$R/tools/.venv/bin/python` (Mac) ou `PY=$R/tools/.venv/Scripts/python.exe` (Windows). Use `$PY` em

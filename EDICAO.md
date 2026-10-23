@@ -61,8 +61,8 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 |---|---|---|
 | **impacto** | Helvetica normal, bloco à esquerda | Helvetica Bold Oblíqua grande |
 | **serifa** | Helvetica normal, em escadinha | DM Serif Display **reta**, **branca** |
-| **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Neue **Condensed Black** grande |
-| **elegante** | Montserrat **Light**, centralizada | DM Serif Display enorme, encostada |
+| **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Neue **Condensed Black** grande (`"fonte_chave": "reta"`: Helvetica **Bold** reta, print "como que / eu faço") |
+| **elegante** | Helvetica Neue **Medium** (semibold), centralizada | DM Serif Display enorme, encostada (print "as minhas / legendas") |
 
 - **Regra de fontes:** **a serifada (DM Serif Display) só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
   grande, sai em fonte sóbria, normal e reta (Helvetica ou Montserrat), nunca fina nem cursiva.
@@ -73,8 +73,9 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 - **Destaque nem sempre serifado**: no serifa e no elegante, `"fonte_chave"` na frase escolhe
   `serifa` (DM Serif Display reta, padrão), `italico`, `bold` (Condensed Black) ou `coolvetica`. **Alterne** ao
   longo do vídeo. Uma fonte mais larga encolhe até a largura da serifada, então o bloco não muda de forma.
-- A Montserrat Light das palavras pequenas do elegante é a exceção à regra "nunca fina": vem do print e
-  o contorno + sombra seguram a leitura.
+- **Pesos semibold ou bold** (pedido de 2026-10-23: "priorize usar fontes mais semibold ou bold, evitando
+  pesos mais finos"): as palavras pequenas de todos os estilos saem em Helvetica Neue Medium; a
+  Montserrat Light do elegante saiu.
 - **Tamanho e posição:** 92% do tamanho, **contorno preto fino + sombra**. O bloco **começa na mesma
   altura da legenda simples** (pedido de 2026-10-21): o topo das letras da 1ª linha fica no topo das
   letras da simples, e o bloco cresce para baixo. A altura é lida das legendas do próprio projeto;
@@ -96,8 +97,9 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
   com mais de 4 s é dividido num começo de frase. `tools/zoom_por_frases.py` monta os conjuntos pelas
   legendas (`--min=1.5 --ideia=2.5` deu o ritmo do Ozempic) e `tools/centralizar_zoom.py` faz o
   enquadramento take a take (`--estampa` com estampa no peito).
-- **Centralizar vem primeiro:** pessoa a mais de 3% do centro faz o conjunto ganhar o zoom que dá folga
-  (até 130%), mesmo que a estampa desça um pouco; e a margem da cabeça vence a estampa.
+- **Centralizar:** pessoa a mais de 3% do centro faz o conjunto ganhar o zoom que dá folga (até 130%),
+  **mas a estampa vence**: a legenda nunca fica em cima dela (pedido de 2026-10-23); para isso a cabeça
+  pode subir até 6% do topo.
 - **Sem animação.** O enquadramento muda no começo das frases: aberto (108% depois de centralizar), 118%
   e **132% nas frases de impacto** (como "Salve este vídeo").
 - Se o rosto ficar fora do centro por falta de folga, suba a escala do trecho (ex.: 145%).
@@ -151,6 +153,22 @@ some. Antes de legendar, olhe a roupa; se houver estampa clara:
 - **Com zoom** (Ozempic, 2026-10-21): `centralizar_zoom.py <projeto> --estampa` (cabeça ≥ 10% do topo, estampa
   ≤ 0,745); legenda simples com o topo das letras em 0,769 (`--altura=` calculada) e dinâmicas com
   `--escala=0.85`, blocos de 2 linhas.
+
+## 6b. Vídeo que já vem cortado (CAP do CapCut)
+O usuário às vezes manda os cortes prontos ("CAP ...", exportados do CapCut) e pede o resto (2026-10-23):
+- **Não corte de novo.** O CAP entra inteiro a 1,10x e é dividido nos cortes dele, para o zoom trocar
+  exatamente ali. Os cortes vêm do projeto do CapCut (`~/Movies/CapCut/User Data/Projects/
+  com.lveditor.draft/<nome>/draft_info.json`, início de cada segmento da trilha de vídeo; um draft pode
+  ter dado dois CAPs). Sem o draft: `tools/achar_cortes.py <cap> --bruto=<original>` (acha pelo áudio).
+- **Sem cor nem exposição:** o CAP já sai do CapCut em SDR; só **nitidez 20** (`concat.adjust`
+  sharpen 20,23 em cada take).
+- Áudio limpo (`limpar_audio.py`) + `user.voz-redes-sociais` calibrado, legendas simples e dinâmicas,
+  sombra em roupa clara, zoom com `zoom_por_frases.py --corte=2.5 --cortes=<cortes do usuário>` (troca em
+  qualquer corte dele depois de 2,5 s; ~14 trocas por minuto) e `centralizar_zoom.py --estampa`.
+- **Lofi baixinho:** `tools/musica_fundo.py <P> <musica>` (17 dB abaixo da voz, fades de 1,7/2,4 s). Use
+  música com licença para redes (a "Chillhop Jazz Coffee Shop", Pixabay, em `Edições/Kit de edição/musica`;
+  a do CapCut só vale dentro do CapCut).
+- Entrega do Dr. Leonardo: 2K em `Edições/Dr Leonardo/Editados Prontos/`.
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.

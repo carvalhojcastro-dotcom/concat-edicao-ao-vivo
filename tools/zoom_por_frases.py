@@ -9,8 +9,9 @@ corta fala contínua: a troca é sempre num corte que já existe (pedido de 2026
 variando de acordo com as frases, para fazerem sentido"; corte só para trocar zoom atrapalha).
 Depois rode o centralizar_zoom.py (enquadra cada take; --estampa com estampa no peito).
 
-Uso: zoom_por_frases.py <projeto> [--zoom=1.18] [--min=2] [--ideia=3] [--max=4]
+Uso: zoom_por_frases.py <projeto> [--zoom=1.18] [--min=2] [--ideia=3] [--max=4] [--corte=2.5 [--cortes=cortes.json]]
 """
+import json
 import os
 import sys
 
@@ -22,6 +23,11 @@ opc = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "
 path = args[0]
 ZOOM, MIN, MAX = float(opc.get("zoom", 1.18)), float(opc.get("min", 2.0)), float(opc.get("max", 4.0))
 IDEIA = float(opc.get("ideia", 3.0))   # depois de tantos segundos, troca também num começo de ideia (vírgula)
+# vídeo que já veio cortado (ex.: CAP do CapCut): depois de tantos segundos, troca em qualquer corte do
+# usuário, mesmo no meio da frase (o corte já está lá; pedido de 2026-10-23: "encaixar com os cortes")
+CORTE = float(opc["corte"]) if "corte" in opc else None
+# os cortes do usuário em segundos do vídeo de origem (JSON); sem a lista, corte = salto no bruto
+CORTES_USUARIO = json.load(open(opc["cortes"])) if "cortes" in opc else None
 
 api = Concat(path)
 api.sock.settimeout(120)
@@ -88,11 +94,19 @@ def abre(k):
     return "ideia" if antes[-1].endswith(",") else ""
 
 
+def corte_real(k):
+    """O take k começa num corte de verdade (o anterior vem de outro ponto do bruto), não numa divisão nossa."""
+    if CORTES_USUARIO is not None:
+        return any(abs(takes[k]["sourceStart"] - c) < 0.06 for c in CORTES_USUARIO)
+    a = takes[k - 1]
+    return abs(a["sourceStart"] + a["duration"] * a.get("speed", 1.0) - takes[k]["sourceStart"]) > 0.05
+
+
 conjuntos, atual = [], [0]
 for k in range(1, len(takes)):
     dur = takes[k]["start"] - takes[atual[0]]["start"]
     tipo = abre(k)
-    if (dur >= MIN and tipo == "frase") or (dur >= IDEIA and tipo == "ideia"):
+    if (dur >= MIN and tipo == "frase") or (dur >= IDEIA and tipo == "ideia") or (CORTE and dur >= CORTE and corte_real(k)):
         conjuntos.append(atual)
         atual = [k]
     else:
