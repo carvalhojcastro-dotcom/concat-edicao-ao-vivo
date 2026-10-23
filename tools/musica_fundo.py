@@ -34,8 +34,7 @@ except RuntimeError:
     api.call("project.open", path=path)
 proj = api.view()["project"]
 tl = timeline(api.view())
-velhas = [c["id"] for c in tl["clips"] if c["kind"] == "audio"
-          and any(m["id"] == c.get("mediaId") and m.get("path") == musica for m in proj["media"])]
+velhas = [c["id"] for c in tl["clips"] if c["kind"] == "audio"]   # só a música é clipe de áudio solto
 if velhas:
     api.edit({"op": "removeClips", "clipIds": velhas})
 fim = max(c["start"] + c["duration"] for c in timeline(api.view())["clips"] if c["kind"] == "video")

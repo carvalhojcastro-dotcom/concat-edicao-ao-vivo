@@ -165,9 +165,17 @@ O usuário às vezes manda os cortes prontos ("CAP ...", exportados do CapCut) e
 - Áudio limpo (`limpar_audio.py`) + `user.voz-redes-sociais` calibrado, legendas simples e dinâmicas,
   sombra em roupa clara, zoom com `zoom_por_frases.py --corte=2.5 --cortes=<cortes do usuário>` (troca em
   qualquer corte dele depois de 2,5 s; ~14 trocas por minuto) e `centralizar_zoom.py --estampa`.
-- **Lofi baixinho:** `tools/musica_fundo.py <P> <musica>` (17 dB abaixo da voz, fades de 1,7/2,4 s). Use
-  música com licença para redes (a "Chillhop Jazz Coffee Shop", Pixabay, em `Edições/Kit de edição/musica`;
-  a do CapCut só vale dentro do CapCut).
+- **Lofi baixinho:** `tools/musica_fundo.py <P> <musica>` (17 dB abaixo da voz, fades de 1,7/2,4 s), **uma
+  música diferente em cada vídeo** (pedido de 2026-10-23). As do CapCut do usuário ficam com nome em
+  `Edições/Kit de edição/musica/CapCut/` (ele escolheu usá-las; a licença delas é a do CapCut); a
+  "Chillhop Jazz Coffee Shop" (Pixabay) é livre para redes.
+- **Zoom in em close** (pedido de 2026-10-23: "dar mais zoom nos zoom ins"): `centralizar_zoom.py
+  --estampa --fechado` leva o conjunto de zoom in a até 170%, com a estampa inteira abaixo das legendas;
+  se nem assim couber, o zoom in fica no limite da estampa.
+- **Versão com headline** (V2): `tools/headline.py <P> "linha 1|linha 2"`: caixa branca, letra preta
+  (Helvetica Bold), no centro da tela, **só na abertura** (até o fim do 1º conjunto aberto, 2 a 5 s, para
+  não cobrir o rosto no close), entrando de baixo para cima. O hook é a pergunta ou promessa do vídeo, em
+  2 linhas curtas ("Parou o Ozempic, / engorda de novo?").
 - Entrega do Dr. Leonardo: 2K em `Edições/Dr Leonardo/Editados Prontos/`.
 
 ## 7. Como trabalhar (regras do usuário)

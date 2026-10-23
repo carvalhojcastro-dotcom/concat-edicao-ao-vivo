@@ -15,7 +15,8 @@ cima dela (2026-10-23); para isso a cabeça pode subir até 0,06 do topo.
 As medidas vêm de quadros que o próprio Concat renderiza com os takes a 100% (a cor do bruto HLG não
 serve para achar a estampa). O centro da pessoa é o rosto; quando o rosto não aparece, o peito (estampa).
 
-Uso: centralizar_zoom.py <projeto> [--aberto=1.08] [--topo=0.13] [--topo-min=0.10] [--estampa[=0.745]]
+Uso: centralizar_zoom.py <projeto> [--aberto=1.08] [--topo=0.13] [--topo-min=0.10] [--estampa[=0.745]] [--fechado[=1.7]]
+  --fechado: com --estampa, o zoom in vira close (até 1,7): a estampa desce inteira para baixo das legendas
 """
 import os
 import shutil
@@ -38,6 +39,10 @@ TOPO_MIN = float(opc.get("topo-min", 0.10))
 EST_MAX = float(opc["estampa"] or 0.745) if "estampa" in opc else None
 CENTRO_TOL = 0.03   # pessoa até 3% fora do centro passa; além disso o zoom do conjunto sobe para centralizar
 ZOOM_MAX = 1.30
+# --fechado: o zoom in vira close (pedido de 2026-10-23: "pode dar mais zoom nos zoom ins"); o topo da
+# estampa desce para baixo de LEG_FIM, onde as legendas (simples e blocos dinâmicos) já acabaram
+FECHADO_MAX = float(opc["fechado"] or 1.7) if "fechado" in opc else None
+LEG_FIM = 0.88
 TOPO_DURO = 0.06    # para tirar a estampa de baixo da legenda, a cabeça pode subir até aqui
 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
@@ -96,7 +101,7 @@ def medir(img):
             blocos = np.split(linhas, np.nonzero(np.diff(linhas) > 30)[0] + 1)
             bloco = max(blocos, key=lambda b: int(m[b[0]:b[-1] + 1].sum()))   # o de mais "letra"
             ys, xs = np.nonzero(m[bloco[0]:bloco[-1] + 1])
-            estampa = ((np.percentile(xs, 5) + np.percentile(xs, 95)) / 2 / w, bloco[-1] / h)
+            estampa = ((np.percentile(xs, 5) + np.percentile(xs, 95)) / 2 / w, bloco[-1] / h, bloco[0] / h)
     return rosto, estampa
 
 
@@ -115,7 +120,8 @@ def medir_takes(api_r, alvo, takes_r, tmp):
         out.append({"fx": float(np.median([r[0] for r in rs])) if rs else None,
                     "topo": float(min(r[1] for r in rs)) if rs else None,
                     "ex": float(np.median([e[0] for e in es])) if es else None,
-                    "est": float(max(e[1] for e in es)) if es else None})
+                    "est": float(max(e[1] for e in es)) if es else None,
+                    "est_topo": float(min(e[2] for e in es)) if es else None})
     return out
 
 
@@ -129,12 +135,12 @@ with projeto_para_render(path, transformar=natural) as (api_r, alvo):
         shutil.rmtree(tmp, ignore_errors=True)
 
 # o que um take não mostrou vem do vizinho mais próximo
-for chave in ("topo", "est"):
+for chave in ("topo", "est", "est_topo"):
     for k, m in enumerate(medidas):
         if m[chave] is None:
             viz = [medidas[j][chave] for j in sorted(range(len(medidas)), key=lambda j: abs(j - k))
                    if medidas[j][chave] is not None]
-            m[chave] = viz[0] if viz else (0.18 if chave == "topo" else EST_MAX or 0.7)
+            m[chave] = viz[0] if viz else {"topo": 0.18, "est": EST_MAX or 0.7, "est_topo": 0.6}[chave]
 
 clips = sorted([c for c in timeline(api.call("project.open", path=path))["clips"] if c["kind"] == "video"],
                key=lambda c: c["start"])
@@ -148,7 +154,12 @@ for k, c in enumerate(clips):
         conjuntos.append((s, [k]))
 
 cl = lambda v, f: max(-f, min(f, v))  # noqa: E731
-cx_de = lambda m: m["fx"] if m["fx"] is not None else (m["ex"] if m["ex"] is not None else 0.5)  # noqa: E731  rosto; peito se não houver
+def cx_de(m):
+    """Centro da pessoa: o rosto; o peito (estampa) se não houver rosto ou se os dois discordam muito (um
+    rosto achado num quadro só, de lado, puxava o close para a beira)."""
+    if m["fx"] is not None and (m["ex"] is None or abs(m["fx"] - m["ex"]) <= 0.08):
+        return m["fx"]
+    return m["ex"] if m["ex"] is not None else (m["fx"] if m["fx"] is not None else 0.5)
 cmds, log, finais = [], [], []
 for s_plano, ks in conjuntos:
     s = max(s_plano, ABERTO)
@@ -158,7 +169,12 @@ for s_plano, ks in conjuntos:
     # mas a legenda nunca em cima da estampa (pedido de 2026-10-23: "posicionando-as bem para não ficarem
     # em cima da estampa da camisa"): cabeça a TOPO_DURO do topo e estampa até EST_MAX só cabem até esta
     # escala, e ela vence o centralizar
-    if EST_MAX is not None:
+    fechado = False
+    if FECHADO_MAX and EST_MAX is not None and s_plano > ABERTO + 1e-3:
+        s_f = max(max((LEG_FIM - TOPO) / max(medidas[k]["est_topo"] - medidas[k]["topo"], 1e-3) for k in ks), s)
+        if s_f <= FECHADO_MAX:
+            s, fechado = s_f, True
+    if EST_MAX is not None and not fechado:
         s = min(s, min((EST_MAX - TOPO_DURO) / max(medidas[k]["est"] - medidas[k]["topo"], 1e-3) for k in ks))
     s = round(max(1.0, s), 3)
     f = (s - 1) / 2
@@ -169,15 +185,19 @@ for s_plano, ks in conjuntos:
         y = lambda v, o: 0.5 + (v - 0.5) * s + o  # noqa: E731
         oy = TOPO - y(m["topo"], 0.0)
         oy = max(oy, TOPO_MIN - y(m["topo"], 0.0))
-        if EST_MAX is not None and y(m["est"], oy) > EST_MAX:
+        if fechado:   # close: a estampa passa inteira para baixo das legendas
+            oy = max(oy, LEG_FIM - y(m["est_topo"], 0.0))
+        elif EST_MAX is not None and y(m["est"], oy) > EST_MAX:
             oy = max(EST_MAX - y(m["est"], 0.0), TOPO_DURO - y(m["topo"], 0.0))   # estampa vence, até TOPO_DURO
         oy = cl(oy, f)
         cmds.append({"op": "setClipTransform", "clipId": clips[k]["id"], "scale": s,
                      "offsetX": round(ox, 4), "offsetY": round(oy, 4)})
         finais.append((k, 0.5 + (cx - 0.5) * s + ox, y(m["topo"], oy)))
-        if EST_MAX is not None and y(m["est"], oy) > EST_MAX + 0.01:
+        if fechado and y(m["est_topo"], oy) < LEG_FIM - 0.01:
+            print(f"  take {k + 1}: no close, o topo da estampa fica em {y(m['est_topo'], oy):.2f} (encosta na legenda)")
+        elif not fechado and EST_MAX is not None and y(m["est"], oy) > EST_MAX + 0.01:
             print(f"  take {k + 1}: estampa desce até {y(m['est'], oy):.2f} (encosta na legenda)")
-    log.append(f"{clips[ks[0]]['start']:6.2f}s  takes {ks[0] + 1}-{ks[-1] + 1}: {round(s * 100)}%"
+    log.append(f"{clips[ks[0]]['start']:6.2f}s  takes {ks[0] + 1}-{ks[-1] + 1}: {round(s * 100)}%" + (" close" if fechado else "")
                + ("" if abs(s - max(s_plano, ABERTO)) < 1e-3 else f" (plano {round(s_plano * 100)}%: limitado)"))
 api.batch(cmds)
 api.call("project.save", path=path)
