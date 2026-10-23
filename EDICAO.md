@@ -173,7 +173,7 @@ O usuário às vezes manda os cortes prontos ("CAP ...", exportados do CapCut) e
   --estampa --fechado` leva o conjunto de zoom in a até 170%, com a estampa inteira abaixo das legendas;
   se nem assim couber, o zoom in fica no limite da estampa.
 - **Versão com headline** (V2): `tools/headline.py <P> "linha 1|linha 2"`: caixa branca, letra preta
-  (Helvetica Bold), no centro da tela, **só na abertura** (até o fim do 1º conjunto aberto, 2 a 5 s, para
+  (Helvetica Bold, tamanho 0,038), no peito, um pouco abaixo do meio (`--altura=0.02`, entre o queixo e a estampa), **só na abertura** (até o fim do 1º conjunto aberto, 2 a 5 s, para
   não cobrir o rosto no close), entrando de baixo para cima. O hook é a pergunta ou promessa do vídeo, em
   2 linhas curtas ("Parou o Ozempic, / engorda de novo?").
 - Entrega do Dr. Leonardo: 2K em `Edições/Dr Leonardo/Editados Prontos/`.

@@ -6,7 +6,7 @@ letra preta) com algum hook escrito para segurar a atenção". Fica só na abert
 conjunto de zoom (aberto), entre 2 e 5 s, para não cobrir o rosto nos closes. Entra de baixo para cima
 como as legendas. Rodar de novo troca a headline anterior.
 
-Uso: headline.py <projeto> "Linha 1|Linha 2" [--fim=s] [--altura=0.0] [--tamanho=0.044]
+Uso: headline.py <projeto> "Linha 1|Linha 2" [--fim=s] [--altura=0.02] [--tamanho=0.038]
   "|" quebra a linha; --altura é o deslocamento do centro (0 = meio da tela, positivo = para baixo).
 """
 import os
@@ -18,10 +18,12 @@ from concat_api import Concat, timeline  # noqa: E402
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 opc = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "=" in a)
 path, texto = args[0], args[1].replace("|", "\n")
-ALTURA, TAMANHO = float(opc.get("altura", 0.0)), float(opc.get("tamanho", 0.044))
+# um pouco abaixo do meio e menor (2026-10-23: "levemente menores e levemente abaixo, estão em cima do
+# rosto"): fica no peito, entre o queixo e a estampa
+ALTURA, TAMANHO = float(opc.get("altura", 0.02)), float(opc.get("tamanho", 0.038))
 NOME = "headline"
 ESTILO = {"content": texto, "fontFamily": "Helvetica", "fontWeight": 700.0, "italic": False, "fontSize": TAMANHO,
-          "color": "#000000", "background": "#ffffff", "backgroundPaddingX": 0.035, "backgroundPaddingY": 0.022,
+          "color": "#000000", "background": "#ffffff", "backgroundPaddingX": 0.8 * TAMANHO, "backgroundPaddingY": 0.45 * TAMANHO,
           "backgroundRadius": 0.012, "align": "center", "lineHeight": 1.12, "tracking": -0.03 * TAMANHO,
           "shadow": False, "strokeWidth": 0.0, "strokeColor": "#000000", "opacity": 1.0, "maxWidth": 0.0, "maxHeight": 0.0}
 ENTRADA, DESLIZE = 0.25, 0.012
