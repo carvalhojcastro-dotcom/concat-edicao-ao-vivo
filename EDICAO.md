@@ -188,8 +188,8 @@ Pedido de 2026-10-25 (Dr. Leonardo, "Cortes palestra"):
 - **Zoom grande e sempre centralizado:** `zoom_por_frases.py --zoom=1.6` e `centralizar_zoom.py --corpo
   --seguir --topo=0.24 --topo-min=0.22`. `--corpo` acha a pessoa pela silhueta (o rosto pequeno some no
   plano aberto); `--seguir` põe keyframes no offsetX para acompanhar a câmera que anda dentro do take.
-- **Headline acima da cabeça** (fundo branco, letra preta, tamanho médio 0,034, o vídeo todo):
-  `headline.py <P> "l1|l2" --altura=-0.1925 --tamanho=0.034 --fim=<duração>` (caixa entre 6% e 17% da altura;
+- **Headline acima da cabeça** (fundo branco, letra preta, tamanho 0,030, o vídeo todo; o usuário pediu "um pouco menor e um pouco mais pra baixo" sem tapar a cabeça):
+  `headline.py <P> "l1|l2" --altura=-0.1825 --tamanho=0.030 --fim=<duração>` (caixa entre 9% e 18% da altura;
   a cabeça fica a 24%). Legendas do meio para baixo: `legendas_simples.py --altura=0.15`.
 
 ## 7. Como trabalhar (regras do usuário)
