@@ -15,7 +15,7 @@ cima dela (2026-10-23); para isso a cabeça pode subir até 0,06 do topo.
 As medidas vêm de quadros que o próprio Concat renderiza com os takes a 100% (a cor do bruto HLG não
 serve para achar a estampa). O centro da pessoa é o rosto; quando o rosto não aparece, o peito (estampa).
 
-Uso: centralizar_zoom.py <projeto> [--aberto=1.08] [--topo=0.13] [--topo-min=0.10] [--estampa[=0.745]] [--fechado[=1.7]]
+Uso: centralizar_zoom.py <projeto> [--aberto=1.08] [--topo=0.13] [--topo-min=0.10] [--estampa[=0.745]] [--fechado[=1.7]] [--corpo] [--seguir]
   --fechado: com --estampa, o zoom in vira close (até 1,7): a estampa desce inteira para baixo das legendas
 """
 import os
@@ -37,6 +37,9 @@ ABERTO = float(opc.get("aberto", 1.08))
 TOPO = float(opc.get("topo", 0.13))
 TOPO_MIN = float(opc.get("topo-min", 0.10))
 EST_MAX = float(opc["estampa"] or 0.745) if "estampa" in opc else None
+SEGUIR = "seguir" in opc   # câmera que anda: o quadro acompanha a pessoa dentro do take (keyframes)
+CORPO = "corpo" in opc   # palestra em plano aberto: centro e topo pela silhueta (o rosto pequeno some)
+ROSTO_MIN = float(opc.get("rosto-min", 0.125))   # menor rosto procurado (fração da largura); plano aberto de palestra: 0.04
 CENTRO_TOL = 0.03   # pessoa até 3% fora do centro passa; além disso o zoom do conjunto sobe para centralizar
 ZOOM_MAX = 1.30
 # --fechado: o zoom in vira close (pedido de 2026-10-23: "pode dar mais zoom nos zoom ins"); o topo da
@@ -58,13 +61,45 @@ def natural(doc):
                 c["opacity"] = 0.0
 
 
+def corpo(img):
+    """(centro x, topo da cabeça) de quem fala num plano aberto de palestra, sem depender do rosto: a maior
+    mancha escura acima do chão (paletó, cabelo) dá o centro; o cabelo logo acima dela dá o topo."""
+    h, w = img.shape[:2]
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    m = (hsv[..., 2] < 75).astype(np.uint8)
+    m[int(0.72 * h):] = 0   # carpete escuro
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))
+    n, lab, st, _ = cv2.connectedComponentsWithStats(m)
+    if n < 2:
+        return None
+    k = 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA]))
+    if st[k, cv2.CC_STAT_AREA] < 0.01 * w * h:
+        return None
+    ys, xs = np.nonzero(lab == k)
+    cx, topo = int(np.median(xs)), int(ys.min())
+    # o cabelo pode ter ficado separado do paletó: sobe pela coluna do centro enquanto houver escuro
+    faixa = hsv[:, max(0, cx - int(0.05 * w)):cx + int(0.05 * w), 2] < 110
+    linha = faixa.mean(1) > 0.15
+    yy, vazio = topo, 0
+    while yy > 0 and vazio < int(0.02 * h):
+        yy -= 1
+        if linha[yy]:
+            topo, vazio = yy, 0
+        else:
+            vazio += 1
+    return cx / w, topo / h
+
+
 def medir(img):
     """(centro x do rosto, topo da cabeça), (centro x da estampa, fim da estampa) - em fração do quadro."""
     h, w = img.shape[:2]
     g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = [f for f in cascade.detectMultiScale(g, 1.1, 5, minSize=(w // 8, w // 8))
+    faces = [f for f in cascade.detectMultiScale(g, 1.1, 5, minSize=(int(w * ROSTO_MIN), int(w * ROSTO_MIN)))
              if 0.15 * h < f[1] + f[3] / 2 < 0.55 * h and 0.2 * w < f[0] + f[2] / 2 < 0.8 * w]
     rosto = None
+    if CORPO:
+        return corpo(img), None
     if faces:
         x, y, fw, fh = max(faces, key=lambda f: f[2])
         # cabelo: escuro e sem cor (azulejo azul escuro atrás não conta), linhas seguidas subindo do rosto
@@ -110,18 +145,23 @@ api.sock.settimeout(600)
 def medir_takes(api_r, alvo, takes_r, tmp):
     out = []
     for k, c in enumerate(takes_r):
-        rs, es = [], []
-        for f in (0.2, 0.5, 0.8):
+        rs, es, serie = [], [], []
+        # --seguir: a câmera da palestra é de mão e anda dentro do take; ~3 medidas por segundo
+        fracs = np.linspace(0.04, 0.96, max(3, int(c["duration"] * 3))) if SEGUIR else (0.2, 0.5, 0.8)
+        for f in fracs:
             png = os.path.join(tmp, f"q{k}_{f}.png")
             api_r.call("preview.frame", path=alvo, time=c["start"] + c["duration"] * f, output=png, width=540, height=960)
             r, e = medir(cv2.imread(png))
+            if r:
+                serie.append((float(f), r[0]))
             rs += [r] if r else []
             es += [e] if e else []
         out.append({"fx": float(np.median([r[0] for r in rs])) if rs else None,
                     "topo": float(min(r[1] for r in rs)) if rs else None,
                     "ex": float(np.median([e[0] for e in es])) if es else None,
                     "est": float(max(e[1] for e in es)) if es else None,
-                    "est_topo": float(min(e[2] for e in es)) if es else None})
+                    "est_topo": float(min(e[2] for e in es)) if es else None,
+                    "serie": serie})
     return out
 
 
@@ -164,7 +204,9 @@ cmds, log, finais = [], [], []
 for s_plano, ks in conjuntos:
     s = max(s_plano, ABERTO)
     # pessoa de lado mais que CENTRO_TOL: o conjunto ganha o zoom que dá folga para trazê-la ao centro
-    lado = max(max(abs(cx_de(medidas[k]) - 0.5) - CENTRO_TOL, 0.0) for k in ks)
+    desvio = lambda m: (float(np.percentile([abs(x - 0.5) for _, x in m["serie"]], 90))   # noqa: E731
+                        if SEGUIR and len(m.get("serie", [])) >= 3 else abs(cx_de(m) - 0.5))
+    lado = max(max(desvio(medidas[k]) - CENTRO_TOL, 0.0) for k in ks)
     s = max(s, min(1 / (1 - 2 * lado), ZOOM_MAX))
     # mas a legenda nunca em cima da estampa (pedido de 2026-10-23: "posicionando-as bem para não ficarem
     # em cima da estampa da camisa"): cabeça a TOPO_DURO do topo e estampa até EST_MAX só cabem até esta
@@ -192,6 +234,17 @@ for s_plano, ks in conjuntos:
         oy = cl(oy, f)
         cmds.append({"op": "setClipTransform", "clipId": clips[k]["id"], "scale": s,
                      "offsetX": round(ox, 4), "offsetY": round(oy, 4)})
+        cmds.append({"op": "clearClipKeys", "clipId": clips[k]["id"], "property": "offsetX"})
+        if SEGUIR and len(m.get("serie", [])) >= 3:
+            # segue a pessoa: centro medido ao longo do take, mediana de 3 e média de 3 (sem tremer)
+            fs, xs = zip(*m["serie"])
+            xs = np.array(xs)
+            xs = np.array([np.median(xs[max(0, i - 1):i + 2]) for i in range(len(xs))])
+            xs = np.convolve(np.pad(xs, 1, mode="edge"), np.ones(3) / 3, mode="valid")
+            for fr, x in zip(fs, xs):
+                cmds.append({"op": "setClipKey", "clipId": clips[k]["id"], "property": "offsetX", "at": round(fr, 4),
+                             "value": round(cl(-(x - 0.5) * s, f), 4), "ease": [0.42, 0.0, 0.58, 1.0]})
+            cx = float(np.median(xs))
         finais.append((k, 0.5 + (cx - 0.5) * s + ox, y(m["topo"], oy)))
         if fechado and y(m["est_topo"], oy) < LEG_FIM - 0.01:
             print(f"  take {k + 1}: no close, o topo da estampa fica em {y(m['est_topo'], oy):.2f} (encosta na legenda)")

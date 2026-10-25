@@ -178,6 +178,20 @@ O usuário às vezes manda os cortes prontos ("CAP ...", exportados do CapCut) e
   2 linhas curtas ("Parou o Ozempic, / engorda de novo?").
 - Entrega do Dr. Leonardo: 2K em `Edições/Dr Leonardo/Editados Prontos/`.
 
+## 6c. Cortes de palestra (câmera de mão, plano aberto)
+Pedido de 2026-10-25 (Dr. Leonardo, "Cortes palestra"):
+- **Legenda do SRT do usuário** (palavra por palavra, do CapCut, já revisado): o texto é o do SRT; o Whisper
+  só confere. Ordene por tempo, tire entrada repetida (frase inteira que repete palavras já marcadas) e
+  aspas. **Não acrescente palavra**; só troque a que os dois modelos ouvem diferente ("se ele for" → "se eu for").
+- CAP exportado **com legenda queimada**: refaça o corte a partir do bruto pelos trechos do draft do CapCut
+  (`cortar_ao_vivo.py` com o que fica fora deles). O bruto do iPhone é HLG: `concat.exposure -1,55` iguala ao CAP.
+- **Zoom grande e sempre centralizado:** `zoom_por_frases.py --zoom=1.6` e `centralizar_zoom.py --corpo
+  --seguir --topo=0.24 --topo-min=0.22`. `--corpo` acha a pessoa pela silhueta (o rosto pequeno some no
+  plano aberto); `--seguir` põe keyframes no offsetX para acompanhar a câmera que anda dentro do take.
+- **Headline acima da cabeça** (fundo branco, letra preta, tamanho médio 0,034, o vídeo todo):
+  `headline.py <P> "l1|l2" --altura=-0.1925 --tamanho=0.034 --fim=<duração>` (caixa entre 6% e 17% da altura;
+  a cabeça fica a 24%). Legendas do meio para baixo: `legendas_simples.py --altura=0.15`.
+
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
 - **Tempos** que ele passa vêm em `mm:ss:quadros`.

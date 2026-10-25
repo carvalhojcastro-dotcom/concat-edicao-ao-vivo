@@ -57,7 +57,9 @@ trilha = next(t["id"] for t in tl["tracks"] if t["id"] not in antes)
 antes_c = {c["id"] for c in tl["clips"]}
 tl = timeline(api.edit({"op": "addTextClip", "trackId": trilha, "start": 0.0, "duration": fim, "offsetY": ALTURA, "style": ESTILO}))
 cid = next(c["id"] for c in tl["clips"] if c["id"] not in antes_c)
-a, s = min(ENTRADA / fim, 0.5), 1 - min((2 / fps) / fim, 0.2)
+# o Concat junta keys a menos de 0,002 uma da outra (KEY_EPSILON): num clipe longo a última "segura"
+# colava no fim e virava um fade do vídeo todo
+a, s = min(ENTRADA / fim, 0.5), min(1 - min((2 / fps) / fim, 0.2), 0.995)
 api.batch([{"op": "updateClip", "clipId": cid, "patch": {"name": NOME}},
            {"op": "setClipKey", "clipId": cid, "property": "offsetY", "at": 0.0, "value": ALTURA + DESLIZE, "ease": LINEAR},
            {"op": "setClipKey", "clipId": cid, "property": "offsetY", "at": a, "value": ALTURA, "ease": EASE_OUT},
