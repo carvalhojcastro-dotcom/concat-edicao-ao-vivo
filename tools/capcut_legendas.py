@@ -106,11 +106,23 @@ def converter(clip, modelo, render_index):
              target_timerange={"start": ini, "duration": dur}, keyframe_refs=[], common_keyframes=[], group_id="")
     s["clip"] = {"scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0, "alpha": 1.0, "flip": {"vertical": False, "horizontal": False},
                  "transform": {"x": round(2 * clip.get("offsetX", 0.0), 6), "y": round(-2 * y_final, 6)}}
-    for prop, tipo, conv in (("offsetY", "KFTypePositionY", lambda v: -2 * v), ("opacity", "KFTypeGlobalAlpha", lambda v: v)):
-        ks = sorted([k for k in chaves if k["property"] == prop], key=lambda k: k["at"])
-        if ks:
+    # Só a entrada vira keyframe. Com as keys da saída (fade de 2 quadros no fim), o CapCut exportava as
+    # palavras de mais de ~1 s ampliadas e cortadas nos quadros antes do fim (2026-10-27, "as legendas
+    # ficaram bugadas na transição"); a palavra some no corte. E vai o conjunto que o próprio CapCut grava
+    # (posição X e Y, escala, rotação), não só a posição Y.
+    entrada = [k for k in chaves if k["at"] <= 0.5]
+    oy = sorted([k for k in entrada if k["property"] == "offsetY"], key=lambda k: k["at"])
+    if oy:
+        tempos = [int(round(k["at"] * dur)) for k in oy]
+        x = round(2 * clip.get("offsetX", 0.0), 6)
+        for tipo, valores in (("KFTypePositionX", [x] * len(oy)), ("KFTypePositionY", [round(-2 * k["value"], 6) for k in oy]),
+                              ("KFTypeScaleX", [1.0] * len(oy)), ("KFTypeRotation", [0.0] * len(oy))):
             s["common_keyframes"].append({"id": novo_id(), "material_id": "", "property_type": tipo,
-                                          "keyframe_list": [keyframe(int(round(k["at"] * dur)), round(conv(k["value"]), 6)) for k in ks]})
+                                          "keyframe_list": [keyframe(t, v) for t, v in zip(tempos, valores)]})
+    al = sorted([k for k in entrada if k["property"] == "opacity"], key=lambda k: k["at"])
+    if al:
+        s["common_keyframes"].append({"id": novo_id(), "material_id": "", "property_type": "KFTypeGlobalAlpha",
+                                      "keyframe_list": [keyframe(int(round(k["at"] * dur)), round(k["value"], 6)) for k in al]})
     return m, anim, s
 
 
