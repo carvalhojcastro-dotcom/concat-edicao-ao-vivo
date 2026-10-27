@@ -69,6 +69,7 @@ desktop.ini
 /fonts/Scholar-*
 /fonts/Coolvetica-*
 /fonts/HelveticaNeue-*
+/fonts/Helvetica-*
 # Ambiente Python das ferramentas e caches.
 /tools/.venv/
 /tools/__pycache__/

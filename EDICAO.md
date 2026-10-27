@@ -192,6 +192,18 @@ Pedido de 2026-10-25 (Dr. Leonardo, "Cortes palestra"):
   `headline.py <P> "l1|l2" --altura=-0.1825 --tamanho=0.030 --fim=<duração>` (caixa entre 9% e 18% da altura;
   a cabeça fica a 24%). Legendas do meio para baixo: `legendas_simples.py --altura=0.15`.
 
+## 6d. Legendas dentro de um projeto do CapCut
+Pedido de 2026-10-26 ("faça dentro do CapCut ... deixe tudo editável"): o projeto fica no CapCut e as
+nossas legendas entram nele como textos normais.
+1. Ache o projeto pelo nome em `com.lveditor.draft/root_meta_info.json` (a pasta pode ter outro nome).
+2. Remonte o áudio da trilha principal pelos segmentos do `draft_info.json` (fonte, velocidade) e transcreva.
+3. Monte as legendas no Concat numa timeline com esse áudio e a mesma duração (vídeo preto): `legendas_simples.py`
+   + `legendas_dinamicas.py`, como sempre.
+4. Feche o CapCut e rode `tools/capcut_legendas.py <projeto Concat> <pasta do projeto no CapCut>`: backup em
+   `~/Desktop/Concat/backup-capcut/`, cada palavra vira um texto do CapCut (fonte de `fonts/`, contorno e
+   sombra do modelo `tools/capcut_modelo_texto.json`, entrada de baixo para cima em keyframes), em trilhas
+   "Legendas (Concat)". Rodar de novo troca as legendas.
+
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
 - **Tempos** que ele passa vêm em `mm:ss:quadros`.
