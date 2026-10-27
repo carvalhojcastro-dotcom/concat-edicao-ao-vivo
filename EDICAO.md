@@ -73,6 +73,9 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 - **Destaque nem sempre serifado**: no serifa e no elegante, `"fonte_chave"` na frase escolhe
   `serifa` (DM Serif Display reta, padrão), `italico`, `bold` (Condensed Black) ou `coolvetica`. **Alterne** ao
   longo do vídeo. Uma fonte mais larga encolhe até a largura da serifada, então o bloco não muda de forma.
+- **Chave longa** (classico e elegante, ex.: "no programa / Vem Com A Gente"): só a linha grande encolhe para
+  caber no quadro; as palavras pequenas mantêm o tamanho (pedido de 2026-10-27: "discrepante o tamanho das
+  palavras da linha de cima").
 - **Pesos semibold ou bold** (pedido de 2026-10-23: "priorize usar fontes mais semibold ou bold, evitando
   pesos mais finos"): as palavras pequenas de todos os estilos saem em Helvetica Neue Medium; a
   Montserrat Light do elegante saiu.

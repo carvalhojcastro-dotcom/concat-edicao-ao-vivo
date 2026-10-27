@@ -252,12 +252,22 @@ def serifa(linhas, t):
     return [p for ps in rows for p in ps]
 
 
+def caber(ps):
+    """Encolhe só a linha grande quando ela passa da largura do quadro. Antes o bloco inteiro encolhia
+    junto e as palavras pequenas sumiam ao lado de uma chave longa ("no programa / Vem Com A Gente",
+    pedido de 2026-10-27: "discrepante o tamanho das palavras da linha de cima")."""
+    w = linha_em(ps, 0.0, 0.0)
+    if w > LARGURA_MAX:
+        ps[:] = [palavra(p["texto"], p["face"], p["em"] * LARGURA_MAX / w, p["cor"], p["trk"]) for p in ps]
+    return ps
+
+
 def classico(linhas, t):
     S, B = 0.042 * H, 0.100 * H
     topo = [palavra(t[i], "helv", S, trk=-0.02) for linha in linhas[:-1] for i, _ in linha]
     # print "helvetica": Condensed Black; com "fonte_chave": "reta", Helvetica Bold reta (print "como que / eu faço")
     face = ("helv-bold", -0.03) if FONTE_CHAVE == "reta" else ("helv-cond-black", -0.01)
-    grande = [palavra(t[i], face[0], B * (0.92 if face[0] == "helv-bold" else 1.0), trk=face[1]) for i, _ in linhas[-1]]
+    grande = caber([palavra(t[i], face[0], B * (0.92 if face[0] == "helv-bold" else 1.0), trk=face[1]) for i, _ in linhas[-1]])
     wb = linha_em(grande, 0.0, 0.0)
     if topo:
         base_topo = -(max(cap(p) for p in grande) + 0.10 * S)
@@ -280,8 +290,8 @@ def elegante(linhas, t):
     # pequenas em semibold (pedido de 2026-10-23: "priorize fontes mais semibold ou bold, evitando pesos mais
     # finos"; print "as minhas / legendas"). Antes era Montserrat Light.
     pequenas = [[palavra(t[i], "helv", S, trk=-0.02) for i, _ in linha] for linha in linhas[:-1]]
-    grande = [chave_em(t[i], K, BRANCO) if c else palavra(t[i], "helv", S, trk=-0.02)
-              for i, c in linhas[-1]]  # serifada só no destaque
+    grande = caber([chave_em(t[i], K, BRANCO) if c else palavra(t[i], "helv", S, trk=-0.02)
+                    for i, c in linhas[-1]])  # serifada só no destaque
     wg = linha_em(grande, 0.0, 0.0)
     # a palavra grande sobe até encostar na linha de cima, medida pelo topo real da tinta (as hastes da
     # serifada sobem acima da maiúscula; o -0,68 em fixo de antes só servia para o itálico da Scholar)
