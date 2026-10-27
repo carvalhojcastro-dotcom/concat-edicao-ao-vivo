@@ -32,6 +32,22 @@ import uuid
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FONTES = os.path.abspath(os.path.join(AQUI, "..", "fonts"))
+# O CapCut do Mac é da App Store (sandbox): só lê fonte do sistema ou de dentro da pasta dele. A pasta
+# ~/Movies/CapCut/User Data é a mesma que ele vê como .../Containers/com.lemon.lvoverseas/Data/Movies/...;
+# as fontes do Concat são copiadas para lá e o texto aponta para esse caminho (como as fontes que ele baixa).
+CAPCUT_FONTES = os.path.expanduser("~/Movies/CapCut/User Data/Fontes Concat")
+CAPCUT_FONTES_VISTA = os.path.expanduser("~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut/User Data/Fontes Concat")
+
+
+def fonte_capcut(arq):
+    """Caminho da fonte como o CapCut consegue ler (copia o arquivo para a pasta dele na 1ª vez)."""
+    if arq.startswith("/"):
+        return arq   # fonte do sistema
+    os.makedirs(CAPCUT_FONTES, exist_ok=True)
+    destino = os.path.join(CAPCUT_FONTES, arq)
+    if not os.path.exists(destino) or os.path.getsize(destino) != os.path.getsize(os.path.join(FONTES, arq)):
+        shutil.copy2(os.path.join(FONTES, arq), destino)
+    return os.path.join(CAPCUT_FONTES_VISTA, arq)
 NOME_TRILHA = "Legendas (Concat)"
 FPS = 30
 
@@ -65,7 +81,7 @@ def keyframe(t_us, valor):
 def converter(clip, modelo, render_index):
     t = clip["text"]
     arq, titulo = FACES[chave(t)]
-    caminho = arq if arq.startswith("/") else os.path.join(FONTES, arq)
+    caminho = fonte_capcut(arq)
     tamanho = round(t["fontSize"] / 0.04302 * 12, 3)
     estilo = json.loads(modelo["material"]["content"])["styles"][0]
     estilo = dict(estilo, range=[0, len(t["content"])], size=tamanho, font={"path": caminho, "id": ""})

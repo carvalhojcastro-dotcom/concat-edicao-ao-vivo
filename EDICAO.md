@@ -200,7 +200,9 @@ nossas legendas entram nele como textos normais.
 3. Monte as legendas no Concat numa timeline com esse áudio e a mesma duração (vídeo preto): `legendas_simples.py`
    + `legendas_dinamicas.py`, como sempre.
 4. Feche o CapCut e rode `tools/capcut_legendas.py <projeto Concat> <pasta do projeto no CapCut>`: backup em
-   `~/Desktop/Concat/backup-capcut/`, cada palavra vira um texto do CapCut (fonte de `fonts/`, contorno e
+   `~/Desktop/Concat/backup-capcut/`, cada palavra vira um texto do CapCut (fonte copiada para
+   `~/Movies/CapCut/User Data/Fontes Concat/`, a única pasta fora do sistema que o CapCut da App Store
+   consegue ler: fonte fora dela aparece trocada; contorno e
    sombra do modelo `tools/capcut_modelo_texto.json`, entrada de baixo para cima em keyframes), em trilhas
    "Legendas (Concat)". Rodar de novo troca as legendas.
 
