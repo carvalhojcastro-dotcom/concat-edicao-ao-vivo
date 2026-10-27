@@ -206,6 +206,22 @@ nossas legendas entram nele como textos normais.
    sombra do modelo `tools/capcut_modelo_texto.json`, entrada de baixo para cima em keyframes), em trilhas
    "Legendas (Concat)". Rodar de novo troca as legendas.
 
+## 6e. Editar do zero no CapCut, no jeito da usuária
+Pedido de 2026-10-27 ("aprenda com a edição do primeiro e replique no segundo ... me entregue pronto e
+editável no CapCut"). Medido no projeto que ela editou ("5 - Braços definidos"):
+- **Cortes:** 0,04 s de ar antes da voz e 0,06 s depois; pausas tiradas (o `reel.py cortes` dá isso; tire
+  0,025 s do começo de cada pedaço). Fala a **1,1x**, voz a 155%, redução de ruído 85% e retoque de rosto.
+- **Zoom** muda com a ideia: abertos 100-110%, zoom in 130-150% com o rosto a ~30% da altura, centrado.
+- **Música** lofi a 0,19 com fade de 0,8 s / 3 s; **efeitos** dos Favoritos dela (Clique do mouse, Simple
+  Whoosh a 48%, Autofoco Sony) na entrada e na troca de B-roll.
+- **B-roll:** fotos realistas na trilha de cima, com o Fade-in dela e avanço lento de zoom (100→108%).
+- **Legendas no CapCut** um pouco maiores e mais juntas que no Concat (2026-10-27): simples `--escala=1.02`,
+  dinâmicas `--espaco=0.16 --aperto=0.18`.
+- **Confira a fala cortada** (`conferir_video.py` no áudio remontado): a transcrição longa esconde começos
+  falsos ("Ele estimula o próprio..." → "vamos lá" → a tomada boa).
+Ferramenta: `tools/capcut_montar.py <projeto novo> <projeto modelo> <plano.json>` (pedaços, zoom, música,
+efeitos, B-roll) e depois `capcut_legendas.py`. Fotos e fontes em `~/Movies/CapCut/User Data/` (sandbox).
+
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
 - **Tempos** que ele passa vêm em `mm:ss:quadros`.

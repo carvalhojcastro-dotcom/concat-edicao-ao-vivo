@@ -127,8 +127,11 @@ def palavra(texto, face, em, cor=BRANCO, trk=0.0):
             "w": largura(face, em, texto, trk)}
 
 
+ESPACO = float(_opc.get("espaco", 0.26))  # vão entre palavras, em em (CapCut: 0.16; pedido de 2026-10-27, "diminua a distância")
+
+
 def espaco(a, b):
-    return 0.26 * min(a["em"], b["em"])
+    return ESPACO * min(a["em"], b["em"])
 
 
 def linha_em(ps, x, base):
