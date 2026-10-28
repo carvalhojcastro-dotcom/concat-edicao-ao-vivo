@@ -24,6 +24,22 @@ import uuid
 
 novo_id = lambda: str(uuid.uuid4()).upper()  # noqa: E731
 RAIZ = os.path.expanduser("~/Movies/CapCut/User Data/Projects/com.lveditor.draft")
+# O CapCut (sandbox) só abre arquivo fora da pasta dele se a pessoa o importou pela janela; um caminho escrito
+# por nós aparece como "arquivo não acessível" (2026-10-28). O bruto entra por link físico (mesmo arquivo, sem
+# ocupar espaço) na pasta dele, com o caminho como ele vê.
+BRUTOS = os.path.expanduser("~/Movies/CapCut/User Data/Brutos Concat")
+BRUTOS_VISTA = os.path.expanduser("~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut/User Data/Brutos Concat")
+
+
+def bruto_visivel(video, pasta_nome):
+    destino = os.path.join(BRUTOS, pasta_nome, os.path.basename(video))
+    os.makedirs(os.path.dirname(destino), exist_ok=True)
+    if not os.path.exists(destino):
+        try:
+            os.link(video, destino)
+        except OSError:          # outro disco: copia
+            shutil.copy2(video, destino)
+    return os.path.join(BRUTOS_VISTA, pasta_nome, os.path.basename(video))
 PULAR = {"matting", "subdraft", "video", "qr_upload", "smart_crop", "adjust_mask"}   # caches do vídeo do modelo
 
 
@@ -71,14 +87,16 @@ def main():
 
     # draft_info: a trilha principal vira um clipe só com o bruto novo; ficam só as camadas do vídeo todo
     w, h, dur = sonda(video)
+    caminho = bruto_visivel(video, os.path.basename(pasta))
+    mid = str(uuid.uuid4())     # o mesmo id liga a mídia da lista ao clipe da timeline
     alvos = [os.path.join(pasta, "draft_info.json"), os.path.join(pasta, "Timelines", tl, "draft_info.json")]
     d = json.load(open(alvos[0], encoding="utf-8"))
     total = d["duration"]
     principal = next(t for t in d["tracks"] if t["type"] == "video")
     seg = copy.deepcopy(sorted(principal["segments"], key=lambda s: s["target_timerange"]["start"])[0])
     mat = copy.deepcopy(next(m for m in d["materials"]["videos"] if m["id"] == seg["material_id"]))
-    mat.update(id=novo_id(), path=video, material_name=os.path.basename(video), width=w, height=h, duration=dur,
-               local_material_id=novo_id().lower(), md5="", crop_ratio="free", type="video")
+    mat.update(id=novo_id(), path=caminho, material_name=os.path.basename(video), width=w, height=h, duration=dur,
+               local_material_id=mid, md5="", crop_ratio="free", type="video", category_name="local", is_copyright=False)
     if isinstance(mat.get("matting"), dict):
         mat["matting"].update(flag=0, path="", custom_matting_id="")
     seg.update(id=novo_id(), material_id=mat["id"], source_timerange={"start": 0, "duration": dur},
@@ -108,7 +126,7 @@ def main():
     for grupo in meta.get("draft_materials", []):
         if grupo.get("type") == 0:
             grupo["value"] = [{"ai_group_type": "", "create_time": int(time.time()), "duration": dur, "enter_from": 0,
-                               "extra_info": os.path.basename(video), "file_Path": video, "height": h, "id": str(uuid.uuid4()),
+                               "extra_info": os.path.basename(video), "file_Path": caminho, "height": h, "id": mid,
                                "import_time": int(time.time()), "import_time_ms": agora, "item_source": 1, "material_color_tag": "",
                                "md5": "", "metetype": "video", "roughcut_time_range": {"duration": -1, "start": -1},
                                "sub_time_range": {"duration": -1, "start": -1}, "type": 0, "width": w}]

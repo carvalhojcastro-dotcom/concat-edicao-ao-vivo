@@ -233,7 +233,8 @@ editável no CapCut"). Medido no projeto que ela editou ("5 - Braços definidos"
 Ferramenta: `tools/capcut_montar.py <projeto novo> <projeto modelo> <plano.json>` (pedaços, zoom, música,
 efeitos, B-roll) e depois `capcut_legendas.py`. Fotos e fontes em `~/Movies/CapCut/User Data/` (sandbox).
 - **Sem projeto no CapCut** ("abra no CapCut", 2026-10-28): `tools/capcut_novo.py <projeto modelo> "<nome>" <bruto>`
-  clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
+  põe o bruto na pasta do CapCut por link físico (caminho escrito por nós fora dela vira "arquivo não
+  acessível" no sandbox) e clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
   legendas; sai o conteúdo) e registra na lista do CapCut. Sabrina: modelo "19 - O ente atrasou o repasse"
   (1,02x, retoque, zoom 1,1/1,3/1,5, Lofi a 0,39, whoosh e clique).
 - **B-roll em motion graphics** (Sabrina, 2026-10-28: "animações motions sobre o que ela está falando ... paleta
