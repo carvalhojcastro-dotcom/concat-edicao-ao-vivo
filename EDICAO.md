@@ -216,6 +216,9 @@ nossas legendas entram nele como textos normais.
    consegue ler: fonte fora dela aparece trocada; contorno e
    sombra do modelo `tools/capcut_modelo_texto.json`, entrada de baixo para cima em keyframes), em trilhas
    "Legendas (Concat)". Rodar de novo troca as legendas.
+5. Reabra o CapCut e confira o nome do projeto na lista: na primeira abertura depois da escrita ele pode voltar
+   ao nome da pasta ("60 - Cirurgia 25.02.26" virou "1028 (1)", 2026-10-28). Se voltar, feche o CapCut e grave o
+   nome em `draft_name` no `draft_meta_info.json` da pasta e no `root_meta_info.json`; aí ele fica.
 
 ## 6e. Editar do zero no CapCut, no jeito da usuária
 Pedido de 2026-10-27 ("aprenda com a edição do primeiro e replique no segundo ... me entregue pronto e

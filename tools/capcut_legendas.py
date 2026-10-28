@@ -200,8 +200,12 @@ def main():
         trilhas[livre][0] = fim
         trilhas[livre][1]["segments"].append(s)
     base["tracks"] += [tr for _, tr in trilhas]
+    if base.get("render_index_track_mode_on"):   # nesse modo o CapCut empilha pela trilha: legendas por cima
+        for i, t in enumerate(base["tracks"]):
+            for s in t["segments"]:
+                s["track_render_index"] = i
 
-    texto = json.dumps(base, ensure_ascii=False, separators=(",", ":"))
+    texto =json.dumps(base, ensure_ascii=False, separators=(",", ":"))
     for p in alvos:
         open(p, "w", encoding="utf-8").write(texto)
         tmp = os.path.join(os.path.dirname(p), "template-2.tmp")
