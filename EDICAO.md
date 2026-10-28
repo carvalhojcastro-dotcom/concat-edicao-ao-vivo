@@ -59,10 +59,18 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 
 | Estilo | Palavras pequenas | Palavra-chave (grande) |
 |---|---|---|
-| **impacto** | Helvetica normal, bloco à esquerda | Helvetica Bold Oblíqua grande |
+| **impacto** | Helvetica Neue Medium **Itálico**, tudo inclinado e à esquerda | Helvetica Bold Oblíqua (prints "que você / usa textos", "pra chamar / atenção") |
 | **serifa** | Helvetica normal, em escadinha | DM Serif Display **reta**, **branca** |
-| **classico** | Helvetica normal (com 2 palavras, vão para as pontas) | Helvetica Neue **Condensed Black** grande (`"fonte_chave": "reta"`: Helvetica **Bold** reta, print "como que / eu faço") |
-| **elegante** | Helvetica Neue **Medium** (semibold), centralizada | DM Serif Display enorme, encostada (print "as minhas / legendas") |
+| **classico** | Helvetica Neue Medium (a 1ª no começo, a última terminando a ~82% da grande) | Helvetica Neue **Condensed Black** grande (`"fonte_chave": "reta"`: Helvetica **Bold** reta, print "como que / eu faço") |
+| **elegante** | Helvetica Neue **Medium** (semibold), no vão entre as hastes | serifada itálica enorme (print "as minhas / legendas"); no CapCut `"fonte_chave": "scholar"` = a Scholar Itálico da biblioteca dele |
+
+- **Medidas dos prints** (2026-10-28, "tente ser mais preciso, as suas não estão iguais"; proporções pela largura
+  das palavras, a altura das letras pequenas vem borrada): minúsculas da grande = 2,19x as das pequenas no classico,
+  2,37x no elegante, 2,37x no impacto (1,6x quando a chave divide a linha com uma pequena, que sai a 0,76 e alinha
+  pelo topo); linhas depois da chave a 0,77. A linha de cima **encaixa** nas minúsculas da de baixo (0,2 a 0,8
+  altura-x de vão) e as hastes (f, l, d, t) sobem entre as palavras. Vão entre palavras igual no bloco (~0,26 em da
+  pequena). Sem pontuação no fim das palavras. No CapCut (tutorial dos prints): sem contorno, só sombra preta
+  (`--sem-contorno`).
 
 - **Regra de fontes:** **a serifada (DM Serif Display) só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
   grande, sai em fonte sóbria, normal e reta (Helvetica ou Montserrat), nunca fina nem cursiva.
@@ -224,6 +232,14 @@ editável no CapCut"). Medido no projeto que ela editou ("5 - Braços definidos"
   falsos ("Ele estimula o próprio..." → "vamos lá" → a tomada boa).
 Ferramenta: `tools/capcut_montar.py <projeto novo> <projeto modelo> <plano.json>` (pedaços, zoom, música,
 efeitos, B-roll) e depois `capcut_legendas.py`. Fotos e fontes em `~/Movies/CapCut/User Data/` (sandbox).
+- **Sem projeto no CapCut** ("abra no CapCut", 2026-10-28): `tools/capcut_novo.py <projeto modelo> "<nome>" <bruto>`
+  clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
+  legendas; sai o conteúdo) e registra na lista do CapCut. Sabrina: modelo "19 - O ente atrasou o repasse"
+  (1,02x, retoque, zoom 1,1/1,3/1,5, Lofi a 0,39, whoosh e clique).
+- **B-roll em motion graphics** (Sabrina, 2026-10-28: "animações motions sobre o que ela está falando ... paleta
+  de cores verde ... lettering moderno e com dinamismo"): cenas em tela cheia, fundo verde-escuro, menta e lima,
+  Poppins Black + Plus Jakarta, conteúdo entre 14% e 56% da altura (as legendas ficam abaixo). No plano,
+  `"tipo": "video"` no B-roll.
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.

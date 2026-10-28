@@ -59,6 +59,23 @@ print("  HelveticaNeue-Medium.ttf extraída do sistema (semibold das legendas)")
 PY
 fi
 
+# Pequenas inclinadas do estilo impacto (prints "que você / usa textos"), família própria para o Concat.
+if [ ! -f fonts/HelveticaNeue-MediumItalic.ttf ]; then
+  tools/.venv/bin/python - <<'PY'
+from fontTools.ttLib import TTCollection
+c = TTCollection("/System/Library/Fonts/HelveticaNeue.ttc")
+f = next(x for x in c.fonts if x["name"].getDebugName(4) == "Helvetica Neue Medium Italic")
+for r in f["name"].names:
+    if r.nameID in (1, 4, 16): r.string = "Helvetica Neue Medium Italic"
+    if r.nameID in (2, 17): r.string = "Regular"
+    if r.nameID == 6: r.string = "HelveticaNeue-MediumItalic-Concat"
+f["OS/2"].fsSelection = (f["OS/2"].fsSelection & ~1) | (1 << 6)
+f["head"].macStyle &= ~2
+f.save("fonts/HelveticaNeue-MediumItalic.ttf")
+print("  HelveticaNeue-MediumItalic.ttf extraída do sistema (pequenas do estilo impacto)")
+PY
+fi
+
 # Helvetica do print "helvetica" (referencias/Legendas dinamicas): condensada e pesada, no destaque em bold.
 if [ ! -f fonts/HelveticaNeue-CondensedBlack.ttf ]; then
   tools/.venv/bin/python - <<'PY'

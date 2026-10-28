@@ -96,6 +96,9 @@ Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e
   - `impacto` aceita linha pequena, chave e linha pequena.
 - Remova vírgulas do fim só nas palavras-chave (o script já tira as dos blocos).
 - A serifada (DM Serif Display) só aparece na palavra-chave; o resto do bloco o script põe em Helvetica/Montserrat.
+- **Prints de referência** ("como que / eu faço", "as minhas / legendas", "que você / usa textos", "pra chamar /
+  atenção"): classico, elegante e impacto seguem as medidas deles (EDICAO.md); quando o usuário pedir "os tipos de
+  legenda que enviei", use só esses três, classico com `"reta"` e, no CapCut, elegante com `"scholar"`.
 - **Fonte da chave** (`"fonte_chave"` na frase, serifa e elegante): `serifa` (DM Serif Display reta, padrão),
   `italico`, `bold` (Condensed Black) ou `coolvetica`. Alterne ao longo do vídeo, sem repetir em
   blocos seguidos.

@@ -30,8 +30,9 @@ Estilos (inspirados em prints de legendas de reels; descritos em EDICAO.md):
              em Helvetica Neue Condensed Black.
   elegante - "Estilo 6": linha pequena em Helvetica Neue Medium (semibold; era Montserrat Light, fina
              demais) sobre uma palavra enorme em DM Serif Display, encostadas.
-  impacto  - "Estilos 1 e 2": bloco alinhado à esquerda, Helvetica normal (reta) e a chave em
-             Helvetica Bold Oblíqua grande (podem dividir a mesma linha).
+  impacto  - "Estilos 1 e 2": bloco alinhado à esquerda e todo inclinado: pequenas em Helvetica Neue Medium
+             Itálico e a chave em Helvetica Bold Oblíqua grande (podem dividir a mesma linha).
+  classico, elegante e impacto seguem as medidas dos prints de 2026-10-28 (ver as funções e EDICAO.md).
 
 Requer Pillow e fontTools (para medir as palavras com as mesmas fontes que o Concat usa).
 """
@@ -65,10 +66,16 @@ FACES = {
     "coolvetica": ("Coolvetica", 400, False, os.path.join(FONTES, "Coolvetica-Rg.otf"), 0),
     "montserrat-light": ("Montserrat", 300, False, os.path.join(FONTES, "Montserrat-Light.ttf"), 0),
 }
+# Scholar Itálico, a serifada do print "as minhas / legendas": só para legendas que vão para o CapCut, onde
+# ela tem licença (capcut_legendas.py aponta para a fonte da biblioteca do CapCut). Fica fora do Git.
+SCHOLAR = os.path.join(FONTES, "Scholar-Italic.otf")
+if os.path.exists(SCHOLAR):
+    FACES["scholar-italic"] = ("Scholar", 400, True, SCHOLAR, 0)
 # Fontes que o projeto precisa registrar (as do sistema o Concat já acha).
 REGISTRAR = [("DM Serif Display", "DMSerifDisplay-Regular.ttf"), ("DM Serif Display", "DMSerifDisplay-Italic.ttf"),
              ("Montserrat", "Montserrat-Bold.otf"), ("Coolvetica", "Coolvetica-Rg.otf"),
-             ("Montserrat", "Montserrat-Light.ttf")] + plataforma.registrar_helvetica()
+             ("Montserrat", "Montserrat-Light.ttf")] + plataforma.registrar_helvetica() + \
+    ([("Scholar", "Scholar-Italic.otf")] if os.path.exists(SCHOLAR) else [])
 
 AMARELO = "#f4c430"
 BRANCO = "#ffffff"
@@ -80,6 +87,7 @@ CHAVES = {
     "italico": ("serif-italic", 0.0),      # DM Serif Display Itálico (prints de estilo 1 e 3)
     "bold": ("helv-cond-black", -0.01),      # Helvetica Neue Condensed Black (print "helvetica")
     "coolvetica": ("coolvetica", -0.02),     # Coolvetica Regular (print "coolvetica")
+    "scholar": ("scholar-italic", -0.01),    # Scholar Itálico, só no CapCut (print "as minhas / legendas")
 }
 LARGURA_MAX = 0.84 * W
 ENTRADA = 0.20           # segundos da entrada deslizando
@@ -134,16 +142,17 @@ def espaco(a, b):
     return ESPACO * min(a["em"], b["em"])
 
 
-def linha_em(ps, x, base):
-    """Põe as palavras lado a lado numa linha base, a partir de x. Devolve a largura."""
+def linha_em(ps, x, base, vao=None):
+    """Põe as palavras lado a lado numa linha base, a partir de x. Devolve a largura. `vao` fixa o
+    espaço entre as palavras em px (os estilos dos prints usam um vão só no bloco todo)."""
     for k, p in enumerate(ps):
         p["x"], p["base"] = x, base
-        x += p["w"] + (espaco(p, ps[k + 1]) if k + 1 < len(ps) else 0)
+        x += p["w"] + ((espaco(p, ps[k + 1]) if vao is None else vao) if k + 1 < len(ps) else 0)
     return x - ps[0]["x"]
 
 
-def larg_linha(ps):
-    return sum(p["w"] for p in ps) + sum(espaco(a, b) for a, b in zip(ps, ps[1:]))
+def larg_linha(ps, vao=None):
+    return sum(p["w"] for p in ps) + sum((espaco(a, b) if vao is None else vao) for a, b in zip(ps, ps[1:]))
 
 
 def cap(p):
@@ -252,73 +261,165 @@ def serifa(linhas, t):
     return [p for ps in rows for p in ps]
 
 
-def caber(ps):
+def caber(ps, vao=None):
     """Encolhe só a linha grande quando ela passa da largura do quadro. Antes o bloco inteiro encolhia
     junto e as palavras pequenas sumiam ao lado de uma chave longa ("no programa / Vem Com A Gente",
     pedido de 2026-10-27: "discrepante o tamanho das palavras da linha de cima")."""
-    w = linha_em(ps, 0.0, 0.0)
+    w = linha_em(ps, 0.0, 0.0, vao)
     if w > LARGURA_MAX:
         ps[:] = [palavra(p["texto"], p["face"], p["em"] * LARGURA_MAX / w, p["cor"], p["trk"]) for p in ps]
     return ps
 
 
+def xh(face):
+    """Altura das minúsculas da face, em em."""
+    return xalt({"face": face, "em": 1.0})
+
+
+def encaixe(base, cima, baixo, vao, folga):
+    """Linha base de `baixo` com `cima` na linha base `base`, como nos prints (2026-10-28): o vão vai da base
+    de cima ao topo das minúsculas de baixo e é pequeno; as hastes de baixo (f, l, d, t) sobem entre as
+    palavras de cima. Só desce mais onde a tinta das duas linhas se tocaria (deixando `folga`)."""
+    nova = base + max(xalt(p) for p in baixo) + vao
+    for a in cima:
+        pa = perfil(a)
+        for b in baixo:
+            pb = perfil(b)
+            for x in range(int(max(a["x"], b["x"])), int(min(a["x"] + len(pa[1]), b["x"] + len(pb[0])))):
+                d, s = pa[1][x - int(a["x"])], pb[0][x - int(b["x"])]
+                if d is not None and s is not None:
+                    nova = max(nova, base + d + s + folga)
+    return nova
+
+
+def assentar(cima, grande, xs, vao, folga, alvos, peso, sx):
+    """Escolhe a posição x das palavras de cima entre as candidatas `xs` (listas de x, uma por palavra):
+    a que deixa a linha mais encaixada na de baixo (sem subir por causa de uma haste) e mais perto do
+    alvo. Devolve a linha base de cima (a grande fica na base 0)."""
+    melhor = None
+    minimo = max(xalt(p) for p in grande) + vao
+    for cand in xs:
+        for p, x in zip(cima, cand):
+            p["x"], p["base"] = x, 0.0
+        sobe = encaixe(0.0, cima, grande, vao, folga) - minimo
+        custo = sobe / sx + peso * sum(abs(x - a) for x, a in zip(cand, alvos))
+        if melhor is None or custo < melhor[0] - 1e-9:
+            melhor = (custo, cand, sobe)
+    for p, x in zip(cima, melhor[1]):
+        p["x"] = x
+    base = -(minimo + melhor[2])
+    for p in cima:
+        p["base"] = base
+    return base
+
+
 def classico(linhas, t):
-    S, B = 0.042 * H, 0.100 * H
+    """Print "como que / eu faço" (medido em 2026-10-28): pequenas em Helvetica Neue Medium; a linha grande
+    com as minúsculas 2,16x as das pequenas; a 1ª pequena no começo da grande e a última terminando a ~82%
+    dela; as pequenas assentam 0,2 altura-x acima das minúsculas da grande, com as hastes subindo entre elas.
+    As proporções saem da largura das palavras no print (a altura das letras pequenas vem borrada)."""
+    S = 0.042 * H
+    sx = xh("helv") * S
+    vao = 0.26 * S                       # o mesmo vão no bloco todo (print: ~0,26 em da pequena)
     topo = [palavra(t[i], "helv", S, trk=-0.02) for linha in linhas[:-1] for i, _ in linha]
     # print "helvetica": Condensed Black; com "fonte_chave": "reta", Helvetica Bold reta (print "como que / eu faço")
-    face = ("helv-bold", -0.03) if FONTE_CHAVE == "reta" else ("helv-cond-black", -0.01)
-    grande = caber([palavra(t[i], face[0], B * (0.92 if face[0] == "helv-bold" else 1.0), trk=face[1]) for i, _ in linhas[-1]])
-    wb = linha_em(grande, 0.0, 0.0)
-    if topo:
-        base_topo = -(max(cap(p) for p in grande) + 0.10 * S)
-        wt = larg_linha(topo)
-        if len(topo) == 1:
-            linha_em(topo, 0.04 * B, base_topo)               # à esquerda, como "como"
-        elif len(topo) == 2 and wt < wb:
-            sobra = (wb - 0.08 * B - sum(p["w"] for p in topo)) / (len(topo) - 1)
-            x = 0.04 * B
-            for p in topo:                                     # espalhadas: "como      que"
-                p["x"], p["base"] = x, base_topo
-                x += p["w"] + sobra
-        else:
-            linha_em(topo, (wb - wt) / 2, base_topo)
+    face, trk = ("helv-bold", -0.03) if FONTE_CHAVE == "reta" else ("helv-cond-black", -0.01)
+    grande = caber([palavra(t[i], face, 2.16 * sx / xh(face), trk=trk) for i, _ in linhas[-1]], vao)
+    wb = linha_em(grande, 0.0, 0.0, vao)
+    if not topo:
+        return grande
+    gap, folga = 0.30 * sx, 0.12 * sx      # 0,2 altura-x entre as tintas (+ o arredondado de "o" e "e")
+    ws = [p["w"] for p in topo]
+    wt = larg_linha(topo, vao)
+    passos = [k / 24 for k in range(25)]
+    if len(topo) == 2 and wt < wb * 0.92:
+        x1s = [a * 0.12 * wb for a in passos[:9]]
+        lo, hi = ws[0] + vao, wb - ws[1]
+        cands = [[x1, x1 + lo + a * max(0.0, hi - x1 - lo)] for x1 in x1s for a in passos]
+        alvos = [0.03 * wb, 0.82 * wb - ws[1]]
+    elif wt < wb:
+        cands, alvos = [], [0.03 * wb if len(topo) == 1 else (wb - wt) / 2]
+        for a in passos:
+            x = a * (wb - wt)
+            cands.append([x + sum(ws[:k]) + k * vao for k in range(len(topo))])
+        alvos = [alvos[0] + sum(ws[:k]) + k * vao for k in range(len(topo))]
+    else:
+        x = (wb - wt) / 2
+        cands = [[x + sum(ws[:k]) + k * vao for k in range(len(topo))]]
+        alvos = cands[0]
+    assentar(topo, grande, cands, gap, folga, alvos, 0.8 / wb / len(topo), sx)
     return topo + grande
 
 
 def elegante(linhas, t):
-    S, K = 0.042 * H, 0.125 * H
-    # pequenas em semibold (pedido de 2026-10-23: "priorize fontes mais semibold ou bold, evitando pesos mais
-    # finos"; print "as minhas / legendas"). Antes era Montserrat Light.
+    """Print "as minhas / legendas" (medido em 2026-10-28): linha pequena em Helvetica Neue Medium (semibold)
+    sobre uma palavra enorme em serifada itálica (Scholar no CapCut) com minúsculas 2,33x as das pequenas;
+    a linha pequena fica no vão entre as hastes (l ... d), 0,45 altura-x acima das minúsculas."""
+    S = 0.042 * H
+    sx = xh("helv") * S
+    vao = 0.26 * S
+    face, trk = CHAVES[FONTE_CHAVE]
     pequenas = [[palavra(t[i], "helv", S, trk=-0.02) for i, _ in linha] for linha in linhas[:-1]]
-    grande = caber([chave_em(t[i], K, BRANCO) if c else palavra(t[i], "helv", S, trk=-0.02)
-                    for i, c in linhas[-1]])  # serifada só no destaque
-    wg = linha_em(grande, 0.0, 0.0)
-    # a palavra grande sobe até encostar na linha de cima, medida pelo topo real da tinta (as hastes da
-    # serifada sobem acima da maiúscula; o -0,68 em fixo de antes só servia para o itálico da Scholar)
-    base = -(max(tinta(p)[0] for p in grande) + APERTO * S)
-    for ps in reversed(pequenas):
-        linha_em(ps, (wg - larg_linha(ps)) / 2, base)
-        base -= max(cap(p) for p in ps) + 0.18 * S
+    grande = caber([palavra(t[i], face, 2.33 * sx / xh(face), BRANCO, trk) if c else palavra(t[i], "helv", S, trk=-0.02)
+                    for i, c in linhas[-1]], vao)  # serifada só no destaque
+    wg = linha_em(grande, 0.0, 0.0, vao)
+    if not pequenas:
+        return grande
+    gap, folga = 0.38 * sx, 0.12 * sx
+    ult = pequenas[-1]
+    ws = [p["w"] for p in ult]
+    wt = larg_linha(ult, vao)
+    centro = (wg - wt) / 2
+    faixa = [centro + (k / 20 - 0.5) * abs(wg - wt) for k in range(21)] if wt < wg else [centro]
+    cands = [[x + sum(ws[:k]) + k * vao for k in range(len(ult))] for x in faixa]
+    alvos = [centro + sum(ws[:k]) + k * vao for k in range(len(ult))]
+    base = assentar(ult, grande, cands, gap, folga, alvos, 0.6 / wg / len(ult), sx)
+    meio = ult[0]["x"] + wt / 2
+    for ps in reversed(pequenas[:-1]):      # mais de uma linha pequena: empilha centrada na de baixo
+        linha_em(ps, meio - larg_linha(ps, vao) / 2, 0.0, vao)
+        base -= encaixe(0.0, ps, ult, 0.5 * sx, folga)
+        for p in ps:
+            p["base"] = base
+        ult = ps
     return [p for ps in pequenas for p in ps] + grande
 
 
 def impacto(linhas, t):
-    S, B = 0.046 * H, 0.096 * H
-    rows, depois_da_chave = [], False
-    for linha in linhas:
-        tem_chave = any(c for _, c in linha)
-        s = S * (0.85 if depois_da_chave and not tem_chave else 1.0)  # "no seu vídeo", menor
-        rows.append([palavra(t[i], "helv-bold-oblique", B, trk=-0.04) if c
-                     else palavra(t[i], "helv", s * 0.92, trk=-0.02) for i, c in linha])  # pequenas: normal e reta
-        depois_da_chave = depois_da_chave or tem_chave
-    base = 0.0
+    """Prints "que você / usa textos" e "pra chamar / atenção / no seu vídeo" (medidos em 2026-10-28): tudo
+    inclinado e alinhado à esquerda. Pequenas em Helvetica Neue Medium Itálico; a chave em Helvetica Bold
+    Oblíqua com minúsculas 2,37x as da 1ª linha (1,6x quando divide a linha com uma pequena, como "usa");
+    a pequena da linha da chave é 0,76 da 1ª e alinha pelo topo das minúsculas da chave, e essa linha
+    entra recuada; as linhas depois da chave saem a 0,77."""
+    S = 0.046 * H * 0.92
+    sx = xh("helv-italic") * S
+    vao = 0.30 * S
+    ki = next((li for li, linha in enumerate(linhas) if any(c for _, c in linha)), None)
+    rows = []
+    for li, linha in enumerate(linhas):
+        if li == ki:
+            xk = (1.6 if any(not c for _, c in linha) else 2.37) * sx
+            rows.append([palavra(t[i], "helv-bold-oblique", xk / xh("helv-bold-oblique"), trk=-0.04) if c
+                         else palavra(t[i], "helv-italic", 0.76 * S, trk=-0.01) for i, c in linha])
+        else:
+            em = S if ki is None or li < ki else 0.77 * S
+            rows.append([palavra(t[i], "helv-italic", em, trk=-0.01) for i, _ in linha])
+    base, folga = 0.0, 0.10 * sx
     for li, ps in enumerate(rows):
-        grande = any(p["face"] == "helv-bold-oblique" for p in ps)
-        recuo = 0.0 if grande else (0.35 if li == 0 else 0.55) * S
-        linha_em(ps, recuo, base)
+        chaves = [p for p in ps if p["face"] == "helv-bold-oblique"]
+        # recuo da tinta como nos prints: linha da chave 0,8 altura-x ("atenção"), 1,3 se começa pequena ("usa")
+        recuo = (1.3 if ps[0]["face"] != "helv-bold-oblique" else 0.8) * sx if chaves else (0.25 * sx if li else 0.0)
+        linha_em(ps, recuo, 0.0, vao)
         if li:
-            base = proxima_base(base, rows[li - 1], ps, APERTO, ref=S * 0.92)
-            linha_em(ps, recuo, base)
+            ant = rows[li - 1]
+            gap = 0.80 * sx if chaves else (0.90 * sx if any(p["face"] == "helv-bold-oblique" for p in ant) else 0.60 * sx)
+            base = encaixe(base, ant, chaves or ps, gap, folga)
+        for p in ps:
+            p["base"] = base
+        if chaves:   # pequenas da linha da chave: topo das minúsculas 0,2 altura-x acima do da chave
+            topo = base - max(xalt(p) for p in chaves) - 0.2 * sx
+            for p in ps:
+                if p not in chaves:
+                    p["base"] = topo + xalt(p)
     return [p for ps in rows for p in ps]
 
 

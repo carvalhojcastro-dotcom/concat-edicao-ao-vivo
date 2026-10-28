@@ -15,7 +15,8 @@ Plano (JSON):
   {"pedacos": [{"fonte": s, "fonte_dur": s, "ini": s, "dur": s, "escala": 1.3, "tx": 0.0, "ty": 0.05}, ...],
    "musica": {"projeto": "<pasta do projeto do CapCut que já usa a faixa>", "nome": "Lofi Garden Groove", "inicio": 0.0},
    "efeitos": [{"nome": "Clique do mouse", "em": 0.0}, ...],
-   "broll": [{"arquivo": "<caminho visto pelo CapCut>", "largura": 1152, "altura": 2048, "inicio": s, "fim": s, "zoom": 1.08}, ...]}
+   "broll": [{"arquivo": "<caminho visto pelo CapCut>", "largura": 1152, "altura": 2048, "inicio": s, "fim": s, "zoom": 1.08}, ...],
+   "broll_modelo": "<pasta de um projeto com B-roll de foto>"}   (opcional: o jeito do B-roll vem de lá)
   As fotos precisam estar numa pasta que o CapCut (sandbox) lê: ~/Movies/CapCut/User Data/..., com o caminho
   escrito como ele vê (~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut/User Data/...).
   tx/ty: posição do CapCut (metade do quadro; y para cima). Tempos em segundos.
@@ -103,31 +104,53 @@ def main():
     principal["segments"] = segs
     total = plano["pedacos"][-1]["ini"] + plano["pedacos"][-1]["dur"]
     N["duration"] = us(total)
+    # camadas do vídeo inteiro que vieram do modelo (ajuste de cor, LUT, sombra): vão até o fim do novo
+    for t in N["tracks"]:
+        if t is not principal and len(t["segments"]) == 1 and t["type"] in ("adjust", "video", "effect", "filter"):
+            tt = t["segments"][0]["target_timerange"]
+            tt["duration"] = us(total) - tt["start"]
+            if t["segments"][0].get("source_timerange"):
+                t["segments"][0]["source_timerange"]["duration"] = tt["duration"]
 
     # B-roll: fotos numa trilha por cima, com a animação de entrada que a usuária usa (Fade-in do modelo)
     # e um avanço lento de zoom no tempo todo (movimento na foto; pedido de 2026-10-27)
     N["tracks"] = [t for t in N["tracks"] if not t.get("name", "").startswith("B-roll")]
     brolls = plano.get("broll", [])
     if brolls:
-        trilha_modelo = next(t for t in A["tracks"] if t["type"] == "video" and t.get("flag") == 2)
-        foto_seg = next(s for t in A["tracks"] for s in t["segments"] if material(A, s["material_id"])[1].get("type") == "photo")
+        B = json.load(open(os.path.join(plano["broll_modelo"], "draft_info.json"), encoding="utf-8")) if plano.get("broll_modelo") else A
+        trilha_modelo = next(t for t in B["tracks"] if t["type"] == "video" and t.get("flag") == 2
+                             and any(material(B, s["material_id"])[1].get("type") == "photo" for s in t["segments"]))
+        foto_seg = next(s for s in trilha_modelo["segments"] if material(B, s["material_id"])[1].get("type") == "photo")
         anim_modelo = next(m for s in trilha_modelo["segments"] for r in s["extra_material_refs"]
-                           for k, m in [material(A, r)] if k == "material_animations" and m.get("animations"))
+                           for k, m in [material(B, r)] if k == "material_animations" and m.get("animations"))
         entrada = [a for a in anim_modelo["animations"] if a["type"] == "in"]
-        _, foto_mat = material(A, foto_seg["material_id"])
+        _, foto_mat = material(B, foto_seg["material_id"])
         tr = dict(copy.deepcopy({k: v for k, v in trilha_modelo.items() if k != "segments"}), id=novo_id(), name="B-roll", segments=[])
+        bruto_mat = material(N, bruto_id)[1]
         for b in brolls:
-            m = dict(copy.deepcopy(foto_mat), id=novo_id(), path=b["arquivo"], width=b["largura"], height=b["altura"],
-                     material_name=os.path.basename(b["arquivo"]))
-            N["materials"].setdefault("videos", []).append(m)
             dur = b["fim"] - b["inicio"]
-            s = segmento_de(foto_seg, A, N, m["id"], 0.0, dur, b["inicio"], dur)
-            anim = dict(copy.deepcopy(anim_modelo), id=novo_id(), animations=copy.deepcopy(entrada))
-            N["materials"].setdefault("material_animations", []).append(anim)
-            s["extra_material_refs"].append(anim["id"])
+            if b.get("tipo") == "video":   # motion graphics prontos (MP4): material de vídeo, sem animação nem zoom
+                m = dict(copy.deepcopy(bruto_mat), id=novo_id(), path=b["arquivo"], width=b["largura"], height=b["altura"],
+                         duration=us(b.get("duracao", dur)), material_name=os.path.basename(b["arquivo"]),
+                         local_material_id=novo_id().lower(), md5="")
+                if isinstance(m.get("matting"), dict):
+                    m["matting"].update(flag=0, path="", custom_matting_id="")
+            else:
+                m = dict(copy.deepcopy(foto_mat), id=novo_id(), path=b["arquivo"], width=b["largura"], height=b["altura"],
+                         material_name=os.path.basename(b["arquivo"]))
+            N["materials"].setdefault("videos", []).append(m)
+            s = segmento_de(foto_seg, B, N, m["id"], 0.0, dur, b["inicio"], dur)
+            s["volume"] = 0.0 if b.get("tipo") == "video" else s.get("volume", 1.0)
+            if b.get("tipo") != "video":
+                anim = dict(copy.deepcopy(anim_modelo), id=novo_id(), animations=copy.deepcopy(entrada))
+                N["materials"].setdefault("material_animations", []).append(anim)
+                s["extra_material_refs"].append(anim["id"])
             s["clip"]["scale"] = {"x": 1.0, "y": 1.0}
             s["clip"]["transform"] = {"x": 0.0, "y": 0.0}
-            zoom = b.get("zoom", 1.08)
+            zoom = b.get("zoom", 1.0 if b.get("tipo") == "video" else 1.08)
+            if abs(zoom - 1.0) < 1e-6:
+                tr["segments"].append(s)
+                continue
             for prop, v0, v1 in (("KFTypePositionX", 0.0, 0.0), ("KFTypePositionY", 0.0, 0.0), ("KFTypeScaleX", 1.0, zoom), ("KFTypeRotation", 0.0, 0.0)):
                 kf = lambda t, v: {"curveType": "Line", "graphID": "", "id": novo_id(), "left_control": {"x": 0.0, "y": 0.0},  # noqa: E731
                                    "right_control": {"x": 0.0, "y": 0.0}, "string_value": "", "time_offset": t, "values": [v]}

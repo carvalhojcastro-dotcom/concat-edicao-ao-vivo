@@ -39,8 +39,19 @@ CAPCUT_FONTES = os.path.expanduser("~/Movies/CapCut/User Data/Fontes Concat")
 CAPCUT_FONTES_VISTA = os.path.expanduser("~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut/User Data/Fontes Concat")
 
 
+def fonte_biblioteca(rid):
+    """Caminho (como o CapCut vê) de uma fonte da biblioteca do CapCut já baixada no cache dele."""
+    achados = glob.glob(os.path.expanduser(f"~/Movies/CapCut/User Data/Cache/effect/{rid}/*/*.[ot]tf"))
+    if not achados:
+        sys.exit(f"a fonte {rid} da biblioteca do CapCut não está no cache: escolha-a uma vez num texto do CapCut")
+    return achados[0].replace(os.path.expanduser("~/Movies/CapCut"),
+                              os.path.expanduser("~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut"))
+
+
 def fonte_capcut(arq):
     """Caminho da fonte como o CapCut consegue ler (copia o arquivo para a pasta dele na 1ª vez)."""
+    if arq.startswith("capcut:"):
+        return fonte_biblioteca(arq[7:])
     if arq.startswith("/"):
         return arq   # fonte do sistema
     os.makedirs(CAPCUT_FONTES, exist_ok=True)
@@ -49,11 +60,15 @@ def fonte_capcut(arq):
         shutil.copy2(os.path.join(FONTES, arq), destino)
     return os.path.join(CAPCUT_FONTES_VISTA, arq)
 NOME_TRILHA = "Legendas (Concat)"
+SOMBRA_SEM_CONTORNO = 0.45   # sem o contorno, a sombra segura a leitura em fundo claro (bolinhas brancas, parede)
 FPS = 30
 
 # (família, peso, itálico) do Concat -> (arquivo, nome que o CapCut mostra)
 FACES = {
     ('"Helvetica Neue Medium"', 500, False): ("HelveticaNeue-Medium.ttf", "Helvetica Neue Medium"),
+    ('"Helvetica Neue Medium Italic"', 500, False): ("HelveticaNeue-MediumItalic.ttf", "Helvetica Neue Medium Italic"),
+    # Scholar Itálico (print "as minhas / legendas"): a da biblioteca do CapCut, onde ela tem licença
+    ("Scholar", 400, True): ("capcut:7441944210267181569", "Scholar-Italic"),
     ('"Helvetica Neue Condensed Black"', 900, False): ("HelveticaNeue-CondensedBlack.ttf", "Helvetica Neue Condensed Black"),
     ("Helvetica", 700, True): ("Helvetica-BoldOblique.ttf", "Helvetica Bold Oblique"),
     ("Helvetica", 700, False): ("Helvetica-Bold.ttf", "Helvetica Bold"),
@@ -84,16 +99,29 @@ def converter(clip, modelo, render_index):
     caminho = fonte_capcut(arq)
     tamanho = round(t["fontSize"] / 0.04302 * 12, 3)
     estilo = json.loads(modelo["material"]["content"])["styles"][0]
-    estilo = dict(estilo, range=[0, len(t["content"])], size=tamanho, font={"path": caminho, "id": ""})
-    estilo["fill"] = {"content": {"solid": {"color": [1, 1, 1]}, "render_type": "solid"}}
+    rid = arq[7:] if arq.startswith("capcut:") else ""
+    estilo = dict(estilo, range=[0, len(t["content"])], size=tamanho, font={"path": caminho, "id": rid})
+    cor = t.get("color", "#ffffff").lstrip("#")
+    estilo["fill"] = {"content": {"solid": {"color": [int(cor[k:k + 2], 16) / 255 for k in (0, 2, 4)]}, "render_type": "solid"}}
     if not t.get("shadow"):
         estilo.pop("shadows", None)
+    sem_contorno = not t.get("strokeWidth")
+    if sem_contorno:   # --sem-contorno: só a sombra, como nos prints (Traço desligado, Sombra preta ligada)
+        estilo.pop("strokes", None)
+        for sh in estilo.get("shadows", []):
+            sh.update(alpha=SOMBRA_SEM_CONTORNO, diffuse=0.2)
     m = copy.deepcopy(modelo["material"])
     m.update(id=novo_id(), type="text", content=json.dumps({"styles": [estilo], "text": t["content"]}, ensure_ascii=False),
              font_path=caminho, font_title=titulo, font_name="", font_size=tamanho,
              letter_spacing=round(t["tracking"] / t["fontSize"], 4) if t["fontSize"] else 0.0,
-             has_shadow=bool(t.get("shadow")), text_color="#FFFFFF", alignment=1, group_id="", add_type=0,
+             has_shadow=bool(t.get("shadow")), text_color="#" + cor.upper(), alignment=1, group_id="", add_type=0,
              recognize_task_id="", recognize_text="", name="")
+    if sem_contorno:
+        m.update(border_width=0.0, shadow_alpha=SOMBRA_SEM_CONTORNO)
+    if rid:   # fonte da biblioteca: o CapCut a acha pelo id do recurso
+        m.update(font_resource_id=rid, fonts=[{"id": novo_id(), "resource_id": rid, "third_resource_id": "",
+                 "category_id": "preset", "category_name": "Predefinições", "source_platform": 1, "path": caminho,
+                 "effect_id": rid, "title": titulo, "team_id": "", "file_uri": "", "request_id": ""}])
     anim = copy.deepcopy(modelo["refs"]["material_animations"])
     anim["id"] = novo_id()
     anim["animations"] = []

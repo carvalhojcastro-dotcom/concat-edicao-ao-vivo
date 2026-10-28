@@ -34,6 +34,8 @@ def faces_helvetica():
         helv = "/System/Library/Fonts/Helvetica.ttc"
         return {
             "helv": ('"Helvetica Neue Medium"', 500, False, _f("HelveticaNeue-Medium.ttf"), 0),
+            # pequenas inclinadas dos prints "que você / usa textos" e "pra chamar / atenção" (2026-10-28)
+            "helv-italic": ('"Helvetica Neue Medium Italic"', 500, False, _f("HelveticaNeue-MediumItalic.ttf"), 0),
             "helv-regular": ("Helvetica", 400, False, helv, 0),  # legendas simples antigas
             "helv-bold": ("Helvetica", 700, False, helv, 1),
             "helv-oblique": ("Helvetica", 400, True, helv, 2),
@@ -43,6 +45,7 @@ def faces_helvetica():
         }
     return {
         "helv": ("Arimo", 500, False, _f("Arimo-Medium.ttf"), 0),
+        "helv-italic": ("Arimo", 400, True, _f("Arimo-Italic.ttf"), 0),
         "helv-regular": ("Arimo", 400, False, _f("Arimo-Medium.ttf"), 0),
         "helv-bold": ("Arimo", 700, False, _f("Arimo-Bold.ttf"), 0),
         "helv-oblique": ("Arimo", 400, True, _f("Arimo-Italic.ttf"), 0),
@@ -56,6 +59,7 @@ def registrar_helvetica():
     """(família, arquivo) que o projeto precisa registrar com addFont."""
     if MAC:  # a Helvetica do sistema o Concat acha sozinho; as faces extraídas da Neue, não
         return [("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf"),
+                ("Helvetica Neue Medium Italic", "HelveticaNeue-MediumItalic.ttf"),
                 ("Helvetica Neue Condensed Black", "HelveticaNeue-CondensedBlack.ttf")]
     return [("Arimo", n) for n in ("Arimo-Medium.ttf", "Arimo-Bold.ttf", "Arimo-Italic.ttf", "Arimo-BoldItalic.ttf")] + \
         [("Archivo Condensed Black", "Archivo-CondensedBlack.ttf")]
