@@ -45,6 +45,22 @@ CAPCUT_FONTES = os.path.expanduser("~/Movies/CapCut/User Data/Fontes Concat")
 CAPCUT_FONTES_VISTA = os.path.expanduser("~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut/User Data/Fontes Concat")
 
 
+def altura_linha(arq):
+    """(ascendente + descendente + entrelinha do hhea) / em. O CapCut dá o tamanho do texto por essa altura, não
+    pelo em como o Concat: a mesma fonte de tamanho 12 sai maior numa fonte de altura de linha menor (2026-10-29,
+    chaves em Helvetica Bold ~1,2x e Scholar ~1,15x maiores que as pequenas em Helvetica Neue Medium)."""
+    from fontTools.ttLib import TTFont
+    if arq.startswith("capcut:"):
+        caminho, n = glob.glob(os.path.expanduser(f"~/Movies/CapCut/User Data/Cache/effect/{arq[7:]}/*/*.[ot]tf"))[0], 0
+    elif arq.startswith("/"):
+        caminho, n = arq, 0
+    else:
+        caminho, n = os.path.join(FONTES, arq), 0
+    t = TTFont(caminho, fontNumber=n)
+    h = t["hhea"]
+    return (h.ascent - h.descent + h.lineGap) / t["head"].unitsPerEm
+
+
 def fonte_biblioteca(rid):
     """Caminho (como o CapCut vê) de uma fonte da biblioteca do CapCut já baixada no cache dele."""
     achados = glob.glob(os.path.expanduser(f"~/Movies/CapCut/User Data/Cache/effect/{rid}/*/*.[ot]tf"))
@@ -126,7 +142,8 @@ def converter(clip, modelo, render_index):
     t = clip["text"]
     arq, titulo = FACES[chave(t)]
     caminho = fonte_capcut(arq)
-    tamanho = round(t["fontSize"] / 0.04302 * 12, 3)
+    # 12 = 0.04302 foi medido com a Helvetica Neue Medium (legenda simples); as outras fontes acertam pela altura de linha
+    tamanho = round(t["fontSize"] / 0.04302 * 12 * altura_linha(arq) / altura_linha("HelveticaNeue-Medium.ttf"), 3)
     estilo = json.loads(modelo["material"]["content"])["styles"][0]
     rid = arq[7:] if arq.startswith("capcut:") else ""
     estilo = dict(estilo, range=[0, len(t["content"])], size=tamanho, font={"path": caminho, "id": rid})

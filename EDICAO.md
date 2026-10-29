@@ -226,6 +226,12 @@ nossas legendas entram nele como textos normais.
 - **Margens** (2026-10-29, linhas-guia do usuário: "algumas legendas passaram das margens"): legenda entre 15% e
   85% da largura, centrada a ~75% da altura (faixa de 61% a 88%). Simples `--altura=0.247 --largura=0.70`, dinâmicas
   `--centro=0.747 --largura=0.70` (a palavra ou o bloco que passar encolhe até caber).
+- **Alinhamento e espaço entre palavras** (2026-10-29: "as menores estão com espaçamento muito grande ... defina para
+  onde vai alinhar; geralmente eu alinho ao centro"): as linhas do bloco ficam centradas num eixo só, com o vão
+  natural (padrão de `legendas_dinamicas.py`; `--alinhar=print` volta ao desenho dos prints). No CapCut use
+  `--por-linha`: cada linha vira um texto só (o CapCut põe o espaço da fonte) e entra quando a 1ª palavra é dita.
+  Palavra por palavra abria vãos porque o CapCut dá o tamanho pela altura de linha da fonte, não pelo em:
+  `capcut_legendas.py` corrige o tamanho por fonte (Helvetica Bold ×0,82, Scholar ×0,86 em relação à Neue Medium).
 - **Quem fala rápido** (Dr. Rafael): menos blocos e mais longos ("estão aparecendo e sumindo muito rápido ... não
   consigo nem ler"): ~13 por minuto, cada um uma frase inteira de 4 a 8 palavras que termina numa pausa (o bloco
   completo fica 0,5 a 1,3 s). Clássico e elegante têm uma linha pequena só: no máximo 3 palavras curtas nela; frase

@@ -99,6 +99,13 @@ SEM_CONTORNO = "--sem-contorno" in sys.argv  # só a sombra leve
 _opc = dict(a[2:].split("=", 1) for a in sys.argv[3:] if a.startswith("--") and "=" in a)
 ESCALA = float(_opc.get("escala", 0.92))   # padrão do usuário: 92% do tamanho
 # --largura=0.70: o bloco nunca passa dessa fração da largura (linhas-guia do usuário a 15% e 85%, 2026-10-29)
+# Alinhamento (2026-10-29, "defina para onde vai alinhar ... geralmente eu alinho ao centro"; "as menores estão com
+# espaçamento muito grande"): por padrão cada linha fica centrada no eixo do bloco, com o vão natural entre as
+# palavras. --alinhar=print volta ao desenho medido nos prints (impacto à esquerda, clássico espalhado).
+# --por-linha: cada linha do bloco vira UM texto (palavras com o espaço da própria fonte), que entra quando a
+# 1ª palavra dela é dita; no CapCut, palavra por palavra abria vãos (a fonte dele mede diferente da do Concat).
+ALINHAR_CENTRO = _opc.get("alinhar", "centro") == "centro"
+POR_LINHA = "--por-linha" in sys.argv
 LIMITE = float(_opc["largura"]) * W if "largura" in _opc else None
 CENTRO_Y = float(_opc.get("centro", 0.67)) * H  # só sem legendas simples no projeto (ou com --centro=)
 # Pedido de 2026-10-21: o bloco começa na mesma altura da legenda simples (topo das letras da 1ª linha
@@ -334,7 +341,11 @@ def classico(linhas, t):
     ws = [p["w"] for p in topo]
     wt = larg_linha(topo, vao)
     passos = [k / 24 for k in range(25)]
-    if len(topo) == 2 and wt < wb * 0.92:
+    if ALINHAR_CENTRO:
+        x = (wb - wt) / 2
+        cands = [[x + sum(ws[:k]) + k * vao for k in range(len(topo))]]
+        alvos = cands[0]
+    elif len(topo) == 2 and wt < wb * 0.92:
         x1s = [a * 0.12 * wb for a in passos[:9]]
         lo, hi = ws[0] + vao, wb - ws[1]
         cands = [[x1, x1 + lo + a * max(0.0, hi - x1 - lo)] for x1 in x1s for a in passos]
@@ -372,7 +383,7 @@ def elegante(linhas, t):
     ws = [p["w"] for p in ult]
     wt = larg_linha(ult, vao)
     centro = (wg - wt) / 2
-    faixa = [centro + (k / 20 - 0.5) * abs(wg - wt) for k in range(21)] if wt < wg else [centro]
+    faixa = [centro + (k / 20 - 0.5) * abs(wg - wt) for k in range(21)] if wt < wg and not ALINHAR_CENTRO else [centro]
     cands = [[x + sum(ws[:k]) + k * vao for k in range(len(ult))] for x in faixa]
     alvos = [centro + sum(ws[:k]) + k * vao for k in range(len(ult))]
     base = assentar(ult, grande, cands, gap, folga, alvos, 0.6 / wg / len(ult), sx)
@@ -406,14 +417,16 @@ def impacto(linhas, t):
             em = S if ki is None or li < ki else 0.77 * S
             rows.append([palavra(t[i], "helv-italic", em, trk=-0.01) for i, _ in linha])
     base, folga = 0.0, 0.10 * sx
+    largura_max = max(larg_linha(ps, vao) for ps in rows)
     for li, ps in enumerate(rows):
         chaves = [p for p in ps if p["face"] == "helv-bold-oblique"]
         # recuo da tinta como nos prints: linha da chave 0,8 altura-x ("atenção"), 1,3 se começa pequena ("usa")
         recuo = (1.3 if ps[0]["face"] != "helv-bold-oblique" else 0.8) * sx if chaves else (0.25 * sx if li else 0.0)
-        linha_em(ps, recuo, 0.0, vao)
+        linha_em(ps, (largura_max - larg_linha(ps, vao)) / 2 if ALINHAR_CENTRO else recuo, 0.0, vao)
         if li:
             ant = rows[li - 1]
-            gap = 0.80 * sx if chaves else (0.90 * sx if any(p["face"] == "helv-bold-oblique" for p in ant) else 0.60 * sx)
+            # duas linhas pequenas seguidas: centradas, as hastes não se encaixam como à esquerda; mais ar entre elas
+            gap = 0.80 * sx if chaves else (0.90 * sx if any(p["face"] == "helv-bold-oblique" for p in ant) else (1.0 if ALINHAR_CENTRO else 0.60) * sx)
             base = encaixe(base, ant, chaves or ps, gap, folga)
         for p in ps:
             p["base"] = base
@@ -470,7 +483,7 @@ def montar(estilo, linhas, chave, textos):
         oy = (base - H / 2 - (asc - desc) / 2 * em) / H
         ox = (x + w / 2 - W / 2) / W
         family, weight, italic, _, _ = FACES[p["face"]]
-        out.append({"i": p["i"], "ox": ox, "oy": oy, "texto": p["texto"],
+        out.append({"i": p["i"], "ox": ox, "oy": oy, "w": w / W, "texto": p["texto"],
                     "style": {"content": p["texto"], "fontFamily": family, "fontWeight": float(weight),
                               "italic": italic, "fontSize": em / H, "color": p["cor"],
                               # contorno preto fino como o das simples (0.0006 numa letra de 0.04302) + sombra:
@@ -478,6 +491,24 @@ def montar(estilo, linhas, chave, textos):
                               "align": "center", "shadow": True, "strokeWidth": 0.0 if SEM_CONTORNO else round(em / H * 0.0006 / 0.04302, 6),
                               "strokeColor": "#000000", "tracking": p["trk"] * em / H, "lineHeight": 1.0,
                               "background": "", "opacity": 1.0, "maxWidth": 0.0, "maxHeight": 0.0}})
+    return out
+
+
+def juntar_linhas(palavras, linhas):
+    """--por-linha: as palavras de cada linha num texto só, centrado onde a linha estava (mesma fonte e tamanho;
+    linha que mistura fontes, como "usa TEXTOS", fica palavra por palavra)."""
+    out = []
+    for linha in linhas:
+        ps = sorted([p for p in palavras if p["i"] in linha], key=lambda p: p["i"])
+        chave_estilo = {(p["style"]["fontFamily"], p["style"]["fontWeight"], p["style"]["italic"],
+                         round(p["style"]["fontSize"], 5), p["style"]["color"]) for p in ps}
+        if len(ps) < 2 or len(chave_estilo) > 1:
+            out += ps
+            continue
+        esq = min(p["ox"] - p["w"] / 2 for p in ps)
+        dir_ = max(p["ox"] + p["w"] / 2 for p in ps)
+        texto = " ".join(p["texto"] for p in ps)
+        out.append(dict(ps[0], ox=(esq + dir_) / 2, w=dir_ - esq, texto=texto, style=dict(ps[0]["style"], content=texto)))
     return out
 
 
@@ -528,6 +559,8 @@ def main():
         fim = round(fim * FPS) / FPS
         FONTE_CHAVE = bloco.get("fonte_chave", "serifa")
         palavras = montar(bloco["estilo"], bloco["linhas"], set(bloco["chave"]), textos)
+        if POR_LINHA:
+            palavras = juntar_linhas(palavras, bloco["linhas"])
         antes = {c["id"] for c in timeline(api.view())["clips"]}
         cmds = [{"op": "removeClips", "clipIds": [legendas[i]["id"] for i in idx], "ripple": False}]
         for p in palavras:
