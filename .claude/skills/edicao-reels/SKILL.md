@@ -1,6 +1,6 @@
 ---
 name: edicao-reels
-description: Edita um vídeo bruto de reels (especialista falando para a câmera) do começo ao fim no Concat deste fork, no estilo de EDICAO.md, e deixa o projeto pronto no Concat (MP4 4K 30 fps quando pedirem a exportação). Use quando o pedido for "edita esse vídeo", "edite o C5430", "faça a edição", "parte 1", "legendas dinâmicas", "coloca b-roll", ou ajustes num reel já editado.
+description: Edita um vídeo bruto de reels (especialista falando para a câmera) do começo ao fim no Concat deste fork ou num projeto do CapCut, no estilo de EDICAO.md, com as legendas padrão (estilo das referências do Instagram, Poppins branca, simples + blocos dinâmicos), e deixa o projeto pronto (MP4 4K 30 fps só quando pedirem a exportação). Use quando o pedido for "edita esse vídeo", "edite o C5430", "faça a edição", "parte 1", "legendas", "legendas dinâmicas", "coloca b-roll", "zoom in e zoom out", "no projeto X do CapCut", ou ajustes num reel já editado.
 ---
 
 # Edição de reels: o processo completo
@@ -14,6 +14,10 @@ Cortes de podcast/entrevista seguem outro processo: `tools/cortes_podcast/LEIA-M
 Vídeo que **já vem cortado** pelo usuário (CAP do CapCut): não corte de novo; siga `EDICAO.md` seção 6b
 (cortes lidos do draft do CapCut, 1,10x, zoom nos cortes dele, nitidez 20 sem cor, lofi com
 `tools/musica_fundo.py`).
+Projeto **no CapCut, já cortado** ("só adicione as legendas e b-rolls ... e os zoom in e zoom out grupais"):
+EDICAO.md 6f. Remonte o áudio dos cortes e transcreva (tempos da timeline), e então: zoom por frases com
+`tools/capcut_caixinha.py` (plano sem "pergunta"; `"x"` no grupo centra quem fala), B-roll do Higgsfield com
+`tools/capcut_broll.py` e legendas com `tools/capcut_legendas_ig.py` (passo 4). CapCut fechado para escrever.
 
 Variáveis (raiz do repositório = `$R`):
 - `PY=$R/tools/.venv/bin/python` (Mac) ou `PY=$R/tools/.venv/Scripts/python.exe` (Windows). Use `$PY` em
@@ -30,8 +34,8 @@ Variáveis (raiz do repositório = `$R`):
 - O venv `tools/.venv` existe? Se não, rode `./tools/setup.sh`.
 - O Concat está aberto com a API ligada? Teste um `socket` na porta 7420. Se `.concat-token` não
   existir, rode `./tools/setup.sh` com o Concat fechado (ele liga a API e grava o token).
-- `fonts/` tem Coolvetica-Rg, HelveticaNeue-Medium e -CondensedBlack? Se faltar, rode o setup (a DM
-  Serif Display e as outras livres já vêm no repositório).
+- `fonts/` tem Poppins-Medium e Poppins-SemiBold (as das legendas padrão; livres, vêm no repositório)? E
+  Coolvetica-Rg, HelveticaNeue-Medium e -CondensedBlack (estilos antigos)? Se faltar, rode o setup.
 - `.env.local` tem uma linha `HF_KEY=`? Confira só que a linha existe (`grep -c '^HF_KEY=.\+:'`),
   **nunca leia, mostre ou peça a chave no chat**. Se não houver, peça ao usuário para rodar
   `./tools/configurar_chave_higgsfield.sh` ou siga sem B-roll se ele preferir.
@@ -65,7 +69,7 @@ Sem nitidez, cor ou LUT automáticas (pedido de 2026-10-19): só aplique se o us
 ```bash
 $PY tools/reel.py aplicar "$P" "$W"                  # cortes + 1.10x + grade de quadros
 $PY tools/limpar_audio.py "<video>" "$P/midia/<nome>_audio_limpo.mov" --projeto "$P"   # ruído de fundo (DeepFilterNet)
-$PY tools/legendas_simples.py "$P" "$W/words.json" T4   # 92%, offsetY 0.17, contorno + sombra
+$PY tools/legendas_simples.py "$P" "$W/words.json" T4   # uma palavra por clipe na T4: só o tempo (o estilo vem no passo 4)
 $PY tools/reel.py listar "$P"                        # índices e tempos para os planos
 ```
 
@@ -79,33 +83,38 @@ $PY tools/retoque.py "<video>" "$P/midia/<nome>_retoque.mov" --projeto "$P"
 ```
 Em homem, não aplique sem pedido.
 
-## 4. Legendas Dinâmicas (julgamento)
-Escreva `$W/dinamicas.json` (formato em `tools/planos_exemplo/dinamicas.json`) e rode
-`$PY tools/legendas_dinamicas.py "$P" "$W/dinamicas.json"`.
-- **Escolha pelo roteiro:** os blocos vão **sempre nas frases e palavras de maior destaque** (a ideia
-  central, o dado, o alerta, o chamado). Nunca em frase de passagem só para cumprir número.
-- **Quantidade (guia, não cota):** cerca de 18 a 22 blocos por minuto, perto de metade das palavras;
-  referência aprovada em `editados/Exemplos - legendas dinamicas` (`plano_exemplos.json`).
-- **Abertura:** os blocos cobrem **toda a abertura** (as 3 a 5 primeiras frases).
-- **Tamanho dos blocos:** de 1 a 6 palavras, com índices **contíguos**; 2 a 3 linhas.
-- **Chave:** a palavra mais forte da frase (o substantivo do assunto, o alerta, o número).
-  Nunca um artigo.
-- **Estilos:** alterne `impacto`, `serifa`, `classico` e `elegante`, nunca o mesmo em blocos seguidos.
-  - `classico` e `elegante` ficam melhor com 1 a 2 palavras na linha de cima e a chave embaixo.
-  - `serifa` aceita escadinha de 2 a 4 linhas, com a chave numa linha só.
-  - `impacto` aceita linha pequena, chave e linha pequena.
-- Remova vírgulas do fim só nas palavras-chave (o script já tira as dos blocos).
-- A serifada (DM Serif Display) só aparece na palavra-chave; o resto do bloco o script põe em Helvetica/Montserrat.
-- **Prints de referência** ("como que / eu faço", "as minhas / legendas", "que você / usa textos", "pra chamar /
-  atenção"): classico, elegante e impacto seguem as medidas deles (EDICAO.md); quando o usuário pedir "os tipos de
-  legenda que enviei", use só esses três, classico com `"reta"` e, no CapCut, elegante com `"scholar"`.
-- **Fonte da chave** (`"fonte_chave"` na frase, serifa e elegante): `serifa` (DM Serif Display reta, padrão),
-  `italico`, `bold` (Condensed Black) ou `coolvetica`. Alterne ao longo do vídeo, sem repetir em
-  blocos seguidos.
-- **Roupa com estampa no peito** (ex.: camiseta com logo): legenda abaixo da estampa (simples com
-  `--altura=` calculada, dinâmicas com `--escala=0.85`); sobre B-roll claro use `sombra_suave`, nunca
-  contorno grosso. **Roupa clara:** `$PY tools/sombra_legenda.py "$P"` (degradê escuro atrás das
-  legendas). Detalhes em `EDICAO.md`.
+## 4. Legendas: simples + blocos dinâmicos no estilo IG (padrão, julgamento)
+**Padrão desde 2026-10-29** ("assuma esses novos tipos de legendas como os principais"): o estilo das referências do
+Instagram que o usuário mandou, medido quadro a quadro (EDICAO.md 6f; vídeos em `referencias/legenda-*-ig*`).
+Sempre **branco**, **Poppins Medium/SemiBold** (sem serifa, sem cursiva, sem rosa), sombra preta suave, sem
+contorno, **sem animação** (corte seco; no bloco, cada palavra entra quando é dita), centrado, dentro das margens
+de 15% a 85%. A ferramenta faz a legenda simples sozinha (1 a 4 palavras emendadas, com a pontuação, some nas
+pausas); você escreve só os blocos em `$W/blocos.json`:
+```json
+{"blocos": [{"linhas": [[0, 1], [2, 3, 4], [5, 6, 7]], "chave": [7]},
+            {"linhas": [[204, 205], [206, 207, 208]], "chave": [208], "fecho": true}]}
+```
+```bash
+# Concat (depois do legendas_simples.py do passo 3, que dá o tempo de cada palavra):
+$PY tools/capcut_legendas_ig.py --concat="$P" "$W/words.json" "$W/blocos.json"
+# CapCut (projeto já cortado por lá; CapCut fechado; words.json com os tempos da TIMELINE, do áudio remontado):
+$PY tools/capcut_legendas_ig.py "<pasta do projeto no CapCut>" "$W/words_tl.json" "$W/blocos.json"
+```
+- **Escolha pelo roteiro:** os blocos vão nas frases e palavras de maior destaque (a ideia central, o dado, o
+  alerta, o chamado, o item da lista). Nunca em frase de passagem só para cumprir número.
+- **Quantidade:** ~13 blocos por minuto (quem fala rápido pede blocos longos: "estão aparecendo e sumindo muito
+  rápido ... não consigo nem ler"). A abertura (gancho) vira bloco.
+- **Cada bloco é uma frase inteira** de 2 a 8 palavras, em 2 ou 3 linhas, com índices **contíguos**, terminando
+  numa pausa (o bloco completo fica na tela até a próxima palavra).
+- **Chave:** a palavra (ou as palavras) mais forte, nunca um artigo; pode dividir a linha com palavras pequenas
+  (`[[126], [127, 128, 129]]` com `"chave": [127, 129]` → "o / **suco** de **caixinha**"). `"fecho": true` na frase de
+  fecho (chave maior). Vírgula do fim da chave sai sozinha.
+- **Linhas:** 1 a 3 palavras curtas cada; o script centra, encolhe o bloco que passaria da margem e desce a linha
+  de baixo se uma descendente de cima (g, ç, p) encostar.
+- **Roupa ou fundo muito claro:** a sombra suave segura a leitura; se não segurar, `$PY tools/sombra_legenda.py "$P"`
+  (degradê escuro atrás das legendas). Roupa com estampa no peito: veja EDICAO.md.
+- **Outros estilos** (impacto/serifa/clássico/elegante de `legendas_dinamicas.py`, os prints "como que / eu faço"):
+  só quando o usuário pedir esses pelo nome.
 
 ## 5. Zoom seco (julgamento)
 Padrão: `$PY tools/zoom_por_frases.py "$P" --min=1.5 --ideia=2.5` monta os conjuntos pelas legendas
@@ -161,8 +170,8 @@ $PY tools/broll_animar.py "$P"
 - **Antes de entregar o MP4:** `$PY tools/conferir_video.py "$P" <mp4>` (palavra faltando, sobrando ou
   cortada perto de corte); ouça cada ponto e corrija.
 - **Olhe as imagens. Confira:**
-  - legenda abaixo do rosto e legível;
-  - palavras pequenas retas e chave grande;
+  - legenda abaixo do rosto, legível e dentro das margens (15% a 85%);
+  - bloco com a chave grande, linhas centradas e juntas, sem palavra encostando;
   - B-roll certo;
   - zoom com o rosto no centro;
   - o vídeo começa no apresentador.
@@ -191,8 +200,9 @@ Edite o projeto (ele fica salvo), reexporte com o mesmo nome se já havia MP4, e
   exportação direta é recusada: use `tools/exportar_seguro.py`.
 - Ao trocar uma imagem com o projeto aberto na janela, o `addClip` pode "imantar" o clipe para
   outro ponto: confira e corrija com `moveClips`.
-- Legendas: para mudar tamanho ou posição, apague todos os clipes de texto e refaça (simples e depois
-  dinâmicas) com `--escala=`/`--altura=`/`--centro=`.
+- Legendas: mude `$W/blocos.json` (ou as medidas em `tools/capcut_legendas_ig.py`) e rode de novo: no Concat,
+  `legendas_simples.py` e depois `capcut_legendas_ig.py --concat=` (troca todos os textos); no CapCut, só o
+  `capcut_legendas_ig.py` (troca as trilhas "Legendas IG").
 
 ## Armadilhas conhecidas
 - O Concat não lê `.ttc`: as faces da Helvetica Neue (Medium, Condensed Black) são extraídas para

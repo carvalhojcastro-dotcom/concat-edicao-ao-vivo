@@ -11,7 +11,7 @@ usando o Concat deste fork pela API (porta 7420) e as ferramentas de `tools/`.
 
 ## O resultado, em uma frase
 O vídeo começa no apresentador já falando, sem pausas nem tomadas ruins, a 1.10x. Tem legenda
-palavra por palavra, frases de destaque montadas palavra a palavra em fontes mistas, zoom seco
+simples curta e blocos de destaque no estilo das referências do Instagram (Poppins branca, seção 6f), zoom seco
 centralizado por frase e B-rolls de imagem gerados por IA que entram e saem nos cortes com
 movimento lento. A exportação é em 4K a 30 fps.
 
@@ -26,13 +26,16 @@ movimento lento. A exportação é em 4K a 30 fps.
 | **Ruído de fundo** | `tools/limpar_audio.py <bruto> <projeto>/midia/<nome>_audio_limpo.mov --projeto <projeto>` (DeepFilterNet, teto 24 dB): limpa o chiado sem abafar a voz e troca a mídia dos clipes (vídeo só copiado). **Não use o Noise Reduction do Concat** (afftdn: abafa e deixa metálico). Pedido de 2026-10-21. |
 | **Áudio para redes** | Quando pedirem volume "padrão de rede social": áudio já limpo pelo `limpar_audio.py` + efeito `user.voz-redes-sociais` (compressor leve, ganho, limitador; pasta `efeitos/`, o setup instala) com ganho calibrado para ~-14 LUFS e pico ≤ -1 dB, volume do clipe 1,0. No Ozempic (áudio limpo): 14,2 dB → -14,0 LUFS, pico -1,4 dB. |
 | **Velocidade** | **1.10x** em todos os clipes (padrão desde 2026-10-21; antes 1.05x), sem folgas, alinhados à grade de quadros (`alinhar_quadros.py`). |
-| **Legenda simples** | Uma palavra por vez, Helvetica 400 branca, **92% do tamanho base** (0.04302), tracking -0.05 em (o "-0.3" do CapCut), **contorno preto fino + sombra**, offsetY **0.17** (abaixo do rosto). |
-| **Texto da legenda** | Sem ponto final; maiúscula só no início de frase; "?" e vírgulas ficam. Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
+| **Legenda simples** | **Padrão desde 2026-10-29: seção 6f** (Poppins Medium branca, 1 a 4 palavras, sem animação). O que segue é o estilo antigo, só quando pedirem: uma palavra por vez, Helvetica 400 branca, 92% do tamanho base (0.04302), tracking -0.05 em, contorno preto fino + sombra, offsetY 0.17. |
+| **Texto da legenda** | Maiúscula só no início de frase; a pontuação fica (estilo IG; o antigo tirava o ponto final). Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
 | **Nitidez e cor** | **Não aplicar automaticamente** (pedido de 2026-10-19). Só quando pedirem: camada `concat.adjust` em T3 (nitidez antiga: `sharpen` 20.23). |
 | **Retoque de rosto** | **Sempre em vídeo de mulher.** `tools/retoque.py` copia a predefinição do CapCut: remover rugas 13, uniforme 12, linhas do sorriso 93, olheiras 17 e maquiagem "Naturais" 56. Gera uma cópia retocada do bruto e troca a mídia no projeto (`--projeto`). |
 | **Cor** | Nenhuma correção, até haver uma LUT definida para o cliente. |
 
-## 2. Legendas Dinâmicas
+## 2. Legendas Dinâmicas (estilos antigos)
+> **Padrão desde 2026-10-29: seção 6f** (blocos Poppins SemiBold brancos, sem animação, palavra por palavra). Esta
+> seção vale só quando o usuário pedir os estilos antigos pelo nome (impacto, serifa, clássico, elegante, os prints).
+
 Referências do cliente (prints dos estilos e das fontes e o vídeo "Como fazer as legendas"):
 `~/Desktop/Concat/referencias/Legendas dinamicas`.
 
@@ -283,7 +286,13 @@ sobreposição contra 220 candidatas; tamanho, espaçamento e linha de base por 
 | animação | nenhuma (corte seco, emendada) | nenhuma; palavra por palavra quando é dita |
 Sombra preta suave, sem contorno. Simples de 1 a 4 palavras (até ~40% da largura), mantém a pontuação, some nas pausas.
 Blocos: ~13 por minuto, frase inteira de 2 a 8 palavras em 2 ou 3 linhas; descendente de cima (g, ç) empurra a linha
-de baixo. Ferramenta: `tools/capcut_legendas_ig.py <pasta CapCut> <words.json> <plano.json>` (direto no CapCut).
+de baixo. Ferramenta: `tools/capcut_legendas_ig.py <pasta CapCut> <words.json> <plano.json>` (direto no CapCut) ou
+`tools/capcut_legendas_ig.py --concat=<projeto> <words.json> <plano.json>` (no Concat, depois do `legendas_simples.py`,
+que só dá o tempo de cada palavra). As duas saídas foram conferidas contra a mesma prévia: caixas iguais a 1-2 px.
+- **Poppins no Concat:** o Concat junta as Poppins pela família interna ("Poppins") e escolhe pelo peso (SemiBold
+  pedida a 500 saía Medium; a 600, negrito sintético 8% mais largo). A ferramenta registra cópias renomeadas
+  (`dist/fontes_concat/*-IG.ttf`, família própria de uma face só, peso 400): aí o Concat desenha o arquivo certo
+  no tamanho certo.
 - **Tamanho no CapCut** (medido no export do "11 - Caixinha"): o CapCut faz a altura typo da fonte (OS/2 ascendente -
   descendente) = tamanho x 0,0032 da altura do quadro e centra essa caixa na posição. A conversão antiga
   (12 = 0,04302, em `capcut_legendas.py`) deixava a Neue Medium ~25% menor no CapCut do que no Concat.
