@@ -11,7 +11,7 @@ usando o Concat deste fork pela API (porta 7420) e as ferramentas de `tools/`.
 
 ## O resultado, em uma frase
 O vídeo começa no apresentador já falando, sem pausas nem tomadas ruins, a 1.10x. Tem legenda
-simples curta e blocos de destaque no estilo das referências do Instagram (Poppins branca, seção 6f), zoom seco
+simples curta e blocos de destaque no estilo das referências do Instagram (Poppins branca, seção 2), zoom seco
 centralizado por frase e B-rolls de imagem gerados por IA que entram e saem nos cortes com
 movimento lento. A exportação é em 4K a 30 fps.
 
@@ -26,80 +26,42 @@ movimento lento. A exportação é em 4K a 30 fps.
 | **Ruído de fundo** | `tools/limpar_audio.py <bruto> <projeto>/midia/<nome>_audio_limpo.mov --projeto <projeto>` (DeepFilterNet, teto 24 dB): limpa o chiado sem abafar a voz e troca a mídia dos clipes (vídeo só copiado). **Não use o Noise Reduction do Concat** (afftdn: abafa e deixa metálico). Pedido de 2026-10-21. |
 | **Áudio para redes** | Quando pedirem volume "padrão de rede social": áudio já limpo pelo `limpar_audio.py` + efeito `user.voz-redes-sociais` (compressor leve, ganho, limitador; pasta `efeitos/`, o setup instala) com ganho calibrado para ~-14 LUFS e pico ≤ -1 dB, volume do clipe 1,0. No Ozempic (áudio limpo): 14,2 dB → -14,0 LUFS, pico -1,4 dB. |
 | **Velocidade** | **1.10x** em todos os clipes (padrão desde 2026-10-21; antes 1.05x), sem folgas, alinhados à grade de quadros (`alinhar_quadros.py`). |
-| **Legenda simples** | **Padrão desde 2026-10-29: seção 6f** (Poppins Medium branca, 1 a 4 palavras, sem animação). O que segue é o estilo antigo, só quando pedirem: uma palavra por vez, Helvetica 400 branca, 92% do tamanho base (0.04302), tracking -0.05 em, contorno preto fino + sombra, offsetY 0.17. |
-| **Texto da legenda** | Maiúscula só no início de frase; a pontuação fica (estilo IG; o antigo tirava o ponto final). Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
+| **Legendas** | Seção 2: Poppins branca, legenda simples de 1 a 4 palavras + blocos dinâmicos, sem animação (`capcut_legendas_ig.py`). |
+| **Texto da legenda** | Maiúscula só no início de frase; a pontuação fica. Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
 | **Nitidez e cor** | **Não aplicar automaticamente** (pedido de 2026-10-19). Só quando pedirem: camada `concat.adjust` em T3 (nitidez antiga: `sharpen` 20.23). |
 | **Retoque de rosto** | **Sempre em vídeo de mulher.** `tools/retoque.py` copia a predefinição do CapCut: remover rugas 13, uniforme 12, linhas do sorriso 93, olheiras 17 e maquiagem "Naturais" 56. Gera uma cópia retocada do bruto e troca a mídia no projeto (`--projeto`). |
 | **Cor** | Nenhuma correção, até haver uma LUT definida para o cliente. |
 
-## 2. Legendas Dinâmicas (estilos antigos)
-> **Padrão desde 2026-10-29: seção 6f** (blocos Poppins SemiBold brancos, sem animação, palavra por palavra). Esta
-> seção vale só quando o usuário pedir os estilos antigos pelo nome (impacto, serifa, clássico, elegante, os prints).
-
-Referências do cliente (prints dos estilos e das fontes e o vídeo "Como fazer as legendas"):
-`~/Desktop/Concat/referencias/Legendas dinamicas`.
-
-**São as legendas favoritas do usuário**, chamadas por quem pede de "legendas dinâmicas": o valor está na
-tipografia mista **somada à animação de entrada** de cada palavra. Sem a animação, não é o estilo.
-Do print 1 vale **a disposição das palavras** (escadinha); a fonte serifada vai só em uma ou outra
-palavra de destaque, nunca na frase toda. Prints → estilos: 1 = serifa, 2 = classico, 3 = elegante, 5 e 6 = impacto.
-
-Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **entra quando é dita**
-(sobe e aparece em 0,2 s) e **todas saem juntas** quando a frase acaba.
-
-- **Quantidade:** cerca de **18 a 22 frases por minuto**, nas frases importantes. Referência aprovada
-  ("bem fluido e prendendo bastante a atenção", 2026-10-21): o projeto `editados/Exemplos - legendas
-  dinamicas`, com 11 frases em 36 s (~18/min), **cerca de metade das palavras** em dinâmica e metade em
-  legenda simples, frases de 2 a 4 linhas, uma nova a cada 1 a 6 s com legenda simples entre elas, sem
-  repetir estilo nem fonte de destaque em frases seguidas. O plano está em `plano_exemplos.json` lá.
-- **A proporção é um guia, não uma cota** (2026-10-21): varia conforme o vídeo pede. O que manda é o
-  roteiro: a dinâmica vai **sempre nas frases e palavras de maior destaque** (a ideia central, o dado, o
-  alerta, o chamado). Nunca use frase de passagem só para chegar ao número; se o trecho não tem frase
-  forte, fica em legenda simples.
-- **Abertura:** **as primeiras frases do vídeo são sempre dinâmicas**, como gancho.
-- **Variedade:** alterne os 4 estilos, nunca o mesmo em duas frases seguidas.
-- **Proibido:** o efeito "falha" (palavra piscando).
-
-| Estilo | Palavras pequenas | Palavra-chave (grande) |
+## 2. Legendas: simples + blocos dinâmicos (estilo das referências do Instagram)
+Pedido: "a partir de agora" a legenda simples é a do 1º vídeo de referência e as dinâmicas as dos outros dois, "sempre
+bold ou semi-bold, sem serifa, sempre em branco" (nada de cursiva, serifada ou rosa). Medido quadro a quadro (fonte por
+sobreposição contra 220 candidatas; tamanho, espaçamento e linha de base por ajuste nos quadros):
+| | simples | bloco dinâmico |
 |---|---|---|
-| **impacto** | Helvetica Neue Medium **Itálico**, tudo inclinado e à esquerda | Helvetica Bold Oblíqua (prints "que você / usa textos", "pra chamar / atenção") |
-| **serifa** | Helvetica normal, em escadinha | DM Serif Display **reta**, **branca** |
-| **classico** | Helvetica Neue Medium (a 1ª no começo, a última terminando a ~82% da grande) | Helvetica Neue **Condensed Black** grande (`"fonte_chave": "reta"`: Helvetica **Bold** reta, print "como que / eu faço") |
-| **elegante** | Helvetica Neue **Medium** (semibold), no vão entre as hastes | serifada itálica enorme (print "as minhas / legendas"); no CapCut `"fonte_chave": "scholar"` = a Scholar Itálico da biblioteca dele |
+| fonte | Poppins Medium | Poppins SemiBold (pequenas e chave) |
+| em (altura do quadro) | 2,71% | pequenas 4,4%, chave 7,6%, fecho 9,7% |
+| espaço entre letras | -0,065 em | -0,07 / -0,06 em |
+| entrelinha | — | topo das minúsculas de baixo 0,2 em (da linha de cima) abaixo da base de cima |
+| posição | centrada, base a 63,9% | centrado, a linha da chave na base da simples |
+| animação | nenhuma (corte seco, emendada) | nenhuma; palavra por palavra quando é dita |
+Sombra preta suave, sem contorno. Simples de 1 a 4 palavras (até ~40% da largura), mantém a pontuação, some nas pausas.
+Blocos: ~13 por minuto, frase inteira de 2 a 8 palavras em 2 ou 3 linhas; descendente de cima (g, ç) empurra a linha
+de baixo. Ferramenta: `tools/capcut_legendas_ig.py <pasta CapCut> <words.json> <plano.json>` (direto no CapCut, palavras
+com tempos da timeline) ou `tools/capcut_legendas_ig.py --concat=<projeto> <words.json> <plano.json>` (no Concat, com o
+words.json do `reel.py cortes`, tempos do bruto). As duas saídas foram conferidas contra a mesma prévia: caixas
+iguais a 1-2 px. `--base=` sobe ou desce a linha das legendas (padrão 0,639). Os estilos antigos (Helvetica com
+contorno, impacto/serifa/clássico/elegante, os prints) foram apagados em 2026-10-29 ("para não ter erro").
+- **Poppins no Concat:** o Concat junta as Poppins pela família interna ("Poppins") e escolhe pelo peso (SemiBold
+  pedida a 500 saía Medium; a 600, negrito sintético 8% mais largo). A ferramenta registra cópias renomeadas
+  (`dist/fontes_concat/*-IG.ttf`, família própria de uma face só, peso 400): aí o Concat desenha o arquivo certo
+  no tamanho certo.
+- **Tamanho no CapCut** (medido no export do "11 - Caixinha"): o CapCut faz a altura typo da fonte (OS/2 ascendente -
+  descendente) = tamanho x 0,0032 da altura do quadro e centra essa caixa na posição (erro medido ~2%).
+- **Projeto já cortado** ("só adicione as legendas e b-rolls ... e os zoom in e zoom out grupais"): zoom por frases com
+  `capcut_caixinha.py` (sem "pergunta" no plano; `"x"` no grupo centra quem fala), B-roll do Higgsfield com
+  `capcut_broll.py` (fotos com as entradas nativas que ela escolheu no "13 - Bioestimulador": "Diminuir zoom" e
+  "Slide lateral", e o avanço lento 100% -> 108%), legendas com `capcut_legendas_ig.py`.
 
-- **Medidas dos prints** (2026-10-28, "tente ser mais preciso, as suas não estão iguais"; proporções pela largura
-  das palavras, a altura das letras pequenas vem borrada): minúsculas da grande = 2,19x as das pequenas no classico,
-  2,37x no elegante, 2,37x no impacto (1,6x quando a chave divide a linha com uma pequena, que sai a 0,76 e alinha
-  pelo topo); linhas depois da chave a 0,77. A linha de cima **encaixa** nas minúsculas da de baixo (0,2 a 0,8
-  altura-x de vão) e as hastes (f, l, d, t) sobem entre as palavras. Vão entre palavras igual no bloco (~0,26 em da
-  pequena). Sem pontuação no fim das palavras. No CapCut (tutorial dos prints): sem contorno, só sombra preta
-  (`--sem-contorno`).
-
-- **Regra de fontes:** **a serifada (DM Serif Display) só na palavra de destaque** (a chave). Tudo o mais, pequeno ou
-  grande, sai em fonte sóbria, normal e reta (Helvetica ou Montserrat), nunca fina nem cursiva.
-- **Pesos iguais aos prints de fonte** (`referencias/Legendas dinamicas`, pedido de 2026-10-20):
-  "helvetica" = Helvetica Neue **Condensed Black**; "montserrat" = Montserrat **Light**; "scholar" = **DM Serif Display**
-  reta, tracking -0,02 (no lugar da Scholar, que só tinha licença no CapCut; 2026-10-21); "coolvetica" = Coolvetica Regular. As fontes ficam em `fonts/`
-  (o `setup.sh` extrai a Condensed Black do sistema; Montserrat Light e Coolvetica são baixadas).
-- **Destaque nem sempre serifado**: no serifa e no elegante, `"fonte_chave"` na frase escolhe
-  `serifa` (DM Serif Display reta, padrão), `italico`, `bold` (Condensed Black) ou `coolvetica`. **Alterne** ao
-  longo do vídeo. Uma fonte mais larga encolhe até a largura da serifada, então o bloco não muda de forma.
-- **Chave longa** (classico e elegante, ex.: "no programa / Vem Com A Gente"): só a linha grande encolhe para
-  caber no quadro; as palavras pequenas mantêm o tamanho (pedido de 2026-10-27: "discrepante o tamanho das
-  palavras da linha de cima").
-- **Pesos semibold ou bold** (pedido de 2026-10-23: "priorize usar fontes mais semibold ou bold, evitando
-  pesos mais finos"): as palavras pequenas de todos os estilos saem em Helvetica Neue Medium; a
-  Montserrat Light do elegante saiu.
-- **Tamanho e posição:** 92% do tamanho, **contorno preto fino + sombra**. O bloco **começa na mesma
-  altura da legenda simples** (pedido de 2026-10-21): o topo das letras da 1ª linha fica no topo das
-  letras da simples, e o bloco cresce para baixo. A altura é lida das legendas do próprio projeto;
-  `--centro=0.67` volta ao bloco centrado.
-- **Entrelinha:** ótica e igual em todas as linhas (pedido de 2026-10-20): o vão vai da base de cima ao
-  topo das minúsculas de baixo (0,30 em da letra pequena, `--aperto=`); hastes e perninhas entram nos
-  vãos e as linhas só se afastam onde uma letra fosse de fato encostar na outra.
-- **Cor do destaque:** **branco** por padrão (pedido de 2026-10-20). O destaque se diferencia pela
-  fonte (serifada) e pelo tamanho, não pela cor. Amarelo #f4c430 ou a cor do cliente só quando
-  pedirem, pelo `"destaque"` do plano. Se usar uma cor escura, rode `contraste_destaques.py`, que troca para branco quando o fundo atrás é escuro.
 
 ## 3. Zoom seco (punch-in)
 - **A pessoa sempre centralizada e com margem no topo** (pedido de 2026-10-21): enquadre cada take,
@@ -151,22 +113,16 @@ Frases importantes viram um bloco tipográfico. Cada palavra é um clipe que **e
 - Confira quadros do MP4 final: legendas, B-rolls, zoom, início e fim.
 - Feche o projeto na API (`project.close` com save), senão ele não abre na janela do Concat.
 
-## 6. Legenda sobre roupa com estampa
-Na camiseta com estampa clara no peito (ex.: "SIMPLES MEDICINA" do Dr. Leonardo), a legenda branca
-some. Antes de legendar, olhe a roupa; se houver estampa clara:
-- zoom normal (enquadrado com `--estampa`, ver abaixo) e legenda **abaixo da estampa**, na parte escura (faixa do fim da
-  estampa + 0,025 até 0,86 da altura; largura até 0,56; linhas acima de 20 caracteres em duas,
-  preset `linha2`);
-- sobre B-roll claro, **nada de contorno grosso** ("não use traços tão fortes"): use `sombra_suave`;
-- confira todas as frases numa folha de quadros antes de entregar.
-- **Roupa clara** (camiseta branca/creme, Dr. Leonardo vídeos 5 a 8): a legenda branca some no tecido.
-  `tools/sombra_legenda.py <projeto>` põe uma sombra em degradê (PNG transparente numa trilha entre o vídeo
-  e as legendas, escurecendo ~70% de 0,70 até 0,80 da altura e até a base), sem mudar o estilo das
-  legendas. Placa atrás da palavra (`legendas_simples.py --fundo=#000000a6`) existe, mas não serve aos
-  blocos dinâmicos. A estampa escura em roupa clara também é achada pelo `--estampa`.
-- **Com zoom** (Ozempic, 2026-10-21): `centralizar_zoom.py <projeto> --estampa` (cabeça ≥ 10% do topo, estampa
-  ≤ 0,745); legenda simples com o topo das letras em 0,769 (`--altura=` calculada) e dinâmicas com
-  `--escala=0.85`, blocos de 2 linhas.
+## 6. Legenda sobre roupa com estampa ou clara
+Na camiseta com estampa clara no peito (ex.: "SIMPLES MEDICINA" do Dr. Leonardo), a legenda branca some. Antes
+de legendar, olhe a roupa:
+- **Estampa no peito:** `centralizar_zoom.py <projeto> --estampa` (cabeça ≥ 10% do topo, estampa ≤ 0,745) e a
+  legenda abaixo da estampa, na parte escura, com `capcut_legendas_ig.py ... --base=<fração>` (a linha das
+  legendas; padrão 0,639). Confira todas as frases numa folha de quadros antes de entregar.
+- **Roupa clara** (camiseta branca/creme): a sombra suave das legendas costuma segurar; se não segurar,
+  `tools/sombra_legenda.py <projeto>` põe um degradê escuro (PNG numa trilha entre o vídeo e as legendas,
+  ~70% de 0,70 até 0,80 da altura e até a base), sem mudar o estilo. Nada de contorno grosso ("não use traços
+  tão fortes").
 
 ## 6b. Vídeo que já vem cortado (CAP do CapCut)
 O usuário às vezes manda os cortes prontos ("CAP ...", exportados do CapCut) e pede o resto (2026-10-23):
@@ -204,43 +160,25 @@ Pedido de 2026-10-25 (Dr. Leonardo, "Cortes palestra"):
   plano aberto); `--seguir` põe keyframes no offsetX para acompanhar a câmera que anda dentro do take.
 - **Headline acima da cabeça** (fundo branco, letra preta, tamanho 0,030, o vídeo todo; o usuário pediu "um pouco menor e um pouco mais pra baixo" sem tapar a cabeça):
   `headline.py <P> "l1|l2" --altura=-0.1825 --tamanho=0.030 --fim=<duração>` (caixa entre 9% e 18% da altura;
-  a cabeça fica a 24%). Legendas do meio para baixo: `legendas_simples.py --altura=0.15`.
+  a cabeça fica a 24%). Legendas um pouco mais baixas: `capcut_legendas_ig.py ... --base=0.66`.
 
 ## 6d. Legendas dentro de um projeto do CapCut
-Pedido de 2026-10-26 ("faça dentro do CapCut ... deixe tudo editável"): o projeto fica no CapCut e as
-nossas legendas entram nele como textos normais.
-1. Ache o projeto pelo nome em `com.lveditor.draft/root_meta_info.json` (a pasta pode ter outro nome).
-2. Remonte o áudio da trilha principal pelos segmentos do `draft_info.json` (fonte, velocidade) e transcreva.
-3. Monte as legendas no Concat numa timeline com esse áudio e a mesma duração (vídeo preto): `legendas_simples.py`
-   + `legendas_dinamicas.py`, como sempre.
-4. Feche o CapCut e rode `tools/capcut_legendas.py <projeto Concat> <pasta do projeto no CapCut>`: backup em
-   `~/Desktop/Concat/backup-capcut/`, cada palavra vira um texto do CapCut (fonte copiada para
-   `~/Movies/CapCut/User Data/Fontes Concat/`, a única pasta fora do sistema que o CapCut da App Store
-   consegue ler: fonte fora dela aparece trocada; contorno e
-   sombra do modelo `tools/capcut_modelo_texto.json`, entrada de baixo para cima em keyframes), em trilhas
-   "Legendas (Concat)". Rodar de novo troca as legendas.
-5. Reabra o CapCut e confira o nome do projeto na lista: na primeira abertura depois da escrita ele pode voltar
+Pedido de 2026-10-26 ("faça dentro do CapCut ... deixe tudo editável"): o projeto fica no CapCut e as legendas
+entram nele como textos normais, no estilo da seção 2.
+1. Ache o projeto pelo nome em `com.lveditor.draft/root_meta_info.json` (a pasta pode ter outro nome; o nome pode
+   vir com acento decomposto, compare normalizado).
+2. Remonte o áudio da trilha principal pelos segmentos do `draft_info.json` (fonte, velocidade) e transcreva com
+   dois modelos: os tempos já são os da timeline.
+3. Escreva os blocos (seção 2) e, com o CapCut **fechado**, rode `tools/capcut_legendas_ig.py <pasta do projeto>
+   <words.json> <blocos.json>`: backup em `~/Desktop/Concat/backup-capcut/`, fontes copiadas para
+   `~/Movies/CapCut/User Data/Fontes Concat/` (a única pasta fora do sistema que o CapCut da App Store lê), textos
+   em trilhas "Legendas IG". Rodar de novo troca as legendas. Prévia de como o CapCut desenha: `desenhar()` do
+   mesmo script.
+4. Reabra o CapCut e confira o nome do projeto na lista: na primeira abertura depois da escrita ele pode voltar
    ao nome da pasta ("60 - Cirurgia 25.02.26" virou "1028 (1)", 2026-10-28). Se voltar, feche o CapCut e grave o
    nome em `draft_name` no `draft_meta_info.json` da pasta e no `root_meta_info.json`; aí ele fica.
-- **Entrada nativa do CapCut** (pedido de 2026-10-29: "use a animação de entrada de cada legenda nativa do CapCut,
-  não quero keyframes"): `capcut_legendas.py ... --animacao-capcut` põe "Mini zoom" (0,4 s; sobe 0,15 da altura do
-  texto) só nas palavras dos blocos dinâmicos; a legenda simples entra sem animação. "Deslizar para cima" sobe
-  2,66 alturas do texto e ela achou longo demais ("começam muito embaixo").
-- **Margens** (2026-10-29, linhas-guia do usuário: "algumas legendas passaram das margens"): legenda entre 15% e
-  85% da largura, centrada a ~75% da altura (faixa de 61% a 88%). Simples `--altura=0.247 --largura=0.70`, dinâmicas
-  `--centro=0.747 --largura=0.70` (a palavra ou o bloco que passar encolhe até caber).
-- **Alinhamento e espaço entre palavras** (2026-10-29: "as menores estão com espaçamento muito grande ... defina para
-  onde vai alinhar; geralmente eu alinho ao centro"): as linhas do bloco ficam centradas num eixo só, com o vão
-  natural (padrão de `legendas_dinamicas.py`; `--alinhar=print` volta ao desenho dos prints). No CapCut use
-  `--por-linha`: cada linha vira um texto só (o CapCut põe o espaço da fonte) e entra quando a 1ª palavra é dita.
-  Palavra por palavra abria vãos porque o CapCut dá o tamanho pela altura de linha da fonte, não pelo em:
-  `capcut_legendas.py` corrige o tamanho por fonte (Helvetica Bold ×0,82, Scholar ×0,86 em relação à Neue Medium).
-- **Quem fala rápido** (Dr. Rafael): menos blocos e mais longos ("estão aparecendo e sumindo muito rápido ... não
-  consigo nem ler"): ~13 por minuto, cada um uma frase inteira de 4 a 8 palavras que termina numa pausa (o bloco
-  completo fica 0,5 a 1,3 s). Clássico e elegante têm uma linha pequena só: no máximo 3 palavras curtas nela; frase
-  maior vai no impacto (aceita 3 linhas).
-- **Roupa clara** (camisa rosa-clara do Dr. Rafael): sem contorno a legenda branca some; use o contorno + sombra
-  do modelo (sem `--sem-contorno`). "Não muito pequenas": simples `--escala=1.15`, dinâmicas `--escala=1.05`.
+- **Margens** (linhas-guia do usuário, 2026-10-29): tudo entre 15% e 85% da largura (o script encolhe o bloco que
+  passaria).
 - **Caixinha de perguntas + zoom por frases** (série "Caixinha de perguntas" do Dr. Rafael, 2026-10-29):
   `tools/capcut_caixinha.py <pasta no CapCut> <plano.json>` põe a figurinha de pergunta do Instagram (foto dele, a
   pergunta que ele lê no começo) acima da cabeça o vídeo todo e troca o zoom por grupos de cortes que começam e
@@ -256,12 +194,10 @@ editável no CapCut"). Medido no projeto que ela editou ("5 - Braços definidos"
 - **Música** lofi a 0,19 com fade de 0,8 s / 3 s; **efeitos** dos Favoritos dela (Clique do mouse, Simple
   Whoosh a 48%, Autofoco Sony) na entrada e na troca de B-roll.
 - **B-roll:** fotos realistas na trilha de cima, com o Fade-in dela e avanço lento de zoom (100→108%).
-- **Legendas no CapCut** um pouco maiores e mais juntas que no Concat (2026-10-27): simples `--escala=1.02`,
-  dinâmicas `--espaco=0.16 --aperto=0.18`.
 - **Confira a fala cortada** (`conferir_video.py` no áudio remontado): a transcrição longa esconde começos
   falsos ("Ele estimula o próprio..." → "vamos lá" → a tomada boa).
 Ferramenta: `tools/capcut_montar.py <projeto novo> <projeto modelo> <plano.json>` (pedaços, zoom, música,
-efeitos, B-roll) e depois `capcut_legendas.py`. Fotos e fontes em `~/Movies/CapCut/User Data/` (sandbox).
+efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/CapCut/User Data/` (sandbox).
 - **Sem projeto no CapCut** ("abra no CapCut", 2026-10-28): `tools/capcut_novo.py <projeto modelo> "<nome>" <bruto>`
   põe o bruto na pasta do CapCut por link físico (caminho escrito por nós fora dela vira "arquivo não
   acessível" no sandbox) e clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
@@ -271,35 +207,6 @@ efeitos, B-roll) e depois `capcut_legendas.py`. Fotos e fontes em `~/Movies/CapC
   de cores verde ... lettering moderno e com dinamismo"): cenas em tela cheia, fundo verde-escuro, menta e lima,
   Poppins Black + Plus Jakarta, conteúdo entre 14% e 56% da altura (as legendas ficam abaixo). No plano,
   `"tipo": "video"` no B-roll.
-
-## 6f. Legendas no estilo das referências do Instagram (padrão desde 2026-10-29)
-Pedido: "a partir de agora" a legenda simples é a do 1º vídeo de referência e as dinâmicas as dos outros dois, "sempre
-bold ou semi-bold, sem serifa, sempre em branco" (nada de cursiva, serifada ou rosa). Medido quadro a quadro (fonte por
-sobreposição contra 220 candidatas; tamanho, espaçamento e linha de base por ajuste nos quadros):
-| | simples | bloco dinâmico |
-|---|---|---|
-| fonte | Poppins Medium | Poppins SemiBold (pequenas e chave) |
-| em (altura do quadro) | 2,71% | pequenas 4,4%, chave 7,6%, fecho 9,7% |
-| espaço entre letras | -0,065 em | -0,07 / -0,06 em |
-| entrelinha | — | topo das minúsculas de baixo 0,2 em (da linha de cima) abaixo da base de cima |
-| posição | centrada, base a 63,9% | centrado, a linha da chave na base da simples |
-| animação | nenhuma (corte seco, emendada) | nenhuma; palavra por palavra quando é dita |
-Sombra preta suave, sem contorno. Simples de 1 a 4 palavras (até ~40% da largura), mantém a pontuação, some nas pausas.
-Blocos: ~13 por minuto, frase inteira de 2 a 8 palavras em 2 ou 3 linhas; descendente de cima (g, ç) empurra a linha
-de baixo. Ferramenta: `tools/capcut_legendas_ig.py <pasta CapCut> <words.json> <plano.json>` (direto no CapCut) ou
-`tools/capcut_legendas_ig.py --concat=<projeto> <words.json> <plano.json>` (no Concat, depois do `legendas_simples.py`,
-que só dá o tempo de cada palavra). As duas saídas foram conferidas contra a mesma prévia: caixas iguais a 1-2 px.
-- **Poppins no Concat:** o Concat junta as Poppins pela família interna ("Poppins") e escolhe pelo peso (SemiBold
-  pedida a 500 saía Medium; a 600, negrito sintético 8% mais largo). A ferramenta registra cópias renomeadas
-  (`dist/fontes_concat/*-IG.ttf`, família própria de uma face só, peso 400): aí o Concat desenha o arquivo certo
-  no tamanho certo.
-- **Tamanho no CapCut** (medido no export do "11 - Caixinha"): o CapCut faz a altura typo da fonte (OS/2 ascendente -
-  descendente) = tamanho x 0,0032 da altura do quadro e centra essa caixa na posição. A conversão antiga
-  (12 = 0,04302, em `capcut_legendas.py`) deixava a Neue Medium ~25% menor no CapCut do que no Concat.
-- **Projeto já cortado** ("só adicione as legendas e b-rolls ... e os zoom in e zoom out grupais"): zoom por frases com
-  `capcut_caixinha.py` (sem "pergunta" no plano; `"x"` no grupo centra quem fala), B-roll do Higgsfield com
-  `capcut_broll.py` (fotos com as entradas nativas que ela escolheu no "13 - Bioestimulador": "Diminuir zoom" e
-  "Slide lateral", e o avanço lento 100% -> 108%), legendas com `capcut_legendas_ig.py`.
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
@@ -327,9 +234,8 @@ P="$(dirname "$PWD")/editados/<nome>"    # pasta do projeto (pasta Concat = mãe
 $PY tools/cortar_ao_vivo.py "$P" cortes.json --pausa 0
 #    1.10x + empacotar (setClipSpeed + moveClips), depois:
 $PY tools/alinhar_quadros.py "$P"                       # depois: project.save
-$PY tools/legendas_simples.py "$P" words.json T4        # 92%, offsetY 0.17, contorno fino
 #    (sem nitidez nem cor automáticas; só se pedirem: addLayerClip concat.adjust em T3)
-$PY tools/legendas_dinamicas.py "$P" plano_dinamicas.json   # 92%, começa na altura da legenda simples
+$PY tools/capcut_legendas_ig.py --concat="$P" words.json blocos.json   # legendas: simples + blocos (seção 2)
 $PY tools/zoom_cortes.py "$P" ref_legendas.json plano_zoom.json
 $PY tools/centralizar_zoom.py "$P"          # take a take; --estampa se houver estampa no peito
 $PY tools/broll_higgsfield.py plano_broll.json "$P/broll" <cena-teste>   # depois as outras

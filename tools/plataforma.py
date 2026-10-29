@@ -55,16 +55,6 @@ def faces_helvetica():
     }
 
 
-def registrar_helvetica():
-    """(família, arquivo) que o projeto precisa registrar com addFont."""
-    if MAC:  # a Helvetica do sistema o Concat acha sozinho; as faces extraídas da Neue, não
-        return [("Helvetica Neue Medium", "HelveticaNeue-Medium.ttf"),
-                ("Helvetica Neue Medium Italic", "HelveticaNeue-MediumItalic.ttf"),
-                ("Helvetica Neue Condensed Black", "HelveticaNeue-CondensedBlack.ttf")]
-    return [("Arimo", n) for n in ("Arimo-Medium.ttf", "Arimo-Bold.ttf", "Arimo-Italic.ttf", "Arimo-BoldItalic.ttf")] + \
-        [("Archivo Condensed Black", "Archivo-CondensedBlack.ttf")]
-
-
 def legenda_simples():
     """(família CSS, peso, arquivo) da legenda simples semibold."""
     if MAC:

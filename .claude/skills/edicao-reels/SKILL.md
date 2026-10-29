@@ -69,7 +69,6 @@ Sem nitidez, cor ou LUT automáticas (pedido de 2026-10-19): só aplique se o us
 ```bash
 $PY tools/reel.py aplicar "$P" "$W"                  # cortes + 1.10x + grade de quadros
 $PY tools/limpar_audio.py "<video>" "$P/midia/<nome>_audio_limpo.mov" --projeto "$P"   # ruído de fundo (DeepFilterNet)
-$PY tools/legendas_simples.py "$P" "$W/words.json" T4   # uma palavra por clipe na T4: só o tempo (o estilo vem no passo 4)
 $PY tools/reel.py listar "$P"                        # índices e tempos para os planos
 ```
 
@@ -95,7 +94,7 @@ pausas); você escreve só os blocos em `$W/blocos.json`:
             {"linhas": [[204, 205], [206, 207, 208]], "chave": [208], "fecho": true}]}
 ```
 ```bash
-# Concat (depois do legendas_simples.py do passo 3, que dá o tempo de cada palavra):
+# Concat (words.json do reel.py cortes, tempos do bruto; o script leva para a timeline):
 $PY tools/capcut_legendas_ig.py --concat="$P" "$W/words.json" "$W/blocos.json"
 # CapCut (projeto já cortado por lá; CapCut fechado; words.json com os tempos da TIMELINE, do áudio remontado):
 $PY tools/capcut_legendas_ig.py "<pasta do projeto no CapCut>" "$W/words_tl.json" "$W/blocos.json"
@@ -113,8 +112,9 @@ $PY tools/capcut_legendas_ig.py "<pasta do projeto no CapCut>" "$W/words_tl.json
   de baixo se uma descendente de cima (g, ç, p) encostar.
 - **Roupa ou fundo muito claro:** a sombra suave segura a leitura; se não segurar, `$PY tools/sombra_legenda.py "$P"`
   (degradê escuro atrás das legendas). Roupa com estampa no peito: veja EDICAO.md.
-- **Outros estilos** (impacto/serifa/clássico/elegante de `legendas_dinamicas.py`, os prints "como que / eu faço"):
-  só quando o usuário pedir esses pelo nome.
+- **Este é o único estilo de legenda.** Os antigos (Helvetica com contorno, impacto/serifa/clássico/elegante, os
+  prints "como que / eu faço", entrada "Mini zoom") foram apagados em 2026-10-29 a pedido ("para não ter erro").
+- **Estampa no peito:** `--base=<fração>` desce a linha das legendas para baixo da estampa (EDICAO.md seção 6).
 
 ## 5. Zoom seco (julgamento)
 Padrão: `$PY tools/zoom_por_frases.py "$P" --min=1.5 --ideia=2.5` monta os conjuntos pelas legendas
@@ -200,9 +200,8 @@ Edite o projeto (ele fica salvo), reexporte com o mesmo nome se já havia MP4, e
   exportação direta é recusada: use `tools/exportar_seguro.py`.
 - Ao trocar uma imagem com o projeto aberto na janela, o `addClip` pode "imantar" o clipe para
   outro ponto: confira e corrija com `moveClips`.
-- Legendas: mude `$W/blocos.json` (ou as medidas em `tools/capcut_legendas_ig.py`) e rode de novo: no Concat,
-  `legendas_simples.py` e depois `capcut_legendas_ig.py --concat=` (troca todos os textos); no CapCut, só o
-  `capcut_legendas_ig.py` (troca as trilhas "Legendas IG").
+- Legendas: mude `$W/blocos.json` (ou use `--base=`) e rode de novo o `capcut_legendas_ig.py` (no Concat com
+  `--concat=`, troca as legendas e deixa a headline; no CapCut, troca as trilhas "Legendas IG").
 
 ## Armadilhas conhecidas
 - O Concat não lê `.ttc`: as faces da Helvetica Neue (Medium, Condensed Black) são extraídas para

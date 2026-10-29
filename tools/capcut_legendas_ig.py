@@ -16,10 +16,11 @@ fica 0,018 em abaixo do meio dela). Erro medido: ~2%.
 
 Uso: capcut_legendas_ig.py <pasta do projeto no CapCut> <words.json> <plano.json> [--previa=<pasta>]
      capcut_legendas_ig.py --concat=<projeto do Concat> <words.json> <plano.json>
-  words.json: no CapCut, palavras com tempos da TIMELINE (word, start, end). No Concat, o words.json da
-  transcrição (tempos do bruto): rode antes legendas_simples.py, que põe uma palavra por clipe em T4 já com o
-  tempo da timeline; daqui sai o tempo dos clipes e o texto do words.json, e todos os textos são trocados.
+  words.json: no CapCut, palavras com tempos da TIMELINE (word, start, end). No Concat, o words.json do
+  reel.py cortes (tempos do bruto): o script leva cada palavra para a timeline pelos clipes (corte, velocidade)
+  e troca as legendas do projeto (a headline, com placa, fica).
   plano.json: {"blocos": [{"linhas": [[i, i], [i]], "chave": [i], "fecho": false}, ...]}  (índices de words.json)
+  --base=0.70: desce (ou sobe) a linha das legendas (fração da altura; padrão 0.639), ex.: estampa no peito.
 O CapCut precisa estar FECHADO (rodar de novo troca as legendas; trilhas "Legendas IG").
 """
 import copy
@@ -318,20 +319,33 @@ def escrever(pasta, itens):
 
 # ---------------------------------------------------------------- Concat
 def palavras_do_concat(api, words):
-    """Tempos da timeline: os clipes da legenda simples (legendas_simples.py, um por palavra, na ordem) + o texto
-    de words.json (com a pontuação, que a legenda simples antiga tirava)."""
+    """Tempos da timeline das palavras do words.json (tempos do bruto, do reel.py cortes), pelos clipes de vídeo
+    (corte, velocidade, ordem). Mantém todas as palavras, na ordem e com os índices do words.json (os blocos do
+    plano usam esses índices); a que não cai em nenhum trecho para o script."""
     from concat_api import timeline
     tl = timeline(api.view())
-    clips = sorted([c for c in tl["clips"] if c["kind"] == "text" and c.get("trackId") == "T4"], key=lambda c: (c["start"], c["id"]))
-    out, k = [], 0
-    for w in words:   # casa pelo texto (rodar de novo deixa outros textos na T4)
-        alvo = w["word"].strip().rstrip(".")
-        while k < len(clips) and clips[k]["text"]["content"] != alvo:
-            k += 1
-        if k == len(clips):
-            sys.exit(f"não achei \"{alvo}\" na T4: rode legendas_simples.py com este words.json antes")
-        out.append(dict(word=w["word"], start=clips[k]["start"], end=clips[k]["start"] + clips[k]["duration"]))
-        k += 1
+    segs = sorted([(c["sourceStart"], c["sourceStart"] + c["duration"] * c["speed"], c["start"], c["speed"])
+                   for c in tl["clips"] if c["kind"] == "video"])
+
+    def tmap(src, prefer):
+        # dentro de um trecho, direto; numa pausa cortada, o início vai para o trecho seguinte e o fim para o anterior
+        for a, b, st, sp in segs:
+            if a - 1e-6 <= src <= b + 1e-6:
+                return st + (src - a) / sp
+        if prefer == "next":
+            return next((st for a, b, st, sp in segs if a > src), None)
+        return next((st + (b - a) / sp for a, b, st, sp in reversed(segs) if b < src), None)
+    out, fora = [], []
+    for w in words:
+        ini, fim = tmap(w["start"], "next"), tmap(w["end"], "prev")
+        if ini is None or fim is None:
+            fora.append(w["word"].strip())
+            continue
+        if fim < ini + 0.02 or fim - ini > 3:   # palavra que pula de trecho: dura o mínimo
+            fim = ini + max(0.06, min(w["end"] - w["start"], 0.4))
+        out.append(dict(word=w["word"], start=ini, end=fim))
+    if fora:
+        sys.exit(f"palavras fora dos trechos do projeto (corrija o words.json): {' '.join(fora)}")
     return out, tl
 
 
@@ -360,6 +374,26 @@ def fonte_concat(est):
     return familia, destino
 
 
+def registrar_fontes_concat(api):
+    """Registra as Poppins (cópias com família própria) no projeto aberto; devolve {arquivo: família}."""
+    familias = {}
+    for est in (SIMPLES, PEQUENA):
+        familia, caminho = fonte_concat(est)
+        api.edit({"op": "addFont", "family": familia, "path": caminho})
+        familias[est["arq"]] = familia
+    return familias
+
+
+def estilo_concat(it, familias):
+    """(estilo do texto no Concat, offsetY) de um item da montagem."""
+    mt = metricas(it["est"]["arq"])
+    oy = it["base"] - 0.5 - (mt["asc"] - mt["desc"]) / 2 * it["em"]   # o Concat põe a base em H/2 + oy + (asc-desc)/2·em
+    return ({"content": it["texto"], "fontFamily": f'"{familias[it["est"]["arq"]]}"', "fontWeight": 400.0,
+             "italic": False, "fontSize": it["em"], "color": "#ffffff", "align": "center", "shadow": True,
+             "strokeWidth": 0.0, "strokeColor": "#000000", "tracking": it["est"]["trk"] * it["em"], "lineHeight": 1.0,
+             "background": "", "opacity": 1.0, "maxWidth": 0.0, "maxHeight": 0.0}, oy)
+
+
 def escrever_concat(projeto, words_src, plano):
     """O mesmo estilo num projeto do Concat: troca todos os textos pelos desta montagem."""
     from concat_api import Concat, timeline
@@ -371,12 +405,10 @@ def escrever_concat(projeto, words_src, plano):
         api.call("project.open", path=projeto)
     words, tl = palavras_do_concat(api, words_src)
     itens = montar(words, plano)
-    familias = {}
-    for est in (SIMPLES, PEQUENA):
-        familia, caminho = fonte_concat(est)
-        api.edit({"op": "addFont", "family": familia, "path": caminho})
-        familias[est["arq"]] = familia
-    api.batch([{"op": "removeClips", "clipIds": [c["id"] for c in tl["clips"] if c["kind"] == "text"], "ripple": False}])
+    familias = registrar_fontes_concat(api)
+    # troca as legendas (texto sem placa atrás); a headline (caixa branca, headline.py) fica
+    api.batch([{"op": "removeClips", "clipIds": [c["id"] for c in tl["clips"] if c["kind"] == "text"
+                                                 and not c["text"].get("background")], "ripple": False}])
 
     for grupo in ([it for it in itens if it["est"] is SIMPLES], [it for it in itens if it["est"] is not SIMPLES]):
         if not grupo:
@@ -384,12 +416,7 @@ def escrever_concat(projeto, words_src, plano):
         antes = {c["id"] for c in timeline(api.view())["clips"]}
         cmds = []
         for it in grupo:
-            mt = metricas(it["est"]["arq"])
-            oy = it["base"] - 0.5 - (mt["asc"] - mt["desc"]) / 2 * it["em"]   # o Concat põe a base em H/2 + oy + (asc-desc)/2·em
-            estilo = {"content": it["texto"], "fontFamily": f'"{familias[it["est"]["arq"]]}"', "fontWeight": 400.0,
-                      "italic": False, "fontSize": it["em"], "color": "#ffffff", "align": "center", "shadow": True,
-                      "strokeWidth": 0.0, "strokeColor": "#000000", "tracking": it["est"]["trk"] * it["em"], "lineHeight": 1.0,
-                      "background": "", "opacity": 1.0, "maxWidth": 0.0, "maxHeight": 0.0}
+            estilo, oy = estilo_concat(it, familias)
             ini = round(it["ini"] * 30) / 30
             fim = max(round(it["fim"] * 30) / 30, ini + 1 / 30)
             cmd = {"op": "addTextClip", "start": ini, "duration": round(fim - ini, 6), "offsetY": round(oy, 6), "style": estilo}
@@ -405,14 +432,16 @@ def escrever_concat(projeto, words_src, plano):
                      and abs(c["start"] - round(it["ini"] * 30) / 30) < 1e-3)
             pares[c["id"]] = it
         api.batch([{"op": "setClipTransform", "clipId": cid, "offsetX": round(it["cx"] - 0.5, 6),
-                    "offsetY": round(it["base"] - 0.5 - (metricas(it["est"]["arq"])["asc"] - metricas(it["est"]["arq"])["desc"]) / 2 * it["em"], 6)}
-                   for cid, it in pares.items()])
+                    "offsetY": round(estilo_concat(it, familias)[1], 6)} for cid, it in pares.items()])
     api.call("project.save", path=projeto)
     print(f"{len(itens)} textos no Concat ({sum(1 for it in itens if it['est'] is SIMPLES)} simples, "
           f"{len(plano.get('blocos', []))} blocos); projeto salvo")
 
 
 def main():
+    base = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--base=")), None)
+    if base:   # --base=0.70: linha de base da legenda (e da chave dos blocos) em fração da altura (padrão 0.639)
+        SIMPLES["base"] = float(base)
     concat = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--concat=")), None)
     if concat:   # capcut_legendas_ig.py --concat=<projeto> <words.json> <plano.json>
         args = [a for a in sys.argv[1:] if not a.startswith("--")]

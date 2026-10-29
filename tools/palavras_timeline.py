@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Converte as palavras do Whisper (tempos do bruto) para tempos da timeline do projeto, já com cortes,
-velocidade e clipes reordenados, para o legendas_estilos.py / legendas_linha.py.
+velocidade e clipes reordenados, para o legendas_estilos.py (cortes de podcast).
 
 Uso: palavras_timeline.py <projeto> <words.json do reel.py cortes> <saida.json>
 Palavra que caiu num trecho cortado sai da lista (e é avisada). A ordem final é a da timeline, então
@@ -25,7 +25,7 @@ def main():
     segs = sorted([(c["sourceStart"], c["sourceStart"] + c["duration"] * c["speed"], c["start"], c["speed"]) for c in clips])
 
     def tmap(src, prefer):
-        """Como em legendas_simples.py: dentro de um trecho, mapeia direto; num corte de pausa, o início
+        """Dentro de um trecho, mapeia direto; num corte de pausa, o início
         vai para o começo do trecho seguinte e o fim para o fim do anterior (em ordem do bruto)."""
         for a, b, st, sp in segs:
             if a - 1e-6 <= src <= b + 1e-6:

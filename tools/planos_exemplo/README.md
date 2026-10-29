@@ -3,8 +3,9 @@
 Formatos que as ferramentas leem. Os índices são das legendas simples, na ordem da timeline
 (`tools/reel.py listar <projeto>`).
 
-- `dinamicas.json` → `legendas_dinamicas.py`: cada bloco tem `estilo`, `linhas` (índices contíguos,
-  agrupados por linha) e `chave` (os índices em destaque).
+- `blocos.json` → `capcut_legendas_ig.py`: os blocos dinâmicos; cada um tem `linhas` (índices contíguos do
+  words.json, agrupados por linha), `chave` (os índices em destaque) e, na frase de fecho, `"fecho": true`.
+  A legenda simples sai sozinha das outras palavras.
 - `zoom.json` → `zoom_cortes.py`: `trechos` = `[índice da 1ª palavra da frase, escala]`; vale até o
   próximo trecho. Depois rode `centralizar_zoom.py`.
 - `broll.json` → `broll_higgsfield.py` / `broll_imagens.py`: `inicio` e `fim` na timeline (segundos),

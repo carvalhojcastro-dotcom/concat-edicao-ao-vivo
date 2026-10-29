@@ -5,7 +5,7 @@
   ... --quadro <saida.png>   também guarda o quadro de teste renderizado pelo Concat
 
 Confere: ffmpeg; bibliotecas do venv (transcrição, imagem, rosto); fontes em fonts/; token da API;
-e, com o Concat aberto, cria um projeto temporário, põe uma legenda dinâmica em cada fonte, renderiza um
+e, com o Concat aberto, cria um projeto temporário, põe um bloco de legenda dinâmica (Poppins), renderiza um
 quadro e apaga o projeto (tirando-o da lista de recentes). Sai com 0 se tudo passou.
 """
 import importlib
@@ -39,17 +39,13 @@ def main():
         except Exception as e:  # noqa: BLE001
             item(f"python: {lib}", False, str(e)[:120])
 
-    falso = tempfile.mkdtemp()  # legendas_dinamicas lê o fps do projeto em argv[1]: um projeto de mentira a 30 fps
-    with open(os.path.join(falso, "concat.json"), "w") as f:
-        f.write('{"timelines": [{"video": {"rateNum": 30, "rateDen": 1}}]}')
-    sys.argv = [sys.argv[0], falso] + sys.argv[1:]
     try:
-        import legendas_dinamicas as ld
+        import capcut_legendas_ig as ig
     except Exception as e:  # noqa: BLE001
-        item("legendas_dinamicas importa", False, str(e)[:160])
+        item("capcut_legendas_ig importa", False, str(e)[:160])
         return 1
-    faltam = sorted({os.path.basename(v[3]) for v in ld.FACES.values() if not os.path.exists(v[3])})
-    item("fontes das legendas em fonts/", not faltam, ", ".join(faltam))
+    faltam = sorted({e["arq"] for e in (ig.SIMPLES, ig.PEQUENA, ig.CHAVE) if not os.path.exists(os.path.join(ig.FONTES, e["arq"]))})
+    item("fontes das legendas (Poppins) em fonts/", not faltam, ", ".join(faltam))
     item(".concat-token", os.path.exists(os.path.join(plataforma.RAIZ, ".concat-token")))
 
     from concat_api import Concat, timeline
@@ -76,18 +72,16 @@ def main():
         api.call("project.create", location=base, name=nome,
                  video={"width": 1080, "height": 1920, "rateNum": 30, "rateDen": 1})
         api.call("project.open", path=proj)
-        for familia, arquivo in ld.REGISTRAR:
-            if os.path.exists(os.path.join(ld.FONTES, arquivo)):
-                api.edit({"op": "addFont", "family": familia, "path": os.path.abspath(os.path.join(ld.FONTES, arquivo))})
-        ld.FONTE_CHAVE = "serifa"
-        palavras = ld.montar("serifa", [[0, 1], [2, 3, 4], [5], [6]], {5},
-                             ["e", "começar", "a", "usar", "essas", "legendas", "aqui"])
-        cmds = [{"op": "addTextClip", "above": True, "start": 0.0, "duration": 2.0, "offsetY": 0.0, "style": p["style"]}
-                for p in palavras]
+        familias = ig.registrar_fontes_concat(api)
+        texto = ["e", "começar", "a", "usar", "essas", "legendas", "aqui"]
+        words = [{"word": " " + w, "start": 0.1 * k, "end": 0.1 * k + 0.1} for k, w in enumerate(texto)]
+        itens = ig.montar(words, {"blocos": [{"linhas": [[0, 1], [2, 3, 4], [5, 6]], "chave": [5]}]})
+        cmds = [{"op": "addTextClip", "above": True, "start": 0.0, "duration": 2.0, "offsetY": ig.estilo_concat(it, familias)[1],
+                 "style": ig.estilo_concat(it, familias)[0]} for it in itens]
         tl = timeline(api.batch(cmds))
         novos = sorted([c for c in tl["clips"] if c["kind"] == "text"], key=lambda c: int("".join(ch for ch in c["id"] if ch.isdigit()) or 0))  # c10 depois de c9
-        api.batch([{"op": "setClipTransform", "clipId": c["id"], "offsetX": p["ox"], "offsetY": p["oy"]}
-                   for c, p in zip(novos, palavras)])
+        api.batch([{"op": "setClipTransform", "clipId": c["id"], "offsetX": it["cx"] - 0.5, "offsetY": ig.estilo_concat(it, familias)[1]}
+                   for c, it in zip(novos, itens)])
         saida = sys.argv[sys.argv.index("--quadro") + 1] if "--quadro" in sys.argv else os.path.join(base, "teste_instalacao.png")
         quadro = os.path.join(base, "quadro.png")
         api.call("preview.frame", path=proj, time=1.0, output=quadro, width=540, height=960)

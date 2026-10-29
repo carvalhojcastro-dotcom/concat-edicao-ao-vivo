@@ -36,7 +36,7 @@ tl = timeline(api.view())
 takes = sorted([c for c in tl["clips"] if c["kind"] == "video"], key=lambda c: c["start"])
 palavras = sorted([(c["start"], c["text"]["content"].strip()) for c in tl["clips"] if c["kind"] == "text"])
 if not palavras:
-    sys.exit("o projeto ainda não tem legendas: rode legendas_simples.py antes")
+    sys.exit("o projeto ainda não tem legendas: rode capcut_legendas_ig.py --concat= antes")
 
 
 PROPRIOS = {"Ozempic", "Leonardo", "Luna", "Cochrane", "Colaboração", "Mounjaro"}

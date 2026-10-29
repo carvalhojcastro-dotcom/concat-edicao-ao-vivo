@@ -20,9 +20,9 @@ pelos passos 1 a 3 desses arquivos (o link é privado: precisa do `gh` logado nu
 processo completo sem pedir confirmação no meio. Deixe o projeto pronto em `../editados/<nome>` (a pasta
 Concat é a mãe deste repositório) e informe o custo do Higgsfield. **Exporte o MP4 (4K 30 fps, em
 `../exportados`) só quando pedirem.** Regras de trabalho do usuário: seção 7 de `EDICAO.md`.
-**Legendas padrão (desde 2026-10-29):** o estilo das referências do Instagram (`EDICAO.md` 6f, Poppins branca,
+**Legendas (desde 2026-10-29):** um estilo só, o das referências do Instagram (`EDICAO.md` seção 2, Poppins branca,
 simples + blocos dinâmicos, sem animação), no Concat ou no CapCut, com `tools/capcut_legendas_ig.py`. Os estilos
-antigos (impacto, serifa, clássico, elegante, prints) só quando o usuário pedir por eles.
+antigos (Helvetica com contorno, impacto, serifa, clássico, elegante, prints) foram apagados a pedido do usuário.
 
 ## Pastas
 `Concat/` = `editados/` (projetos), `exportados/` (MP4), `referencias/` (prints, vídeo-aula, kit;

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cria um projeto novo no CapCut a partir de um projeto que a usuária já editou (o "modelo"), com o bruto
 de outro vídeo no lugar do dela. Depois a montagem entra com capcut_montar.py e as legendas com
-capcut_legendas.py.
+capcut_legendas_ig.py.
 
 Pedido de 2026-10-28 ("edite o vídeo da pasta 13 ... abra no CapCut"): não havia projeto no CapCut para o
 vídeo. O modelo é um projeto da mesma cliente; dele ficam as camadas que valem para o vídeo inteiro

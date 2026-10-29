@@ -45,12 +45,10 @@ Scripts que falam com a API (porta 7420; o token fica em `.concat-token`, fora d
 |---|---|
 | `cortar_ao_vivo.py` | corta trechos (segundos da mídia) com ripple |
 | `alinhar_quadros.py` | alinha clipes à grade de quadros (evita quadro preto) |
-| `legendas_simples.py` | legenda palavra por palavra a partir do Whisper |
-| `legendas_dinamicas.py` | frases em destaque palavra a palavra, 4 estilos, fontes mistas |
+| `capcut_legendas_ig.py` | legendas (simples + blocos dinâmicos, Poppins branca) no Concat ou direto no CapCut |
 | `zoom_cortes.py` / `centralizar_zoom.py` | zoom seco por frase, centralizado no rosto (OpenCV) |
 | `broll_higgsfield.py` | gera B-roll de imagem pela API do Higgsfield (chave em `.env.local`) |
 | `broll_imagens.py` / `broll_animar.py` | posiciona B-roll nos cortes e anima |
-| `contraste_destaques.py` | escolhe a cor do destaque pelo brilho do fundo |
 | `exportar.py` | exporta pela API (padrão 4K) |
 | `quadros.py` | renderiza quadros para conferência |
 | `reel.py` | etapas mecânicas: novo projeto, transcrição, cortes/tomadas, 1.05x, nitidez, listar, fechar |
