@@ -30,7 +30,7 @@ Ele faz sozinho:
 - baixa o **Concat deste fork** da Release do GitHub para `/Applications` (ou compila do código com
   `./tools/setup.sh --compilar`, ~10 min);
 - **liga a API do Concat** (porta 7420) e grava o token em `.concat-token`;
-- prepara as fontes: as livres (inclusive a DM Serif Display do destaque) já vêm no repositório, a Coolvetica é baixada do site oficial e as
+- prepara as fontes: as livres (inclusive a Poppins das legendas) já vêm no repositório, a Coolvetica é baixada do site oficial e as
   faces da Helvetica Neue são extraídas do macOS;
 - cria `~/Desktop/Concat/editados`, `exportados` e o atalho `referencias`.
 

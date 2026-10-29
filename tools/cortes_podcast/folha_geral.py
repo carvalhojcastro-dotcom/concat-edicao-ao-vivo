@@ -1,10 +1,10 @@
-"""Folha única: 5 quadros por corte (gancho, peças de enquadramento distintas, composições). Uso: folha_geral.py <saida.jpg> <dir>=<mp4> ..."""
+"""Folha única: 5 quadros por corte (gancho, peças de enquadramento distintas, blocos dinâmicos). Uso: folha_geral.py <saida.jpg> <dir>=<mp4> ..."""
 import json, os, subprocess, sys, tempfile
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..")); import plataforma  # noqa: E401,E402 (acha o ffmpeg no Windows)
 out = sys.argv[1]; d = tempfile.mkdtemp(); linhas = []
 for par in sys.argv[2:]:
     pasta, mp4 = par.split("=", 1)
-    cfg = json.load(open(os.path.join(pasta, "corte.json"))); plano = json.load(open(os.path.join(pasta, "plano.json")))
+    cfg = json.load(open(os.path.join(pasta, "corte.json"))); blocos = json.load(open(os.path.join(pasta, "blocos.json")))["blocos"]
     words = json.load(open(os.path.join(pasta, "words_leg.json")))
     segs = cfg["segmentos"]
     def saida(t):
@@ -12,16 +12,16 @@ for par in sys.argv[2:]:
         for a, b in segs:
             if a - 1e-3 <= t <= b + 1e-3: return off + t - a
             off += b - a
-    comps = [f for f in plano["frases"] if f["preset"] != "linha"]
-    ts = [words[comps[0]["de"] + sum(len(l.split()) for l in comps[0]["linhas"]) - 1]["end"] + 0.1]
+    fim_bloco = lambda b: (words[b["linhas"][-1][-1]]["start"] + words[b["linhas"][-1][-1]]["end"]) / 2  # noqa: E731  bloco completo
+    ts = [fim_bloco(blocos[0])] if blocos else []
     vistos = set()
     for p in sorted(cfg["pecas"], key=lambda p: -(p["e"] - p["s"])):
         k = (p["layout"], p["quem"])
         if k not in vistos and len(vistos) < 3:
             vistos.add(k); ts.append(saida((p["s"] + p["e"]) / 2))
-    for c in comps[len(comps) // 2:]:
+    for b in blocos[len(blocos) // 2:]:
         if len(ts) >= 5: break
-        ts.append(words[c["de"] + sum(len(l.split()) for l in c["linhas"]) - 1]["end"] + 0.1)
+        ts.append(fim_bloco(b))
     ts = sorted(t for t in ts if t is not None)[:5]
     fs = []
     for t in ts:

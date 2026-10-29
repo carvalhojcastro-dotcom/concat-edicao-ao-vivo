@@ -1,5 +1,7 @@
-"""Converte a decupagem de destaque (texto do edit-director) em composições para plano_auto.py.
-Uso: destaques.py <destaques.txt> <ID> <dir do corte>  -> grava <dir>/aj.json"""
+"""Converte a decupagem de destaque (texto do edit-director) nos blocos dinâmicos do capcut_legendas_ig.py.
+Uso: destaques.py <destaques.txt> <ID> <dir do corte>  -> grava <dir>/blocos.json
+Cada frase de destaque vira um bloco (linhas de 1 a 3 palavras, a chave grande); tudo branco (a cor que o
+edit-director sugere é ignorada: as legendas são sempre brancas desde 2026-10-29)."""
 import json, os, re, sys, difflib
 txt, cid, pasta = sys.argv[1:4]
 words = json.load(open(os.path.join(pasta, "words_leg.json")))
@@ -14,8 +16,7 @@ for l in open(txt):
         m = re.match(r'-\s*"(.+?)".*?chave:\s*([^|]+)\|\s*(\w+)', l)
         if m:
             itens.append((m.group(1), m.group(2).strip(), m.group(3)))
-PRESETS = ["escada", "chave", "sanduiche"]
-comps, usados = [], set()
+blocos, usados = [], set()
 for frase, chave, cor in itens:
     alvo = [norm(t) for t in frase.split() if norm(t)]
     n = len(alvo); melhor = (0, None)
@@ -28,37 +29,30 @@ for frase, chave, cor in itens:
     if melhor[0] < 0.7:
         print(f"!! não achei: {frase} ({melhor[0]:.2f})"); continue
     i = melhor[1]; idx = list(range(i, i + n))
-    toks = [words[k]["word"] for k in idx]
-    nk = [norm(t) for t in toks]
+    nk = [norm(words[k]["word"]) for k in idx]
     kc = norm(chave)
     kpos = nk.index(kc) if kc in nk else max(range(n), key=lambda j: difflib.SequenceMatcher(a=kc, b=nk[j]).ratio())
-    chave_txt = "*" + re.sub(r"[,.;:!]+$", "", toks[kpos]) + "*"
-    antes, depois = toks[:kpos], toks[kpos + 1:]
-    if not antes:
-        linhas = [chave_txt] + ([" ".join(depois)] if depois else [])
-        if not depois:
-            linhas = [chave_txt]
-    else:
-        if len(antes) > 3:
-            h = (len(antes) + 1) // 2
-            linhas = [" ".join(antes[:h]), " ".join(antes[h:])]
-        else:
-            linhas = [" ".join(antes)]
-        linhas.append(" ".join([chave_txt] + depois))
-    comps.append({"de": i, "linhas": linhas, "destaque": "#f4c430" if cor.startswith("amar") else "#ffffff"})
+    antes, depois = idx[:kpos], idx[kpos + 1:]
+    # linhas equilibradas de até 3 palavras; um pedaço curto (1-2 palavras) antes da chave divide a linha com ela
+    # ("o seu / CORAÇÃO" vira "o seu CORAÇÃO"), como nos blocos aprovados
+    def partir(ks):
+        if not ks:
+            return []
+        n_l = -(-len(ks) // 3)
+        tam = [len(ks) // n_l + (1 if j < len(ks) % n_l else 0) for j in range(n_l)]
+        out, a = [], 0
+        for t in sorted(tam, reverse=True):
+            out.append(ks[a:a + t]); a += t
+        return out
+    cima = partir(antes)
+    linha_chave = [idx[kpos]] + (depois if len(depois) <= 2 else [])
+    if cima and len(cima[-1]) <= 2 and len(linha_chave) == 1:
+        linha_chave = cima.pop() + linha_chave
+    linhas = cima + [linha_chave] + (partir(depois) if len(depois) > 2 else [])
+    blocos.append({"linhas": linhas, "chave": [idx[kpos]]})
     usados.update(idx)
-comps.sort(key=lambda c: c["de"])
-ant = None
-for c in comps:
-    nl = len(c["linhas"])
-    ops = ["escada", "chave"] if nl >= 2 else ["grande"]
-    if nl >= 3:
-        ops = ["escada", "chave", "sanduiche"]
-    p = next(o for o in ops if o != ant) if len(ops) > 1 else ops[0]
-    c["preset"] = p; ant = p
-    pequenas = {"escada": [0], "sanduiche": [1]}.get(p, [])   # linhas "p" do preset: sobe para "m" (legível no celular)
-    for j in pequenas:
-        if j < len(c["linhas"]) - 1 or (j < len(c["linhas"]) and "*" not in c["linhas"][j]):
-            c["linhas"][j] = " ".join(t if "*" in t else t + "^m" for t in c["linhas"][j].split())
-    print(f"[{c['de']:3d}] {p:9s} {' / '.join(c['linhas'])}  {c['destaque']}")
-json.dump(comps, open(os.path.join(pasta, "aj.json"), "w"), ensure_ascii=False, indent=1)
+blocos.sort(key=lambda b: b["linhas"][0][0])
+for b in blocos:
+    print(f"[{b['linhas'][0][0]:3d}] " + " / ".join(" ".join(("*" + words[k]["word"] + "*") if k in b["chave"] else words[k]["word"]
+                                                            for k in l) for l in b["linhas"]))
+json.dump({"blocos": blocos}, open(os.path.join(pasta, "blocos.json"), "w"), ensure_ascii=False, indent=1)

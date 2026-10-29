@@ -1,6 +1,7 @@
-"""Legendas dinâmicas do Concat num corte vertical, exporta 4K30 SDR e não deixa projeto para trás.
+"""Legendas (estilo das referências do Instagram, capcut_legendas_ig.py) num corte vertical, exporta 1080x1920
+30 fps SDR e não deixa projeto para trás.
 
-Uso: legendar_corte.py <vertical.mp4> <words.json> <plano.json> <saida.mp4> [--manter] [--quadros "t1 t2 ..." folha.jpg]
+Uso: legendar_corte.py <vertical.mp4> <words_leg.json> <blocos.json> <saida.mp4> [--manter] [--quadros "t1 t2 ..." folha.jpg]
 Projeto temporário em <repositório>/dist/verificacao/_cortes/<nome>: criado, legendado, exportado,
 fechado, apagado e tirado do recents.json. --manter deixa o projeto (para depurar).
 """
@@ -13,7 +14,8 @@ from render_projeto import tirar_dos_recentes  # noqa: E402
 import plataforma  # noqa: E402
 
 PY = plataforma.python_venv()
-BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dist", "verificacao", "_cortes")
+# caminho resolvido: a API do Concat recusa caminho com ".." ("outside where this API writes")
+BASE = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "dist", "verificacao", "_cortes"))
 
 
 def main():
@@ -38,10 +40,10 @@ def main():
         api.edit({"op": "addClip", "mediaId": v["project"]["media"][0]["id"], "trackId": tl["tracks"][0]["id"], "start": 0.0})
         api.call("project.save", path=proj)
         api.call("project.close", path=proj)
-        r = subprocess.run([PY, os.path.join(TOOLS, "legendas_estilos.py"), proj, words, plano], capture_output=True, text=True)
+        r = subprocess.run([PY, os.path.join(TOOLS, "capcut_legendas_ig.py"), f"--concat={proj}", words, plano], capture_output=True, text=True)
         print(r.stdout[-3000:], r.stderr[-3000:])
         if r.returncode:
-            sys.exit("legendas_estilos falhou")
+            sys.exit("capcut_legendas_ig falhou")
         if "--quadros" in sys.argv:
             i = sys.argv.index("--quadros")
             subprocess.run([PY, os.path.join(TOOLS, "quadros.py"), proj, sys.argv[i + 2], sys.argv[i + 1]], check=True)

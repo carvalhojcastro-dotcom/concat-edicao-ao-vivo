@@ -8,7 +8,6 @@ REC="$HOME/Library/Application Support/app.concat.editor/recents.json"; [ -f $SP
 for par in "$@"; do
   ID=${par%%=*}; NOME=${par#*=}; C=$SP/c$EP/$ID
   python3 $BIN/plano_auto.py $C >/dev/null
-  python3 $BIN/destaques.py $SP/c$EP/destaques.txt $ID $C | grep "!!"
-  python3 $BIN/plano_auto.py $C $C/aj.json | grep -E "^!!|frases em" | sed "s/^/$ID /"
+  python3 $BIN/destaques.py $SP/c$EP/destaques.txt $ID $C | grep "!!" | sed "s/^/$ID /"
   $BIN/finalizar.sh $C "$D/$NOME.mp4" 2>&1 | grep -E "exportado|falhou|Error|!!|1080" | sed "s/^/$ID /"
 done

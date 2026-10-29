@@ -1,4 +1,4 @@
-# Cortes verticais de podcast (Reels 9:16) com legendas dinâmicas do Concat
+# Cortes verticais de podcast (Reels 9:16) com as legendas padrão (estilo IG)
 
 Processo usado nos podcasts 10 e 11 do Dr. Rafael Almeida (outubro de 2026). As regras abaixo vieram das correções do usuário.
 
@@ -10,7 +10,7 @@ $TRABALHO/p<EP>/audio.wav     áudio 16 kHz mono do episódio
 $TRABALHO/p<EP>/nomeado.json  transcrição com locutor por segmento
 $TRABALHO/p<EP>/fonte.txt     caminho do vídeo do episódio
 $TRABALHO/p<EP>/saida.txt     pasta de saída (…/<EP>/Cortes)
-$TRABALHO/c<EP>/<ID>/         um corte: corte.json, words.json, vertical.mp4, plano.json…
+$TRABALHO/c<EP>/<ID>/         um corte: corte.json, words.json, words_leg.json, vertical.mp4, blocos.json…
 $TRABALHO/c<EP>/overrides.json   {"M03": "s-e,s-e"}: trechos no lugar dos do clip-builder
 $TRABALHO/c<EP>/destaques.txt    frases de destaque por corte (formato do edit-director)
 ```
@@ -28,7 +28,8 @@ $TRABALHO/c<EP>/destaques.txt    frases de destaque por corte (formato do edit-d
 4. **Montagem + enquadramento:** `lote.sh <EP> <run> M01 M02 …` (montar_corte → enquadrar → estabilizar → render_vertical → conferir).
 5. **Texto:** `corrigir.py <corte> '{"de": "para"}'` (por texto, não por índice) e revisão ortográfica do `words_leg.json`.
 6. **Legenda + export:** `final_lote.sh <EP> "M01=01 - Título" …`:
-   - plano_auto + destaques + legendar_corte;
+   - plano_auto (texto: correções e maiúsculas → words_leg.json) + destaques (frases de destaque → blocos.json)
+     + legendar_corte (`capcut_legendas_ig.py --concat=`: legenda simples + blocos);
    - projeto temporário em `dist/verificacao/_cortes`, apagado no fim;
    - export 1080x1920, 30 fps, SDR (`hdr=False`);
    - `recentes.py` limpa a lista de projetos.
@@ -53,7 +54,9 @@ $TRABALHO/c<EP>/destaques.txt    frases de destaque por corte (formato do edit-d
   - Câmera aberta (3 ou mais rostos) → quadro inteiro sobre fundo desfocado.
   - Não há tela dividida: o podcast já vem editado com uma câmera por vez.
 - **Legenda:**
-  - Branca. Composições (escada/chave) nas frases de destaque, com a chave em serifada (DM Serif Display, antes Scholar); amarelo #f4c430 em 1 ou 2 por corte. `sombra_suave` + contorno 0,02.
+  - O estilo único das legendas (EDICAO.md seção 2, desde 2026-10-29): Poppins branca, simples de 1 a 4 palavras +
+    blocos dinâmicos nas frases de destaque (chave grande), sombra suave, sem contorno, sem animação, sem cor. Os
+    estilos antigos (escada/chave/sanduíche, serifada, amarelo) foram apagados.
   - Primeira palavra do vídeo em maiúscula. No resto, maiúscula só depois de "?"/"!" e em nome próprio/sigla (lista `PROPRIOS` em plano_auto.py).
   - Revisão ortográfica sem mudar palavra nem ordem. Palavra que ninguém entende sai do corte (áudio e legenda).
   - A última legenda termina antes do fim do vídeo. O Concat exportava 1 quadro preto com a legenda; o `finalizar.sh` agora confere e tira.

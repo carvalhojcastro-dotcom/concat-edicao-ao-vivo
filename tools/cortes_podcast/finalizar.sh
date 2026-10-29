@@ -4,7 +4,7 @@ SP=${TRABALHO:?defina TRABALHO (pasta de trabalho)}
 BIN=${0:A:h}
 PY="$(cd "$(dirname "$0")/.." && pwd)/.venv/bin/python"
 C=$1; O=$2
-$PY -I $BIN/legendar_corte.py $C/vertical.mp4 $C/words_leg.json $C/plano.json "$O" 2>&1 | grep -E "exportado|falhou|Error|Traceback"
+$PY -I $BIN/legendar_corte.py $C/vertical.mp4 $C/words_leg.json $C/blocos.json "$O" 2>&1 | grep -E "exportado|falhou|Error|Traceback"
 python3 $BIN/recentes.py
 ffprobe -v error -show_entries stream=width,height,r_frame_rate,color_transfer -show_entries format=duration -of csv=p=0 "$O" | tr '\n' ' '; echo
 python3 -c 1 && $PY -I $BIN/folha.py $C "$O" $C/folha.jpg

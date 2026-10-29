@@ -55,13 +55,6 @@ def faces_helvetica():
     }
 
 
-def legenda_simples():
-    """(família CSS, peso, arquivo) da legenda simples semibold."""
-    if MAC:
-        return '"Helvetica Neue Medium"', 500, _f("HelveticaNeue-Medium.ttf")
-    return "Arimo", 500, _f("Arimo-Medium.ttf")
-
-
 def familia_helvetica():
     return "Helvetica" if MAC else "Arimo"
 

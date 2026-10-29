@@ -355,7 +355,7 @@ def fonte_concat(est):
     SemiBold de verdade). Com família e nome próprios, ele desenha exatamente este arquivo."""
     from fontTools.ttLib import TTFont
     familia = est["titulo"] + " IG"
-    pasta = os.path.join(AQUI, "..", "dist", "fontes_concat")
+    pasta = os.path.abspath(os.path.join(AQUI, "..", "dist", "fontes_concat"))
     destino = os.path.join(pasta, est["arq"].replace(".ttf", "-IG.ttf"))
     if not os.path.exists(destino):
         os.makedirs(pasta, exist_ok=True)
@@ -405,6 +405,9 @@ def escrever_concat(projeto, words_src, plano):
         api.call("project.open", path=projeto)
     words, tl = palavras_do_concat(api, words_src)
     itens = montar(words, plano)
+    fim_video = max(c["start"] + c["duration"] for c in tl["clips"] if c["kind"] == "video")
+    for it in itens:   # nenhuma legenda passa do fim do vídeo (o export ganhava quadro preto com legenda)
+        it["fim"] = min(it["fim"], fim_video - 2 / 30)
     familias = registrar_fontes_concat(api)
     # troca as legendas (texto sem placa atrás); a headline (caixa branca, headline.py) fica
     api.batch([{"op": "removeClips", "clipIds": [c["id"] for c in tl["clips"] if c["kind"] == "text"
@@ -449,6 +452,10 @@ def main():
         return
     pasta, words, plano = sys.argv[1], json.load(open(sys.argv[2])), json.load(open(sys.argv[3]))
     itens = montar(words, plano)
+    duracao = json.load(open(os.path.join(pasta, "draft_info.json"), encoding="utf-8"))["duration"] / 1e6 if os.path.isdir(pasta) else None
+    for it in itens:   # nenhuma legenda passa do fim do vídeo
+        if duracao:
+            it["fim"] = min(it["fim"], duracao - 2 / 30)
     previa = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--previa=")), None)
     if previa:
         json.dump([dict(it, est=it["est"]["titulo"]) for it in itens], open(os.path.join(previa, "itens.json"), "w"), ensure_ascii=False, indent=0)

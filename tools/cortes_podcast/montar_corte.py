@@ -3,7 +3,7 @@
 Uso: montar_corte.py <nomeado.json> <audio16k.wav> <src.mp4> <saida_dir> "in-out,in-out" [--pausa 0.6]
 Gera em saida_dir:
   corte.json  {"src", "segmentos", "falas"}  (tempos da fonte, bordas no quadro)
-  words.json  palavras no tempo do corte (para legendas_estilos.py)
+  words.json  palavras no tempo do corte (para plano_auto.py / capcut_legendas_ig.py)
   texto.txt   texto corrido com índice de cada palavra
 Bordas: 1ª/última batida de voz acima de -30 dB perto da 1ª/última palavra; pausas internas
 maiores que --pausa viram 0,25 s (0,12 s de cada lado).
