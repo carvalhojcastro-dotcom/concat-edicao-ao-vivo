@@ -220,7 +220,13 @@ nossas legendas entram nele como textos normais.
    ao nome da pasta ("60 - Cirurgia 25.02.26" virou "1028 (1)", 2026-10-28). Se voltar, feche o CapCut e grave o
    nome em `draft_name` no `draft_meta_info.json` da pasta e no `root_meta_info.json`; aí ele fica.
 - **Entrada nativa do CapCut** (pedido de 2026-10-29: "use a animação de entrada de cada legenda nativa do CapCut,
-  não quero keyframes"): `capcut_legendas.py ... --animacao-capcut` põe "Deslizar para cima" (0,4 s) em cada palavra.
+  não quero keyframes"): `capcut_legendas.py ... --animacao-capcut` põe "Mini zoom" (0,4 s; sobe 0,15 da altura do
+  texto) só nas palavras dos blocos dinâmicos; a legenda simples entra sem animação. "Deslizar para cima" sobe
+  2,66 alturas do texto e ela achou longo demais ("começam muito embaixo").
+- **Quem fala rápido** (Dr. Rafael): menos blocos e mais longos ("estão aparecendo e sumindo muito rápido ... não
+  consigo nem ler"): ~13 por minuto, cada um uma frase inteira de 4 a 8 palavras que termina numa pausa (o bloco
+  completo fica 0,5 a 1,3 s). Clássico e elegante têm uma linha pequena só: no máximo 3 palavras curtas nela; frase
+  maior vai no impacto (aceita 3 linhas).
 - **Roupa clara** (camisa rosa-clara do Dr. Rafael): sem contorno a legenda branca some; use o contorno + sombra
   do modelo (sem `--sem-contorno`). "Não muito pequenas": simples `--escala=1.15`, dinâmicas `--escala=1.05`.
 - **Caixinha de perguntas + zoom por frases** (série "Caixinha de perguntas" do Dr. Rafael, 2026-10-29):

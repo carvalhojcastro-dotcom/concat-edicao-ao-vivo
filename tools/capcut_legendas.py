@@ -18,9 +18,12 @@ O CapCut precisa estar FECHADO (ele regrava o projeto aberto). Antes de escrever
 projeto para ~/Desktop/Concat/backup-capcut/. Rodar de novo troca as legendas anteriores (trilhas
 "Legendas (Concat)").
 
-Uso: capcut_legendas.py <projeto do Concat> <pasta do projeto no CapCut> [--animacao-capcut]
-  --animacao-capcut: a entrada é a animação nativa do CapCut "Deslizar para cima" (pedido de 2026-10-29: "use a
-  animação de entrada de cada legenda nativa do CapCut, não quero keyframes"); ela precisa estar no cache dele
+Uso: capcut_legendas.py <projeto do Concat> <pasta do projeto no CapCut> [--animacao-capcut[=mini-zoom|deslizar]]
+  --animacao-capcut: a entrada das legendas dinâmicas é uma animação nativa do CapCut, sem keyframes (pedido de
+  2026-10-29: "use a animação de entrada de cada legenda nativa do CapCut"). As legendas simples (uma palavra por
+  vez, trilha T4 do Concat) entram sem animação ("quando alternar para as legendas simples ... não precisa usar
+  animações"). Padrão "Mini zoom" (sobe 0,15 da altura do texto, com fade e 90%->100%); "Deslizar para cima" sobe
+  2,66 alturas do texto ("começam muito embaixo", 2026-10-29). A animação precisa estar no cache do CapCut
   (basta tê-la usado uma vez num texto).
 """
 import copy
@@ -91,20 +94,26 @@ def chave(t):
     return (t["fontFamily"], int(round(t["fontWeight"])), bool(t.get("italic")))
 
 
-ANIMACAO_CAPCUT = "--animacao-capcut" in sys.argv
-DESLIZAR = "6763470111253729803"     # "Deslizar para cima" (texto, entrada), o mesmo do vídeo-aula das legendas
-ENTRADA_NATIVA = 0.4                 # segundos (o padrão dele é 0,73 s; palavra curta pega a duração dela)
+ANIMACOES = {   # entradas de texto do CapCut: (id do recurso, nome)
+    "mini-zoom": ("6763469998330483213", "Mini zoom"),            # dos Favoritos dela (projeto 19 da Sabrina)
+    "deslizar": ("6763470111253729803", "Deslizar para cima"),    # a do vídeo-aula das legendas
+}
+_anim = next((a for a in sys.argv if a.startswith("--animacao-capcut")), None)
+ANIMACAO_CAPCUT = ANIMACOES[_anim.split("=", 1)[1] if "=" in _anim else "mini-zoom"] if _anim else None
+TRILHA_SIMPLES = "T4"                # trilha das legendas simples no Concat (legendas_simples.py)
+ENTRADA_NATIVA = 0.4                 # segundos (palavra curta pega a duração dela)
 
 
 def animacao_nativa(dur_us):
-    achados = glob.glob(os.path.expanduser(f"~/Movies/CapCut/User Data/Cache/effect/{DESLIZAR}/*/"))
+    rid, nome = ANIMACAO_CAPCUT
+    achados = glob.glob(os.path.expanduser(f"~/Movies/CapCut/User Data/Cache/effect/{rid}/*/"))
     if not achados:
-        sys.exit("a animação \"Deslizar para cima\" não está no cache do CapCut: aplique-a uma vez num texto")
+        sys.exit(f"a animação \"{nome}\" não está no cache do CapCut: aplique-a uma vez num texto")
     caminho = achados[0].rstrip("/").replace(os.path.expanduser("~/Movies/CapCut"),
                                              os.path.expanduser("~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut"))
-    return {"id": DESLIZAR, "type": "in", "start": 0, "duration": min(dur_us, int(ENTRADA_NATIVA * 1e6)), "path": caminho,
-            "platform": "all", "resource_id": DESLIZAR, "third_resource_id": DESLIZAR, "source_platform": 1,
-            "name": "Deslizar para cima", "category_id": "ruchang", "category_name": "text", "panel": "",
+    return {"id": rid, "type": "in", "start": 0, "duration": min(dur_us, int(ENTRADA_NATIVA * 1e6)), "path": caminho,
+            "platform": "all", "resource_id": rid, "third_resource_id": rid, "source_platform": 1,
+            "name": nome, "category_id": "ruchang", "category_name": "text", "panel": "",
             "material_type": "sticker", "anim_adjust_params": None, "request_id": ""}
 
 
@@ -150,7 +159,7 @@ def converter(clip, modelo, render_index):
     oy = [k for k in chaves if k["property"] == "offsetY"]
     y_final = sorted(oy, key=lambda k: k["at"])[-1]["value"] if oy else clip.get("offsetY", 0.0)
     if ANIMACAO_CAPCUT:   # sem keyframes: a animação nativa leva a palavra até a posição final
-        anim["animations"] = [animacao_nativa(dur)]
+        anim["animations"] = [] if clip.get("trackId") == TRILHA_SIMPLES else [animacao_nativa(dur)]
         chaves = []
     s = copy.deepcopy(modelo["segmento"])
     s.update(id=novo_id(), material_id=m["id"], extra_material_refs=[anim["id"]], render_index=render_index,
