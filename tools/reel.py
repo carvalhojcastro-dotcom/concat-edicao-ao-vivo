@@ -84,6 +84,14 @@ def transcrever(video, trabalho):
     r = plataforma.transcrever(wav, language="pt")
     json.dump(r, open(os.path.join(trabalho, "transcript.json"), "w"), ensure_ascii=False)
     rms = _rms(wav)
+    # Os limiares (voz -30, pausa -36 dB) valem para um bruto em torno de -25 LUFS. Bruto baixo (-30 a -32 LUFS,
+    # Dra. Luciana no consultório, 2026-10-29) tinha a fala baixa tomada por pausa e cortada no meio da palavra:
+    # a análise sobe o nível do bruto até -25 LUFS antes de medir (o áudio do vídeo não muda).
+    import re
+    e = subprocess.run(["ffmpeg", "-nostats", "-i", wav, "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True).stderr
+    lufs = re.findall(r"I:\s+(-?[\d.]+) LUFS", e)
+    if lufs:
+        rms = rms + (-25.0 - float(lufs[-1]))
     np.save(os.path.join(trabalho, "rms.npy"), rms)
     quieto = rms < LIMIAR_PAUSA; sil = []; i = 0
     while i < len(rms):
@@ -184,7 +192,13 @@ def cortes(trabalho, trechos):
         for a, b in sil:
             lo, hi = max(a, s), min(b, e)
             if hi - lo >= PAUSA_MIN and lo > s + 0.05 and hi < e - 0.05:
-                corte.append([round(lo + RESPIRO, 4), round(hi - RESPIRO, 4)])
+                lo, hi = lo + RESPIRO, hi - RESPIRO
+                # fala corrida: uma palavra começa dentro da "pausa" e a de antes não fecha frase (ou a pausa é curta):
+                # é consoante baixa, não pausa ("porque era" virava "para", 2026-10-29)
+                k = next((k for k, w in enumerate(palavras) if lo + 0.03 < w["start"] < hi - 0.03), None)
+                if k and (not palavras[k - 1]["word"].strip()[-1:] in ".,?!:;" or hi - lo < 0.3):
+                    continue
+                corte.append([round(lo, 4), round(hi, 4)])
         prev = e
     corte.append([round(prev, 4), dur])
     json.dump(corte, open(os.path.join(trabalho, "cortes.json"), "w"))

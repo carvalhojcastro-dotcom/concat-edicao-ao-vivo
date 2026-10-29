@@ -13,6 +13,7 @@ O projeto novo já tem o bruto importado (um clipe só); a trilha principal é r
 
 Plano (JSON):
   {"pedacos": [{"fonte": s, "fonte_dur": s, "ini": s, "dur": s, "escala": 1.3, "tx": 0.0, "ty": 0.05}, ...],
+   "velocidade": 1.05, "volume": 3.2,   (opcionais: senão ficam os do modelo; dur = fonte_dur / velocidade)
    "musica": {"projeto": "<pasta do projeto do CapCut que já usa a faixa>", "nome": "Lofi Garden Groove", "inicio": 0.0},
    "efeitos": [{"nome": "Clique do mouse", "em": 0.0}, ...],
    "broll": [{"arquivo": "<caminho visto pelo CapCut>", "largura": 1152, "altura": 2048, "inicio": s, "fim": s, "zoom": 1.08}, ...],
@@ -100,6 +101,16 @@ def main():
         s["clip"]["scale"] = {"x": p["escala"], "y": p["escala"]}
         s["clip"]["transform"] = {"x": p.get("tx", 0.0), "y": p.get("ty", 0.0)}
         s["uniform_scale"] = {"on": True, "value": p["escala"]}
+        vel = p.get("velocidade", plano.get("velocidade"))
+        if vel:   # "velocidade" no plano: a do modelo não serve (pedido de 2026-10-29: "acelere em 1.05x")
+            s["speed"] = vel
+            for r in s["extra_material_refs"]:
+                k, m = material(N, r)
+                if k == "speeds":
+                    m["speed"] = vel
+        vol = p.get("volume", plano.get("volume"))
+        if vol is not None:   # ganho da voz (o modelo foi ajustado para outro bruto); "volume" no pedaço vence o do plano
+            s["volume"] = s["last_nonzero_volume"] = vol
         segs.append(s)
     principal["segments"] = segs
     total = plano["pedacos"][-1]["ini"] + plano["pedacos"][-1]["dur"]

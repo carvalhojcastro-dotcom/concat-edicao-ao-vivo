@@ -198,6 +198,11 @@ editável no CapCut"). Medido no projeto que ela editou ("5 - Braços definidos"
   falsos ("Ele estimula o próprio..." → "vamos lá" → a tomada boa).
 Ferramenta: `tools/capcut_montar.py <projeto novo> <projeto modelo> <plano.json>` (pedaços, zoom, música,
 efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/CapCut/User Data/` (sandbox).
+- **Bruto direto para projetos no CapCut** ("abra cada um desses vídeos em um projeto no CapCut, faça os cortes,
+  acelere em 1.05x e adicione as novas legendas", 2026-10-29): `reel.py transcrever` + `reel.py cortes` (tomadas),
+  `capcut_novo.py` (modelo da mesma cliente e do mesmo cenário) e `capcut_montar.py` só com `pedacos`,
+  `"velocidade"` e `"volume"` (ganho para ~-14 LUFS; pedaço com `"volume"` próprio, ex.: pergunta de quem filma 7 dB
+  mais alta), depois `capcut_legendas_ig.py`. Confira a fala cortada transcrevendo o corte de novo.
 - **Sem projeto no CapCut** ("abra no CapCut", 2026-10-28): `tools/capcut_novo.py <projeto modelo> "<nome>" <bruto>`
   põe o bruto na pasta do CapCut por link físico (caminho escrito por nós fora dela vira "arquivo não
   acessível" no sandbox) e clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
