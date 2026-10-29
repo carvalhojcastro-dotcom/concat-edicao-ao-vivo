@@ -219,6 +219,15 @@ nossas legendas entram nele como textos normais.
 5. Reabra o CapCut e confira o nome do projeto na lista: na primeira abertura depois da escrita ele pode voltar
    ao nome da pasta ("60 - Cirurgia 25.02.26" virou "1028 (1)", 2026-10-28). Se voltar, feche o CapCut e grave o
    nome em `draft_name` no `draft_meta_info.json` da pasta e no `root_meta_info.json`; aí ele fica.
+- **Entrada nativa do CapCut** (pedido de 2026-10-29: "use a animação de entrada de cada legenda nativa do CapCut,
+  não quero keyframes"): `capcut_legendas.py ... --animacao-capcut` põe "Deslizar para cima" (0,4 s) em cada palavra.
+- **Roupa clara** (camisa rosa-clara do Dr. Rafael): sem contorno a legenda branca some; use o contorno + sombra
+  do modelo (sem `--sem-contorno`). "Não muito pequenas": simples `--escala=1.15`, dinâmicas `--escala=1.05`.
+- **Caixinha de perguntas + zoom por frases** (série "Caixinha de perguntas" do Dr. Rafael, 2026-10-29):
+  `tools/capcut_caixinha.py <pasta no CapCut> <plano.json>` põe a figurinha de pergunta do Instagram (foto dele, a
+  pergunta que ele lê no começo) acima da cabeça o vídeo todo e troca o zoom por grupos de cortes que começam e
+  terminam com uma frase (in 1,4 / out = o enquadramento dela, alternando). O X acompanha a escala (o centro que
+  ela escolheu fica no centro); no zoom in o Y desce para a cabeça não encostar na caixinha. Nada de corte novo.
 
 ## 6e. Editar do zero no CapCut, no jeito da usuária
 Pedido de 2026-10-27 ("aprenda com a edição do primeiro e replique no segundo ... me entregue pronto e
