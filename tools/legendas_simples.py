@@ -2,6 +2,7 @@
 """Legendas simples da Parte 1: uma palavra por vez, Helvetica, sem animação, sem ponto final.
 
 Uso: legendas_simples.py <projeto> <words.json> [trilha=T4] [--escala=0.92] [--altura=0.17] [--fundo=#00000080]
+                         [--largura=0.70]   (palavra mais larga que essa fração do quadro encolhe só ela)
   words.json: palavras do Whisper com tempos da MÍDIA DE ORIGEM (start, end, word).
   Os tempos viram tempos da timeline pelos clipes de vídeo (cortes e velocidade incluídos).
 Estilo aprovado: Helvetica Neue Medium (semibold) 500, fontSize 0.04302, tracking -0.00224 (o "-0.3" do CapCut),
@@ -31,6 +32,21 @@ ESCALA = float(opc.get("escala", 0.92))    # padrão do usuário: 92% do tamanho
 ALTURA = float(opc.get("altura", 0.17))  # padrão do usuário: abaixo do rosto (antes 0.104)
 ESTILO = dict(ESTILO, fontSize=ESTILO["fontSize"] * ESCALA, tracking=ESTILO["tracking"] * ESCALA,
               strokeWidth=ESTILO["strokeWidth"] * ESCALA)
+# Margens do usuário (2026-10-29: linhas-guia a 15% e 85% da largura, "algumas legendas passaram das margens")
+LARGURA = float(opc["largura"]) if "largura" in opc else None
+
+
+def estilo_de(texto):
+    """Estilo da palavra; com --largura, a palavra que passa da margem encolhe até caber (quadro 9:16)."""
+    if LARGURA is None:
+        return dict(ESTILO, content=texto)
+    from PIL import ImageFont
+    H = 1920
+    em = ESTILO["fontSize"] * H
+    w = ImageFont.truetype(plataforma.legenda_simples()[2], size=round(em)).getlength(texto) + ESTILO["tracking"] * H * max(len(texto) - 1, 0)
+    k = min(1.0, LARGURA * H * 9 / 16 / w)
+    return dict(ESTILO, content=texto, fontSize=ESTILO["fontSize"] * k, tracking=ESTILO["tracking"] * k,
+                strokeWidth=ESTILO["strokeWidth"] * k)
 api = Concat(path); api.sock.settimeout(300)
 try:
     api.call("project.get", path=path)   # aberto na janela? então é ela que responde
@@ -90,6 +106,6 @@ for k in range(len(itens)):
             itens[k + 1][1] = itens[k][2]
 for k in range(0, len(itens), 50):
     api.batch([{"op": "addTextClip", "trackId": trilha, "start": s, "duration": round(e - s, 6),
-                "offsetY": ALTURA, "style": dict(ESTILO, content=t)} for t, s, e in itens[k:k + 50]])
+                "offsetY": ALTURA, "style": estilo_de(t)} for t, s, e in itens[k:k + 50]])
 api.call("project.save", path=path)
 print(f"{len(itens)} legendas em {trilha}, de {itens[0][1]:.2f} a {itens[-1][2]:.2f}s")

@@ -98,6 +98,8 @@ LINEAR = [0.0, 0.0, 1.0, 1.0]
 SEM_CONTORNO = "--sem-contorno" in sys.argv  # só a sombra leve
 _opc = dict(a[2:].split("=", 1) for a in sys.argv[3:] if a.startswith("--") and "=" in a)
 ESCALA = float(_opc.get("escala", 0.92))   # padrão do usuário: 92% do tamanho
+# --largura=0.70: o bloco nunca passa dessa fração da largura (linhas-guia do usuário a 15% e 85%, 2026-10-29)
+LIMITE = float(_opc["largura"]) * W if "largura" in _opc else None
 CENTRO_Y = float(_opc.get("centro", 0.67)) * H  # só sem legendas simples no projeto (ou com --centro=)
 # Pedido de 2026-10-21: o bloco começa na mesma altura da legenda simples (topo das letras da 1ª linha
 # no topo das letras da simples) e cresce para baixo. main() mede a simples do projeto; None = centrar.
@@ -452,6 +454,8 @@ def montar(estilo, linhas, chave, textos):
     topo = min(p["base"] - cap(p) for p in ps)
     pe = max(p["base"] + 0.15 * p["em"] for p in ps)
     k = min(1.0, LARGURA_MAX / (dir_ - esq)) * ESCALA
+    if LIMITE:
+        k = min(k, LIMITE / (dir_ - esq))
     cx, cy = (esq + dir_) / 2, (topo + pe) / 2
     if TOPO_Y is not None:  # o topo do bloco cai no topo da legenda simples
         cy = topo + (CENTRO_Y - TOPO_Y) / k

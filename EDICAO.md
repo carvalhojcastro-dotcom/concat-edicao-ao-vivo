@@ -223,6 +223,9 @@ nossas legendas entram nele como textos normais.
   não quero keyframes"): `capcut_legendas.py ... --animacao-capcut` põe "Mini zoom" (0,4 s; sobe 0,15 da altura do
   texto) só nas palavras dos blocos dinâmicos; a legenda simples entra sem animação. "Deslizar para cima" sobe
   2,66 alturas do texto e ela achou longo demais ("começam muito embaixo").
+- **Margens** (2026-10-29, linhas-guia do usuário: "algumas legendas passaram das margens"): legenda entre 15% e
+  85% da largura, centrada a ~75% da altura (faixa de 61% a 88%). Simples `--altura=0.247 --largura=0.70`, dinâmicas
+  `--centro=0.747 --largura=0.70` (a palavra ou o bloco que passar encolhe até caber).
 - **Quem fala rápido** (Dr. Rafael): menos blocos e mais longos ("estão aparecendo e sumindo muito rápido ... não
   consigo nem ler"): ~13 por minuto, cada um uma frase inteira de 4 a 8 palavras que termina numa pausa (o bloco
   completo fica 0,5 a 1,3 s). Clássico e elegante têm uma linha pequena só: no máximo 3 palavras curtas nela; frase
