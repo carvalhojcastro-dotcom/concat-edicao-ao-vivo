@@ -10,7 +10,7 @@ já estão feitos e o médico já está centralizado (eixo X). Entram:
     centro) e o Y vem do plano (a cabeça não pode subir até a caixinha).
 
 O CapCut precisa estar FECHADO. Backup em ~/Desktop/Concat/backup-capcut/. Rodar de novo refaz os dois.
-Uso: capcut_caixinha.py <pasta do projeto no CapCut> <plano.json>
+Uso: capcut_caixinha.py <pasta do projeto no CapCut> <plano.json>   (sem "pergunta": só o zoom por frases)
 plano.json: {"pergunta": "Reposição hormonal protege o coração?", "cabecalho": "Faça uma pergunta",
              "avatar": "<foto quadrada do rosto>", "base_caixinha": 470,      (px do quadro 1080x1920)
              "base": {"escala": 1.15, "x": -0.1218, "y": -0.0172},          (o enquadramento dela)
@@ -143,10 +143,13 @@ def main():
         esc = g["escala"] if g else base["escala"]
         y = g.get("y", base["y"]) if g else base["y"]
         s["clip"]["scale"] = {"x": esc, "y": esc}
-        s["clip"]["transform"] = {"x": round(base["x"] * esc / base["escala"], 6), "y": y}
+        x = g["x"] if g and "x" in g else base["x"] * esc / base["escala"]   # "x" no grupo: centrar quem fala no zoom
+        s["clip"]["transform"] = {"x": round(x, 6), "y": y}
         trocas += bool(g)
 
-    # caixinha: foto do tamanho do quadro numa trilha por cima do vídeo, o vídeo todo
+    # caixinha: foto do tamanho do quadro numa trilha por cima do vídeo, o vídeo todo (sem "pergunta" no plano, só o zoom)
+    if "pergunta" not in plano:
+        return salvar(d, alvos, f"zoom em {trocas} de {len(principal['segments'])} cortes, sem caixinha; backup em {copia}")
     d["tracks"] = [t for t in d["tracks"] if t.get("name") != NOME_TRILHA]
     os.makedirs(PASTA, exist_ok=True)
     nome = os.path.basename(pasta)[:60] + ".png"
@@ -176,18 +179,21 @@ def main():
     tr = dict(copy.deepcopy({k: v for k, v in tr_mod.items() if k != "segments"}), id=novo_id(), name=NOME_TRILHA,
               is_default_name=False, segments=[s])
     d["tracks"].insert(d["tracks"].index(principal) + 1, tr)
+    salvar(d, alvos, f"zoom em {trocas} de {len(principal['segments'])} cortes; caixinha {nome} (topo em {topo:.0f}px); backup em {copia}")
+
+
+def salvar(d, alvos, msg):
     if d.get("render_index_track_mode_on"):   # o CapCut empilha pela ordem das trilhas
         for i, t in enumerate(d["tracks"]):
             for seg in t["segments"]:
                 seg["track_render_index"] = i
-
     texto = json.dumps(d, ensure_ascii=False, separators=(",", ":"))
     for p in alvos:
         open(p, "w", encoding="utf-8").write(texto)
         tmp = os.path.join(os.path.dirname(p), "template-2.tmp")
         if os.path.exists(tmp):
             open(tmp, "w", encoding="utf-8").write(texto)
-    print(f"zoom em {trocas} de {len(principal['segments'])} cortes; caixinha {nome} (topo em {topo:.0f}px); backup em {copia}")
+    print(msg)
 
 
 if __name__ == "__main__":

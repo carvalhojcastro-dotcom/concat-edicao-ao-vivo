@@ -269,6 +269,29 @@ efeitos, B-roll) e depois `capcut_legendas.py`. Fotos e fontes em `~/Movies/CapC
   Poppins Black + Plus Jakarta, conteúdo entre 14% e 56% da altura (as legendas ficam abaixo). No plano,
   `"tipo": "video"` no B-roll.
 
+## 6f. Legendas no estilo das referências do Instagram (padrão desde 2026-10-29)
+Pedido: "a partir de agora" a legenda simples é a do 1º vídeo de referência e as dinâmicas as dos outros dois, "sempre
+bold ou semi-bold, sem serifa, sempre em branco" (nada de cursiva, serifada ou rosa). Medido quadro a quadro (fonte por
+sobreposição contra 220 candidatas; tamanho, espaçamento e linha de base por ajuste nos quadros):
+| | simples | bloco dinâmico |
+|---|---|---|
+| fonte | Poppins Medium | Poppins SemiBold (pequenas e chave) |
+| em (altura do quadro) | 2,71% | pequenas 4,4%, chave 7,6%, fecho 9,7% |
+| espaço entre letras | -0,065 em | -0,07 / -0,06 em |
+| entrelinha | — | topo das minúsculas de baixo 0,2 em (da linha de cima) abaixo da base de cima |
+| posição | centrada, base a 63,9% | centrado, a linha da chave na base da simples |
+| animação | nenhuma (corte seco, emendada) | nenhuma; palavra por palavra quando é dita |
+Sombra preta suave, sem contorno. Simples de 1 a 4 palavras (até ~40% da largura), mantém a pontuação, some nas pausas.
+Blocos: ~13 por minuto, frase inteira de 2 a 8 palavras em 2 ou 3 linhas; descendente de cima (g, ç) empurra a linha
+de baixo. Ferramenta: `tools/capcut_legendas_ig.py <pasta CapCut> <words.json> <plano.json>` (direto no CapCut).
+- **Tamanho no CapCut** (medido no export do "11 - Caixinha"): o CapCut faz a altura typo da fonte (OS/2 ascendente -
+  descendente) = tamanho x 0,0032 da altura do quadro e centra essa caixa na posição. A conversão antiga
+  (12 = 0,04302, em `capcut_legendas.py`) deixava a Neue Medium ~25% menor no CapCut do que no Concat.
+- **Projeto já cortado** ("só adicione as legendas e b-rolls ... e os zoom in e zoom out grupais"): zoom por frases com
+  `capcut_caixinha.py` (sem "pergunta" no plano; `"x"` no grupo centra quem fala), B-roll do Higgsfield com
+  `capcut_broll.py` (fotos com as entradas nativas que ela escolheu no "13 - Bioestimulador": "Diminuir zoom" e
+  "Slide lateral", e o avanço lento 100% -> 108%), legendas com `capcut_legendas_ig.py`.
+
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
 - **Tempos** que ele passa vêm em `mm:ss:quadros`.

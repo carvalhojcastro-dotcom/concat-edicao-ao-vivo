@@ -75,3 +75,9 @@ desktop.ini
 /tools/__pycache__/
 # Planos de edição por vídeo (conteúdo de clientes).
 /tools/planos/
+# Referências baixadas do Instagram (conteúdo de terceiros), fontes candidatas e quadros de análise
+/referencias/legenda-simples-ig/
+/referencias/legenda-mista-ig/
+/referencias/legenda-mista-ig-2/
+/referencias/dinamicas/
+/referencias/comparacao/
