@@ -225,7 +225,8 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   lugar dela, clique ou obturador. Posto no CapCut com
   `tools/capcut_sfx.py` (um clipe por evento, trilhas "SFX motions (Concat)"). Nível: ~17-20 dB abaixo da voz
   (-35 a -40 LUFS momentâneo, picos -20 a -27 dBFS), no máximo o do whoosh dela a 45%. Nada de clique de mouse,
-  "pop" ou "boing". Exemplo: `tools/planos/sabrina_24_sfx.py`.
+  "pop" ou "boing". Processo, paleta e como variar a cada vídeo: skill `sfx-motion`
+  (`.claude/skills/sfx-motion/SKILL.md`); mapa de eventos em JSON para `tools/sfx_motion.py`.
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.

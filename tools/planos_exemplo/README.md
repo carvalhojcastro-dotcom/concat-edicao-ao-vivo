@@ -10,5 +10,8 @@ Formatos que as ferramentas leem. Os índices são das legendas simples, na orde
   próximo trecho. Depois rode `centralizar_zoom.py`.
 - `broll.json` → `broll_higgsfield.py` / `broll_imagens.py`: `inicio` e `fim` na timeline (segundos),
   `nome` (vira o arquivo) e `prompt` (inglês, só descrição positiva).
+- `sfx_motion.json` → `sfx_motion.py`: efeitos sonoros dos motions. Por cena, `inicio`/`dur` na timeline e
+  `eventos` (um por elemento que entra), cada um com `camadas` (`t` dentro da cena, `som` de `sfx_sintese.py`
+  e os argumentos dele). Como escolher e variar: skill `sfx-motion`.
 
 Os planos reais de cada vídeo ficam fora do Git (`tools/planos/`).

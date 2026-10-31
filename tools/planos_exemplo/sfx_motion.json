@@ -1,0 +1,809 @@
+{
+ "trilha": "SFX motions (Concat)",
+ "ganho_db": 2,
+ "cenas": [
+  {
+   "nome": "titulo e grafico",
+   "inicio": 3.0,
+   "dur": 3.9667,
+   "eventos": [
+    {
+     "nome": "titulo",
+     "camadas": [
+      {
+       "t": 0.04,
+       "som": "grave",
+       "f0": 90,
+       "f1": 44,
+       "db_pico": -25,
+       "decai": 0.18
+      },
+      {
+       "t": 0.05,
+       "som": "letras",
+       "texto": "TÍTULO DA CENA",
+       "passo": 0.03,
+       "sem": 11
+      }
+     ]
+    },
+    {
+     "nome": "barras",
+     "camadas": [
+      {
+       "t": 0.4,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 0,
+       "db_pico": -31,
+       "pan": -0.4
+      },
+      {
+       "t": 0.48,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 2,
+       "db_pico": -31,
+       "pan": -0.2
+      },
+      {
+       "t": 0.56,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 1,
+       "db_pico": -31,
+       "pan": 0.0
+      },
+      {
+       "t": 0.64,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 4,
+       "db_pico": -31,
+       "pan": 0.2
+      },
+      {
+       "t": 0.72,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 3,
+       "db_pico": -31,
+       "pan": 0.4
+      }
+     ]
+    },
+    {
+     "nome": "lupa",
+     "camadas": [
+      {
+       "t": 0.82,
+       "som": "foco",
+       "db_pico": -33,
+       "pan": -0.3
+      },
+      {
+       "t": 0.9,
+       "som": "ar",
+       "dur": 2.2,
+       "f0": 1300,
+       "f1": 2700,
+       "pico": 0.45,
+       "q": 2.2,
+       "pan0": -0.4,
+       "pan1": 0.4,
+       "db_pico": -37,
+       "corpo": 0.1,
+       "sem": 12
+      }
+     ]
+    },
+    {
+     "nome": "pilula",
+     "camadas": [
+      {
+       "t": 2.07,
+       "som": "toc",
+       "freq": 260,
+       "db_pico": -30
+      },
+      {
+       "t": 2.1,
+       "som": "obturador",
+       "n": 1,
+       "semitons": 2,
+       "db_pico": -32
+      }
+     ]
+    }
+   ],
+   "saida": {
+    "sem": 13
+   }
+  },
+  {
+   "nome": "tres cartoes",
+   "inicio": 12.0,
+   "dur": 4.1667,
+   "eventos": [
+    {
+     "nome": "titulo",
+     "camadas": [
+      {
+       "t": 0.03,
+       "som": "tique",
+       "freq": 4200,
+       "db_pico": -30,
+       "sem": 21
+      }
+     ]
+    },
+    {
+     "nome": "cartao 1",
+     "camadas": [
+      {
+       "t": 0.13,
+       "som": "ar",
+       "dur": 0.45,
+       "f0": 500,
+       "f1": 2600,
+       "pico": 0.35,
+       "pan0": -0.6,
+       "pan1": 0.1,
+       "db_pico": -27,
+       "sem": 22
+      },
+      {
+       "t": 0.37,
+       "som": "clique",
+       "tipo": "solta",
+       "semitons": 0.0,
+       "db_pico": -31,
+       "pan": -0.2
+      },
+      {
+       "t": 0.45,
+       "som": "toc",
+       "freq": 200,
+       "db_pico": -30,
+       "pan": 0.1
+      }
+     ]
+    },
+    {
+     "nome": "cartao 2",
+     "camadas": [
+      {
+       "t": 1.78,
+       "som": "ar",
+       "dur": 0.45,
+       "f0": 500,
+       "f1": 2600,
+       "pico": 0.35,
+       "pan0": -0.6,
+       "pan1": 0.1,
+       "db_pico": -27,
+       "sem": 23
+      },
+      {
+       "t": 2.02,
+       "som": "clique",
+       "tipo": "solta",
+       "semitons": 1.5,
+       "db_pico": -31,
+       "pan": -0.2
+      },
+      {
+       "t": 2.1,
+       "som": "toc",
+       "freq": 225,
+       "db_pico": -30,
+       "pan": 0.1
+      }
+     ]
+    },
+    {
+     "nome": "cartao 3",
+     "camadas": [
+      {
+       "t": 3.23,
+       "som": "ar",
+       "dur": 0.45,
+       "f0": 500,
+       "f1": 2600,
+       "pico": 0.35,
+       "pan0": -0.6,
+       "pan1": 0.1,
+       "db_pico": -27,
+       "sem": 24
+      },
+      {
+       "t": 3.47,
+       "som": "clique",
+       "tipo": "solta",
+       "semitons": 3.0,
+       "db_pico": -31,
+       "pan": -0.2
+      },
+      {
+       "t": 3.55,
+       "som": "toc",
+       "freq": 250,
+       "db_pico": -30,
+       "pan": 0.1
+      }
+     ]
+    }
+   ],
+   "saida": {
+    "sem": 25
+   }
+  },
+  {
+   "nome": "checklist",
+   "inicio": 20.0,
+   "dur": 6.8,
+   "eventos": [
+    {
+     "nome": "titulo",
+     "camadas": [
+      {
+       "t": 0.03,
+       "som": "tique",
+       "freq": 4400,
+       "db_pico": -31,
+       "sem": 41
+      }
+     ]
+    },
+    {
+     "nome": "ponto 1",
+     "camadas": [
+      {
+       "t": 0.1,
+       "som": "ar",
+       "dur": 0.3,
+       "f0": 900,
+       "f1": 2800,
+       "pico": 0.4,
+       "pan0": 0.3,
+       "pan1": 0.0,
+       "db_pico": -30,
+       "sem": 42
+      },
+      {
+       "t": 0.41,
+       "som": "tique",
+       "freq": 3200,
+       "db_pico": -29,
+       "sem": 45
+      },
+      {
+       "t": 0.44,
+       "som": "ar",
+       "dur": 0.18,
+       "f0": 2500,
+       "f1": 6000,
+       "pico": 0.5,
+       "q": 3,
+       "pan0": -0.1,
+       "pan1": 0.2,
+       "db_pico": -35,
+       "corpo": 0.0,
+       "sem": 48
+      },
+      {
+       "t": 0.59,
+       "som": "clique",
+       "tipo": "solta",
+       "semitons": 1,
+       "db_pico": -32
+      }
+     ]
+    },
+    {
+     "nome": "ponto 2",
+     "camadas": [
+      {
+       "t": 1.51,
+       "som": "ar",
+       "dur": 0.3,
+       "f0": 900,
+       "f1": 2800,
+       "pico": 0.4,
+       "pan0": 0.3,
+       "pan1": 0.0,
+       "db_pico": -30,
+       "sem": 43
+      },
+      {
+       "t": 1.82,
+       "som": "tique",
+       "freq": 3350,
+       "db_pico": -29,
+       "sem": 46
+      },
+      {
+       "t": 1.85,
+       "som": "ar",
+       "dur": 0.18,
+       "f0": 2500,
+       "f1": 6000,
+       "pico": 0.5,
+       "q": 3,
+       "pan0": -0.1,
+       "pan1": 0.2,
+       "db_pico": -35,
+       "corpo": 0.0,
+       "sem": 49
+      },
+      {
+       "t": 2.0,
+       "som": "clique",
+       "tipo": "solta",
+       "semitons": 2,
+       "db_pico": -32
+      }
+     ]
+    },
+    {
+     "nome": "ponto 3",
+     "camadas": [
+      {
+       "t": 2.81,
+       "som": "ar",
+       "dur": 0.3,
+       "f0": 900,
+       "f1": 2800,
+       "pico": 0.4,
+       "pan0": 0.3,
+       "pan1": 0.0,
+       "db_pico": -30,
+       "sem": 44
+      },
+      {
+       "t": 3.12,
+       "som": "tique",
+       "freq": 3500,
+       "db_pico": -29,
+       "sem": 47
+      },
+      {
+       "t": 3.15,
+       "som": "ar",
+       "dur": 0.18,
+       "f0": 2500,
+       "f1": 6000,
+       "pico": 0.5,
+       "q": 3,
+       "pan0": -0.1,
+       "pan1": 0.2,
+       "db_pico": -35,
+       "corpo": 0.0,
+       "sem": 50
+      },
+      {
+       "t": 3.3,
+       "som": "clique",
+       "tipo": "solta",
+       "semitons": 3,
+       "db_pico": -32
+      }
+     ]
+    },
+    {
+     "nome": "pilula 1",
+     "camadas": [
+      {
+       "t": 4.93,
+       "som": "ar",
+       "dur": 0.25,
+       "f0": 1500,
+       "f1": 5000,
+       "pico": 0.6,
+       "q": 2,
+       "pan0": 0.0,
+       "pan1": -0.5,
+       "db_pico": -36,
+       "corpo": 0.0,
+       "sem": 51
+      },
+      {
+       "t": 5.13,
+       "som": "toc",
+       "freq": 240,
+       "db_pico": -33,
+       "pan": -0.5
+      },
+      {
+       "t": 5.14,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 0,
+       "db_pico": -31,
+       "pan": -0.5
+      }
+     ]
+    },
+    {
+     "nome": "pilula 2",
+     "camadas": [
+      {
+       "t": 5.7,
+       "som": "ar",
+       "dur": 0.25,
+       "f0": 1500,
+       "f1": 5000,
+       "pico": 0.6,
+       "q": 2,
+       "pan0": 0.0,
+       "pan1": 0.0,
+       "db_pico": -36,
+       "corpo": 0.0,
+       "sem": 52
+      },
+      {
+       "t": 5.9,
+       "som": "toc",
+       "freq": 240,
+       "db_pico": -33,
+       "pan": 0.0
+      },
+      {
+       "t": 5.91,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 1,
+       "db_pico": -31,
+       "pan": 0.0
+      }
+     ]
+    },
+    {
+     "nome": "pilula 3",
+     "camadas": [
+      {
+       "t": 6.11,
+       "som": "ar",
+       "dur": 0.25,
+       "f0": 1500,
+       "f1": 5000,
+       "pico": 0.6,
+       "q": 2,
+       "pan0": 0.0,
+       "pan1": 0.5,
+       "db_pico": -36,
+       "corpo": 0.0,
+       "sem": 53
+      },
+      {
+       "t": 6.31,
+       "som": "toc",
+       "freq": 240,
+       "db_pico": -33,
+       "pan": 0.5
+      },
+      {
+       "t": 6.32,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 2,
+       "db_pico": -31,
+       "pan": 0.5
+      }
+     ]
+    }
+   ],
+   "saida": {
+    "sem": 55
+   }
+  },
+  {
+   "nome": "colunas",
+   "inicio": 30.0,
+   "dur": 4.9,
+   "eventos": [
+    {
+     "nome": "titulo",
+     "camadas": [
+      {
+       "t": 0.03,
+       "som": "tique",
+       "freq": 4000,
+       "db_pico": -31,
+       "sem": 61
+      },
+      {
+       "t": 0.0,
+       "som": "ar",
+       "dur": 0.4,
+       "f0": 1200,
+       "f1": 3000,
+       "pico": 0.5,
+       "pan0": -0.5,
+       "pan1": 0.5,
+       "db_pico": -36,
+       "corpo": 0.0,
+       "sem": 62
+      }
+     ]
+    },
+    {
+     "nome": "coluna 1",
+     "camadas": [
+      {
+       "t": 0.06,
+       "som": "sobe",
+       "dur": 0.42,
+       "db_pico": -28,
+       "pan": -0.45,
+       "sem": 63,
+       "pouso": [
+        {
+         "t": 0.0,
+         "som": "toc",
+         "freq": 200,
+         "db_pico": 0,
+         "pan": -0.45
+        },
+        {
+         "t": 0.004,
+         "som": "obturador",
+         "n": 0,
+         "semitons": 0,
+         "db_pico": -5,
+         "pan": -0.45
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "nome": "coluna 2",
+     "camadas": [
+      {
+       "t": 1.66,
+       "som": "sobe",
+       "dur": 0.42,
+       "db_pico": -28,
+       "pan": 0.0,
+       "sem": 64,
+       "pouso": [
+        {
+         "t": 0.0,
+         "som": "toc",
+         "freq": 220,
+         "db_pico": 0,
+         "pan": 0.0
+        },
+        {
+         "t": 0.004,
+         "som": "obturador",
+         "n": 1,
+         "semitons": 0,
+         "db_pico": -5,
+         "pan": 0.0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "nome": "coluna 3",
+     "camadas": [
+      {
+       "t": 2.96,
+       "som": "sobe",
+       "dur": 0.42,
+       "db_pico": -28,
+       "pan": 0.45,
+       "sem": 65,
+       "pouso": [
+        {
+         "t": 0.0,
+         "som": "toc",
+         "freq": 240,
+         "db_pico": 0,
+         "pan": 0.45
+        },
+        {
+         "t": 0.004,
+         "som": "obturador",
+         "n": 2,
+         "semitons": 0,
+         "db_pico": -5,
+         "pan": 0.45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "saida": {
+    "sem": 66
+   }
+  },
+  {
+   "nome": "riscados",
+   "inicio": 38.0,
+   "dur": 4.2667,
+   "eventos": [
+    {
+     "nome": "titulo",
+     "camadas": [
+      {
+       "t": 0.21,
+       "som": "grave",
+       "f0": 90,
+       "f1": 44,
+       "db_pico": -27,
+       "decai": 0.16
+      },
+      {
+       "t": 0.22,
+       "som": "tique",
+       "freq": 3800,
+       "db_pico": -31,
+       "sem": 72
+      }
+     ]
+    },
+    {
+     "nome": "voto",
+     "camadas": [
+      {
+       "t": 0.25,
+       "som": "ar",
+       "dur": 0.75,
+       "f0": 1800,
+       "f1": 900,
+       "pico": 0.5,
+       "q": 1.5,
+       "pan0": 0.0,
+       "pan1": 0.0,
+       "db_pico": -33,
+       "sem": 73
+      },
+      {
+       "t": 0.95,
+       "som": "tique",
+       "freq": 3400,
+       "db_pico": -30,
+       "sem": 74
+      },
+      {
+       "t": 0.98,
+       "som": "toc",
+       "freq": 180,
+       "db_pico": -28
+      },
+      {
+       "t": 1.1,
+       "som": "obturador",
+       "n": 5,
+       "semitons": 0,
+       "db_pico": -31
+      }
+     ]
+    },
+    {
+     "nome": "nao preve",
+     "camadas": [
+      {
+       "t": 1.2,
+       "som": "ar",
+       "dur": 0.28,
+       "f0": 1500,
+       "f1": 4500,
+       "pico": 0.6,
+       "q": 2,
+       "pan0": 0.0,
+       "pan1": 0.0,
+       "db_pico": -35,
+       "corpo": 0.0,
+       "sem": 75
+      },
+      {
+       "t": 1.33,
+       "som": "toc",
+       "freq": 260,
+       "db_pico": -32
+      },
+      {
+       "t": 1.36,
+       "som": "clique",
+       "tipo": "aperta",
+       "semitons": 0,
+       "db_pico": -30
+      }
+     ]
+    },
+    {
+     "nome": "reforma",
+     "camadas": [
+      {
+       "t": 2.06,
+       "som": "ar",
+       "dur": 0.25,
+       "f0": 800,
+       "f1": 2400,
+       "pico": 0.4,
+       "pan0": -0.2,
+       "pan1": 0.2,
+       "db_pico": -32,
+       "sem": 76
+      },
+      {
+       "t": 2.12,
+       "som": "grave",
+       "f0": 120,
+       "f1": 70,
+       "db_pico": -30,
+       "decai": 0.1,
+       "clique": 0.25
+      }
+     ]
+    },
+    {
+     "nome": "risco 1",
+     "camadas": [
+      {
+       "t": 2.55,
+       "som": "traco",
+       "dur": 0.36,
+       "db_pico": -29,
+       "pan0": -0.4,
+       "pan1": 0.4,
+       "sem": 77
+      }
+     ]
+    },
+    {
+     "nome": "atraso",
+     "camadas": [
+      {
+       "t": 2.96,
+       "som": "ar",
+       "dur": 0.25,
+       "f0": 750,
+       "f1": 2300,
+       "pico": 0.4,
+       "pan0": 0.2,
+       "pan1": -0.2,
+       "db_pico": -32,
+       "sem": 78
+      },
+      {
+       "t": 3.02,
+       "som": "grave",
+       "f0": 110,
+       "f1": 64,
+       "db_pico": -30,
+       "decai": 0.1,
+       "clique": 0.25
+      }
+     ]
+    },
+    {
+     "nome": "risco 2",
+     "camadas": [
+      {
+       "t": 3.45,
+       "som": "traco",
+       "dur": 0.4,
+       "db_pico": -29,
+       "pan0": -0.5,
+       "pan1": 0.5,
+       "sem": 79
+      }
+     ]
+    }
+   ],
+   "entrada": {
+    "sem": 71
+   },
+   "saida": {
+    "sem": 80
+   }
+  }
+ ]
+}

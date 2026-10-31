@@ -161,6 +161,8 @@ $PY tools/broll_higgsfield.py "$W/broll.json" "$P/broll" <cena1>     # 1 de test
 $PY tools/broll_imagens.py "$P" "$W/broll.json" "$P/broll"
 $PY tools/broll_animar.py "$P"
 ```
+- **B-roll em motion graphics** (Sabrina e quem pedir motion): sem legenda por cima, conteúdo centrado a ~80%
+  (`EDICAO.md` 6e), e **efeitos sonoros em cada elemento que entra**: siga a skill `sfx-motion`.
 
 ## 7. Revisão e entrega
 - **Quadros de revisão:** `$PY tools/quadros.py "$P" <saida.jpg> "<tempos>"` (usa
