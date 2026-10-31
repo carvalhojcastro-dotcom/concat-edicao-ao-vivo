@@ -117,8 +117,8 @@ $PY tools/capcut_legendas_ig.py "<pasta do projeto no CapCut>" "$W/words_tl.json
 - **Estampa no peito:** `--base=<fração>` desce a linha das legendas para baixo da estampa (EDICAO.md seção 6).
 
 ## 5. Zoom seco (julgamento)
-Só zoom seco. **Não ponha zoom animado (keyframes) nos takes**: a usuária faz isso à mão quando quer, e os nossos
-foram desfeitos ("não gostei, não faça mais", 2026-10-30). Take que ela animou fica como está.
+Só zoom seco. **Não ponha zoom animado (keyframes) nos takes**: foram desfeitos ("não gostei, não faça mais",
+2026-10-30). Take que já vier com zoom animado: pergunte antes de manter.
 
 Padrão: `$PY tools/zoom_por_frases.py "$P" --min=1.5 --ideia=2.5` monta os conjuntos pelas legendas
 (troca em começo de frase, ou de ideia depois de 2,5 s; divide take contínuo com mais de 4 s num começo

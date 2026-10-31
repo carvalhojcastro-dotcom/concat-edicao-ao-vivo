@@ -192,9 +192,9 @@ editável no CapCut"). Medido no projeto que ela editou ("5 - Braços definidos"
 - **Cortes:** 0,04 s de ar antes da voz e 0,06 s depois; pausas tiradas (o `reel.py cortes` dá isso; tire
   0,025 s do começo de cada pedaço). Fala a **1,1x**, voz a 155%, redução de ruído 85% e retoque de rosto.
 - **Zoom** muda com a ideia: abertos 100-110%, zoom in 130-150% com o rosto a ~30% da altura, centrado.
-- **Zoom animado (keyframes) não é nosso:** a usuária às vezes põe, à mão, um zoom com a curva "Desaceleração na
-  saída" num take. Os que fizemos foram desfeitos ("desfaça isso por favor, não gostei, não faça mais",
-  2026-10-30). Só zoom seco por conjuntos; não mexa nos takes que ela animou.
+- **Sem zoom animado (keyframes) nos takes:** os zooms com a curva "Desaceleração na saída" foram todos desfeitos
+  ("desfaça isso por favor, não gostei, não faça mais", 2026-10-30). Só zoom seco por conjuntos. Se um take já
+  vier com zoom animado, não presuma que é dela: pergunte antes de manter.
 - **Música** lofi a 0,19 com fade de 0,8 s / 3 s; **efeitos** dos Favoritos dela (Clique do mouse, Simple
   Whoosh a 48%, Autofoco Sony) na entrada e na troca de B-roll.
 - **B-roll:** fotos realistas na trilha de cima, com o Fade-in dela e avanço lento de zoom (100→108%).
