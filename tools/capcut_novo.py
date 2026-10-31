@@ -97,6 +97,8 @@ def main():
     mat = copy.deepcopy(next(m for m in d["materials"]["videos"] if m["id"] == seg["material_id"]))
     mat.update(id=novo_id(), path=caminho, material_name=os.path.basename(video), width=w, height=h, duration=dur,
                local_material_id=mid, md5="", crop_ratio="free", type="video", category_name="local", is_copyright=False)
+    # o modelo pode ter o som separado do vídeo (áudio extraído numa trilha): no bruto novo o clipe ficaria mudo
+    mat.update(has_sound_separated=False, extra_type_option=0, unique_id=uuid.uuid4().hex)
     if isinstance(mat.get("matting"), dict):
         mat["matting"].update(flag=0, path="", custom_matting_id="")
     seg.update(id=novo_id(), material_id=mat["id"], source_timerange={"start": 0, "duration": dur},

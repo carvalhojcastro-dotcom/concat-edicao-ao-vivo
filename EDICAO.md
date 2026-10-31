@@ -207,7 +207,8 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   põe o bruto na pasta do CapCut por link físico (caminho escrito por nós fora dela vira "arquivo não
   acessível" no sandbox) e clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
   legendas; sai o conteúdo) e registra na lista do CapCut. Sabrina: modelo "19 - O ente atrasou o repasse"
-  (1,02x, retoque, zoom 1,1/1,3/1,5, Lofi a 0,39, whoosh e clique).
+  (1,02x, retoque, zoom 1,1/1,3/1,5, whoosh e clique); a Lofi vai a **0,16** (`"musica": {"volume": 0.157}`): ela baixou
+  de 0,39 (a do modelo) no projeto 13.
 - **B-roll em motion graphics** (Sabrina, 2026-10-28: "animações motions sobre o que ela está falando ... paleta
   de cores verde ... lettering moderno e com dinamismo"): cenas em tela cheia, fundo verde-escuro, menta e lima,
   Poppins Black + Plus Jakarta, conteúdo entre 14% e 56% da altura (as legendas ficam abaixo). No plano,

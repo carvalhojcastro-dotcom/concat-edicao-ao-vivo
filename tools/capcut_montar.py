@@ -14,7 +14,8 @@ O projeto novo já tem o bruto importado (um clipe só); a trilha principal é r
 Plano (JSON):
   {"pedacos": [{"fonte": s, "fonte_dur": s, "ini": s, "dur": s, "escala": 1.3, "tx": 0.0, "ty": 0.05}, ...],
    "velocidade": 1.05, "volume": 3.2,   (opcionais: senão ficam os do modelo; dur = fonte_dur / velocidade)
-   "musica": {"projeto": "<pasta do projeto do CapCut que já usa a faixa>", "nome": "Lofi Garden Groove", "inicio": 0.0},
+   "musica": {"projeto": "<pasta do projeto do CapCut que já usa a faixa>", "nome": "Lofi Garden Groove", "inicio": 0.0, "volume": 0.16},
+   (volume da música é opcional: senão fica o do modelo)
    "efeitos": [{"nome": "Clique do mouse", "em": 0.0}, ...],
    "broll": [{"arquivo": "<caminho visto pelo CapCut>", "largura": 1152, "altura": 2048, "inicio": s, "fim": s, "zoom": 1.08}, ...],
    "broll_modelo": "<pasta de um projeto com B-roll de foto>"}   (opcional: o jeito do B-roll vem de lá)
@@ -189,6 +190,8 @@ def main():
         faixa = dict(copy.deepcopy(faixa), id=novo_id())
         N["materials"]["audios"].append(faixa)
         s = segmento_de(seg_mus, A, N, faixa["id"], mus.get("inicio", 0.0), total, 0.0, total)
+        if "volume" in mus:   # a usuária baixou a lofi da Sabrina de 0,39 (modelo) para ~0,16 no projeto 13
+            s["volume"] = mus["volume"]
         N["tracks"].append(dict(copy.deepcopy({k: v for k, v in trilha_mus.items() if k != "segments"}), id=novo_id(), segments=[s]))
 
     # efeitos sonoros: material e volume de cada efeito do modelo, pelo nome; uma trilha por sobreposição
