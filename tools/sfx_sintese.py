@@ -16,9 +16,12 @@ Paleta (todas as funções devolvem um array (n, 2) em float, já no nível fina
   sobe     inchaço de ar que abre o filtro e pousa numa nota (coluna que cresce)
   toc      batida seca e abafada (algo que encaixa)
   rolo     sequência de tiques (lettering letra a letra)
+  obturador, clique, foco   recortes do kit da usuária (câmera, meio clique de mouse, motor da lente)
 Uso como biblioteca: import sfx_sintese as sfx; sfx.salvar(caminho, sfx.mix([(0.0, sfx.ar()), (0.1, sfx.nota("A5"))]))
 """
 import math
+import os
+import subprocess
 
 import numpy as np
 import scipy.io.wavfile as wavfile
@@ -215,15 +218,15 @@ def papel(db_pico=-31, pan=0.0, sem=None):
     return apara(nivel(sala(estereo(fecha(m), pan, 0.4), 0.15), db_pico))
 
 
-def sobe(dur=0.5, final="A5", db_pico=-29, pan=0.0, sem=None):
-    """Inchaço: ruído num passa-baixa que abre (300 -> 3500 Hz) e pousa numa nota curta."""
+def sobe(dur=0.5, final="A5", db_pico=-29, pan=0.0, sem=None, pouso=None):
+    """Inchaço: ruído num passa-baixa que abre (300 -> 3500 Hz) e pousa numa nota curta (ou no som `pouso`)."""
     rng = np.random.default_rng(sem)
     n = n_amostras(dur)
     t = np.linspace(0, 1, n)
     r = ruido_rosa(n, rng)
     m = svf(r, 300 * (3500 / 300) ** (t ** 1.6), 0.9) * (t ** 1.8) * np.minimum(1, (1 - t) / 0.06)
     swell = estereo(m, pan, 0.6)
-    pouso = nota(final, 0, decai=0.22, pan=pan, molhado=0.3)
+    pouso = nota(final, 0, decai=0.22, pan=pan, molhado=0.3) if pouso is None else pouso
     out = np.zeros((n + len(pouso), 2))
     out[:n] += nivel(swell, -4)
     out[n - n_amostras(0.01):n - n_amostras(0.01) + len(pouso)] += nivel(pouso, -2)
@@ -250,6 +253,59 @@ def rolo(tempos, db_pico=-33, f=(3300, 4600), sem=None):
         partes.append((t0, tique(fr, db_pico - 3 * i / max(1, len(tempos) - 1) - rng.uniform(0, 2.5),
                                   pan=rng.uniform(-0.3, 0.3), molhado=0.1, sem=int(fr))))
     return mix(partes)
+
+
+# ── amostras do kit (cliques e câmera) ──
+# Pedido de 2026-10-30: as notas "parecem teclas de piano tocando ... substituir por cliques, ou camera shooter".
+# Os áudios são do kit da usuária (fora do Git, por licença); aqui só se recorta, varia e assenta no nível.
+KIT = os.path.expanduser("~/Desktop/Edições/Kit de edição/sfx")
+_amostras = {}
+# trechos (s) de cada golpe nos arquivos do kit
+OBTURADOR = [(0.30, 0.47), (0.475, 0.65), (1.215, 1.40), (2.725, 2.90), (2.905, 3.08), (3.795, 3.98), (4.25, 4.45)]
+CLIQUE = {"aperta": (0.112, 0.20), "solta": (0.208, 0.30)}
+FOCO = (0.54, 1.15)   # só o motor da lente (o começo do arquivo tem os bipes de confirmação, que são tonais)
+
+
+def _carregar(arq):
+    if arq not in _amostras:
+        caminho = os.path.join(KIT, arq)
+        if not os.path.exists(caminho):
+            raise SystemExit(f"falta o kit de edição: {caminho}")
+        bruto = subprocess.run(["ffmpeg", "-v", "error", "-i", caminho, "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"],
+                               capture_output=True, check=True).stdout
+        _amostras[arq] = np.frombuffer(bruto, dtype=np.float32).astype(float)
+    return _amostras[arq]
+
+
+def amostra(arq, ini, fim, semitons=0.0, db_pico=-30, pan=0.0, molhado=0.08, alta=250, baixa=None):
+    """Recorte do kit com afinação (reamostragem), filtros, rampas, pan e o nível final."""
+    x = _carregar(arq)[int(ini * SR):int(fim * SR)]
+    if semitons:
+        r = 2 ** (semitons / 12)
+        x = np.interp(np.arange(0, len(x) - 1, r), np.arange(len(x)), x)
+    x = passa(x, "highpass", alta)
+    if baixa:
+        x = passa(x, "lowpass", baixa)
+    k = n_amostras(0.002)
+    x[:k] *= np.linspace(0, 1, k)
+    return apara(nivel(sala(estereo(fecha(x, 0.012), pan, 0.25), molhado, 0.4), db_pico))
+
+
+def obturador(n=0, semitons=0.0, db_pico=-31, pan=0.0, baixa=9000):
+    """Um disparo de câmera (espelho + cortina), um dos golpes do kit."""
+    a, b = OBTURADOR[n % len(OBTURADOR)]
+    return amostra("obturador-camera.mp3", a, b, semitons, db_pico, pan, alta=350, baixa=baixa)
+
+
+def clique(tipo="aperta", semitons=0.0, db_pico=-31, pan=0.0, baixa=8000):
+    """Meio clique de mouse (só o apertar ou só o soltar), mais seco e curto que o clique inteiro."""
+    a, b = CLIQUE[tipo]
+    return amostra("clique-mouse.mp3", a, b, semitons, db_pico, pan, alta=400, baixa=baixa)
+
+
+def foco(db_pico=-33, pan=0.0, semitons=0.0):
+    """Motor e travas da lente focando, sem os bipes."""
+    return amostra("autofoco-camera-sony.mp3", *FOCO, semitons, db_pico, pan, molhado=0.1, alta=600)
 
 
 # ── montagem ──

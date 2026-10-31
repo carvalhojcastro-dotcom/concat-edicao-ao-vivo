@@ -219,8 +219,10 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   `"sem_legenda": [[ini, fim], ...]` (as janelas do B-roll) no plano do `capcut_legendas_ig.py`.
 - **Efeitos sonoros nos motions** (2026-10-30: "profissional, sem esses efeitos clichês ... cada vez que entra uma
   nova frase nos motions ... variar ... sobrepor ... sutil, fluido"): um evento por elemento que entra, no quadro
-  em que ele aparece, feito em `tools/sfx_sintese.py` (sopro de ar, tique digital, nota de vidro na pentatônica,
-  grave sentido, traço de caneta, papel, inchaço, batida seca; camadas sobrepostas) e posto no CapCut com
+  em que ele aparece, feito em `tools/sfx_sintese.py` (sopro de ar, tique digital, grave sentido, traço de caneta,
+  papel, inchaço, batida seca, e obturador / meio clique / motor de foco recortados do kit dela; camadas
+  sobrepostas). **Sem notas** (a nota de vidro "parece teclas de piano tocando ... ficou ruim", 2026-10-30): no
+  lugar dela, clique ou obturador. Posto no CapCut com
   `tools/capcut_sfx.py` (um clipe por evento, trilhas "SFX motions (Concat)"). Nível: ~17-20 dB abaixo da voz
   (-35 a -40 LUFS momentâneo, picos -20 a -27 dBFS), no máximo o do whoosh dela a 45%. Nada de clique de mouse,
   "pop" ou "boing". Exemplo: `tools/planos/sabrina_24_sfx.py`.

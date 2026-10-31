@@ -11,7 +11,9 @@ motions. Os WAV vêm de tools/sfx_sintese.py e ficam numa pasta que o CapCut (sa
 Plano: {"trilha": "SFX motions (Concat)", "efeitos": [{"arquivo": "...wav", "em": s, "duracao": s,
          "nome": "...", "volume": 1.0}, ...]}
 O projeto precisa ter ao menos um clipe de áudio (o molde do segmento e do material). CapCut FECHADO.
-Uso: capcut_sfx.py <pasta do projeto no CapCut> <plano.json>
+Uso: capcut_sfx.py <pasta do projeto no CapCut> <plano.json> [--trocar]
+  --trocar: só troca o arquivo (e a duração) de cada clipe já posto, achado pelo nome do efeito; posição,
+  volume e clipes apagados pela usuária ficam como ela deixou (pedido de 2026-10-30: trocar as notas por cliques).
 """
 import copy
 import glob
@@ -91,6 +93,30 @@ def aplicar(d, plano):
     return len(plano["efeitos"]), len(trilhas)
 
 
+def trocar(d, plano):
+    """Troca o arquivo dos clipes das trilhas do plano, pelo nome do efeito; o resto do clipe fica."""
+    nome = plano.get("trilha", "SFX (Concat)")
+    por_nome = {e["nome"]: e for e in plano["efeitos"]}
+    n = 0
+    for t in d["tracks"]:
+        if not t.get("name", "").startswith(nome):
+            continue
+        for seg in t["segments"]:
+            _, m = material(d, seg["material_id"])
+            e = por_nome.get(m.get("name")) if m else None
+            if not e or m["path"] == e["arquivo"]:
+                continue
+            local = e["arquivo"].replace("/Library/Containers/com.lemon.lvoverseas/Data", "")
+            if not os.path.exists(local):
+                sys.exit(f"não existe: {local}")
+            dur = us(e["duracao"])
+            m.update(path=e["arquivo"], duration=dur, unique_id=uuid.uuid4().hex)
+            seg["source_timerange"] = {"start": 0, "duration": dur}
+            seg["target_timerange"] = dict(seg["target_timerange"], duration=dur)
+            n += 1
+    return n
+
+
 def main():
     pasta, plano_arq = os.path.abspath(sys.argv[1]), sys.argv[2]
     if subprocess.run(["pgrep", "-x", "CapCut"], capture_output=True).returncode == 0:
@@ -110,9 +136,15 @@ def main():
         d = json.load(open(p, encoding="utf-8"))
         if not any(t["type"] == "audio" and t["segments"] for t in d["tracks"]):
             continue   # linha do tempo sem áudio (outra timeline do projeto): não mexe
-        n, nt = aplicar(d, plano)
+        if "--trocar" in sys.argv:
+            n, nt = trocar(d, plano), None
+        else:
+            n, nt = aplicar(d, plano)
         open(p, "w", encoding="utf-8").write(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
-    print(f"{n} efeitos em {nt} trilhas \"{plano.get('trilha')}\"; backup em {copia}")
+    if nt is None:
+        print(f"{n} clipes com arquivo novo; backup em {copia}")
+    else:
+        print(f"{n} efeitos em {nt} trilhas \"{plano.get('trilha')}\"; backup em {copia}")
 
 
 if __name__ == "__main__":
