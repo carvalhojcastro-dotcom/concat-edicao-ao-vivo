@@ -117,6 +117,9 @@ $PY tools/capcut_legendas_ig.py "<pasta do projeto no CapCut>" "$W/words_tl.json
 - **Estampa no peito:** `--base=<fração>` desce a linha das legendas para baixo da estampa (EDICAO.md seção 6).
 
 ## 5. Zoom seco (julgamento)
+No CapCut, além do zoom seco por conjuntos, use **às vezes** (~1 take a cada 7 a 8, nunca em sequência) o zoom
+animado com a curva "Desaceleração na saída": `tools/capcut_zoom_suave.py` (regras em `EDICAO.md` 6e).
+
 Padrão: `$PY tools/zoom_por_frases.py "$P" --min=1.5 --ideia=2.5` monta os conjuntos pelas legendas
 (troca em começo de frase, ou de ideia depois de 2,5 s; divide take contínuo com mais de 4 s num começo
 de frase). Para escolher à mão, escreva `$W/zoom.json` (formato em `tools/planos_exemplo/zoom.json`):
