@@ -101,7 +101,9 @@ def main():
         s = segmento_de(modelo_voz, A, N, bruto_id, p["fonte"], p["fonte_dur"], p["ini"], p["dur"])
         s["clip"]["scale"] = {"x": p["escala"], "y": p["escala"]}
         s["clip"]["transform"] = {"x": p.get("tx", 0.0), "y": p.get("ty", 0.0)}
-        s["uniform_scale"] = {"on": True, "value": p["escala"]}
+        # "value" é a proporção x/y travada pela escala uniforme (1,0 em todos os clipes que ela fez), não o zoom:
+        # com o zoom aqui, mudar a escala no CapCut achatava a imagem (y = x / value; 2026-10-30)
+        s["uniform_scale"] = {"on": True, "value": 1.0}
         vel = p.get("velocidade", plano.get("velocidade"))
         if vel:   # "velocidade" no plano: a do modelo não serve (pedido de 2026-10-29: "acelere em 1.05x")
             s["speed"] = vel

@@ -207,6 +207,9 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   `capcut_novo.py` (modelo da mesma cliente e do mesmo cenário) e `capcut_montar.py` só com `pedacos`,
   `"velocidade"` e `"volume"` (ganho para ~-14 LUFS; pedaço com `"volume"` próprio, ex.: pergunta de quem filma 7 dB
   mais alta), depois `capcut_legendas_ig.py`. Confira a fala cortada transcrevendo o corte de novo.
+- **Escala uniforme no JSON do CapCut:** `uniform_scale.value` é a proporção x/y que a trava mantém (1,0 em todos os
+  clipes feitos por ela), não o zoom; o zoom fica só em `clip.scale`. Com o zoom ali, a imagem aparecia certa, mas
+  ao mudar o tamanho no CapCut ficava achatada (y = x / value; "a imagem fica achatada. isso é errado", 2026-10-30).
 - **Sem projeto no CapCut** ("abra no CapCut", 2026-10-28): `tools/capcut_novo.py <projeto modelo> "<nome>" <bruto>`
   põe o bruto na pasta do CapCut por link físico (caminho escrito por nós fora dela vira "arquivo não
   acessível" no sandbox) e clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
