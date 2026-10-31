@@ -214,7 +214,9 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   põe o bruto na pasta do CapCut por link físico (caminho escrito por nós fora dela vira "arquivo não
   acessível" no sandbox) e clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
   legendas; sai o conteúdo) e registra na lista do CapCut. Sabrina: modelo "19 - O ente atrasou o repasse"
-  (1,02x, retoque, zoom 1,1/1,3/1,5). Pedaços com zoom por frase e rosto centrado: `tools/capcut_pedacos.py`.
+  (1,02x, retoque, zoom 1,1/1,3/1,5). Pedaços com zoom por frase e rosto centrado: `tools/capcut_pedacos.py`;
+  folha de revisão sem abrir o CapCut (zoom, motions e legendas): `tools/capcut_previa.py`. A pasta do vídeo em
+  Edições › Sabrina Reinbold leva o **nome da pasta do Drive** do card (ex.: "3 - Por que um RPPS pode ter…", 2026-10-31).
   No 24/11 ela tirou a música e os cliques de zoom e pôs o whoosh do modelo (45%) na entrada de cada motion;
   o 01/12 saiu assim: sem música, sem clique, whoosh na entrada dos motions (`"efeitos"` no início de cada B-roll).
   Se ela pedir música, a Lofi vai a 0,16 (`"musica": {"volume": 0.157}`; no 13 ela baixou de 0,39 para isso).
