@@ -176,7 +176,8 @@ entram nele como textos normais, no estilo da seção 2.
    mesmo script.
 4. Reabra o CapCut e confira o nome do projeto na lista: na primeira abertura depois da escrita ele pode voltar
    ao nome da pasta ("60 - Cirurgia 25.02.26" virou "1028 (1)", 2026-10-28). Se voltar, feche o CapCut e grave o
-   nome em `draft_name` no `draft_meta_info.json` da pasta e no `root_meta_info.json`; aí ele fica.
+   nome em `draft_name` no `draft_meta_info.json` da pasta e no `root_meta_info.json`; aí ele fica. Nome com mais
+   de 50 caracteres o CapCut corta (volta ao da pasta): é limite dele, não insista.
 - **Margens** (linhas-guia do usuário, 2026-10-29): tudo entre 15% e 85% da largura (o script encolhe o bloco que
   passaria).
 - **Caixinha de perguntas + zoom por frases** (série "Caixinha de perguntas" do Dr. Rafael, 2026-10-29):
@@ -211,8 +212,11 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   de 0,39 (a do modelo) no projeto 13.
 - **B-roll em motion graphics** (Sabrina, 2026-10-28: "animações motions sobre o que ela está falando ... paleta
   de cores verde ... lettering moderno e com dinamismo"): cenas em tela cheia, fundo verde-escuro, menta e lima,
-  Poppins Black + Plus Jakarta, conteúdo entre 14% e 56% da altura (as legendas ficam abaixo). No plano,
-  `"tipo": "video"` no B-roll.
+  Poppins Black + Plus Jakarta. No plano, `"tipo": "video"` no B-roll. **Sem legenda enquanto o motion está na
+  tela** e o conteúdo **centrado no quadro, a ~80%** do tamanho do primeiro (pedido de 2026-10-30: "retirar as
+  legendas nos momentos em que o motion aparece ... puxar o motion mais para baixo, e diminuir ... centralizar
+  todos os elementos"): `tools/planos/sabrina_24_motion.py` mede a caixa da cena e a põe no centro; nas legendas,
+  `"sem_legenda": [[ini, fim], ...]` (as janelas do B-roll) no plano do `capcut_legendas_ig.py`.
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.

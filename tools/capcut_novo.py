@@ -59,7 +59,10 @@ def main():
     modelo, nome, video = os.path.abspath(sys.argv[1]), sys.argv[2], os.path.abspath(sys.argv[3])
     if subprocess.run(["pgrep", "-x", "CapCut"], capture_output=True).returncode == 0:
         sys.exit("feche o CapCut antes (ele regrava a lista de projetos ao sair)")
-    pasta = os.path.join(RAIZ, nome[:50].rstrip(" .,"))
+    # o CapCut corta o nome do projeto em 50 caracteres (os da Sabrina: "19 - O ente atrasou o repasse. O gestor do RPPS en");
+    # nome mais longo volta ao da pasta quando ele abre (2026-10-30), então o nome já sai cortado
+    nome = nome[:50].rstrip(" .,")
+    pasta = os.path.join(RAIZ, nome)
     if os.path.exists(pasta):
         sys.exit(f"já existe: {pasta}")
     shutil.copytree(modelo, pasta, ignore=lambda d, fs: [f for f in fs if (d == modelo and f in PULAR) or f.endswith(".bak")])

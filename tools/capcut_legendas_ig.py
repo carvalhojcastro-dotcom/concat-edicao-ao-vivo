@@ -20,6 +20,7 @@ Uso: capcut_legendas_ig.py <pasta do projeto no CapCut> <words.json> <plano.json
   reel.py cortes (tempos do bruto): o script leva cada palavra para a timeline pelos clipes (corte, velocidade)
   e troca as legendas do projeto (a headline, com placa, fica).
   plano.json: {"blocos": [{"linhas": [[i, i], [i]], "chave": [i], "fecho": false}, ...]}  (índices de words.json)
+     opcional "sem_legenda": [[ini, fim], ...] (s da timeline): sem legenda ali (motion em tela cheia)
   --base=0.70: desce (ou sobe) a linha das legendas (fração da altura; padrão 0.639), ex.: estampa no peito.
 O CapCut precisa estar FECHADO (rodar de novo troca as legendas; trilhas "Legendas IG").
 """
@@ -200,7 +201,19 @@ def montar(words, plano):
         if fim - words[ult]["end"] > PAUSA:
             fim = words[ult]["end"] + 0.3
         itens += bloco(words, b, fim)
-    itens += simples(words, [i for i in range(len(words)) if i not in usados])
+    # "sem_legenda": janelas da timeline sem legenda (motion graphics em tela cheia; pedido de 2026-10-30:
+    # "retirar as legendas nos momentos em que o motion aparece"); a palavra dita dentro delas fica sem legenda
+    fora = plano.get("sem_legenda", [])
+    dentro = lambda t: any(a - 0.02 <= t < b for a, b in fora)  # noqa: E731
+    itens += simples(words, [i for i in range(len(words)) if i not in usados
+                             and not dentro((words[i]["start"] + words[i]["end"]) / 2)])
+    for it in itens:   # nenhuma legenda invade a janela (nem entra antes de ela acabar)
+        for a, b in fora:
+            if it["ini"] < a < it["fim"]:
+                it["fim"] = a
+            if a <= it["ini"] < b < it["fim"]:
+                it["ini"] = b
+    itens = [it for it in itens if it["fim"] - it["ini"] > 0.05]
     return sorted(itens, key=lambda it: (it["ini"], it["base"]))
 
 
