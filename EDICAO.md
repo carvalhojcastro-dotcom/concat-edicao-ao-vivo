@@ -214,8 +214,10 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   põe o bruto na pasta do CapCut por link físico (caminho escrito por nós fora dela vira "arquivo não
   acessível" no sandbox) e clona um projeto da mesma cliente (fica o que vale para o vídeo todo: ajustes de cor, LUT, sombra atrás das
   legendas; sai o conteúdo) e registra na lista do CapCut. Sabrina: modelo "19 - O ente atrasou o repasse"
-  (1,02x, retoque, zoom 1,1/1,3/1,5, whoosh e clique); a Lofi vai a **0,16** (`"musica": {"volume": 0.157}`): ela baixou
-  de 0,39 (a do modelo) no projeto 13.
+  (1,02x, retoque, zoom 1,1/1,3/1,5). Pedaços com zoom por frase e rosto centrado: `tools/capcut_pedacos.py`.
+  No 24/11 ela tirou a música e os cliques de zoom e pôs o whoosh do modelo (45%) na entrada de cada motion;
+  o 01/12 saiu assim: sem música, sem clique, whoosh na entrada dos motions (`"efeitos"` no início de cada B-roll).
+  Se ela pedir música, a Lofi vai a 0,16 (`"musica": {"volume": 0.157}`; no 13 ela baixou de 0,39 para isso).
 - **B-roll em motion graphics** (Sabrina, 2026-10-28: "animações motions sobre o que ela está falando ... paleta
   de cores verde ... lettering moderno e com dinamismo"): cenas em tela cheia, fundo verde-escuro, menta e lima,
   Poppins Black + Plus Jakarta. No plano, `"tipo": "video"` no B-roll. **Sem legenda enquanto o motion está na
