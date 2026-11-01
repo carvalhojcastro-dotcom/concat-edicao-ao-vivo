@@ -56,13 +56,21 @@ def aplicar(d, plano):
     # tira as trilhas de uma rodada anterior, com os materiais delas
     velhas = [t for t in d["tracks"] if t.get("name", "").startswith(nome)]
     ids = {s["material_id"] for t in velhas for s in t["segments"]} | {r for t in velhas for s in t["segments"] for r in s.get("extra_material_refs", [])}
+    # molde (trilha, clipe e material de áudio): de outra trilha de áudio; se só houver as nossas, de um clipe delas,
+    # escolhido antes de apagá-las (projeto sem música nem efeito da usuária, 2026-10-31)
+    audios = [t for t in d["tracks"] if t["type"] == "audio" and t["segments"]]
+    origem = next((t for t in audios if t not in velhas), None) or next((t for t in velhas if t["segments"]), None)
+    if origem is None:
+        sys.exit("o projeto precisa de ao menos um clipe de áudio (molde)")
+    trilha_molde = copy.deepcopy(origem)
+    seg_molde = trilha_molde["segments"][0]
+    guardar = {seg_molde["material_id"], *seg_molde.get("extra_material_refs", [])} if origem in velhas else set()
     d["tracks"] = [t for t in d["tracks"] if t not in velhas]
     for k, v in d["materials"].items():
         if isinstance(v, list):
-            d["materials"][k] = [m for m in v if not (isinstance(m, dict) and m.get("id") in ids)]
-    trilha_molde = next(t for t in d["tracks"] if t["type"] == "audio" and t["segments"])
-    seg_molde = trilha_molde["segments"][0]
+            d["materials"][k] = [m for m in v if not (isinstance(m, dict) and m.get("id") in ids - guardar)]
     _, mat_molde = material(d, seg_molde["material_id"])
+    mat_molde = copy.deepcopy(mat_molde)
     trilhas = []   # [fim, trilha]
     for e in sorted(plano["efeitos"], key=lambda e: e["em"]):
         caminho = e["arquivo"]
@@ -90,6 +98,9 @@ def aplicar(d, plano):
         trilhas[livre][0] = e["em"] + dur
         trilhas[livre][1]["segments"].append(s)
     d["tracks"] += [t for _, t in trilhas]
+    for k, v in d["materials"].items():   # o molde tirado das trilhas antigas não fica sobrando
+        if guardar and isinstance(v, list):
+            d["materials"][k] = [m for m in v if not (isinstance(m, dict) and m.get("id") in guardar)]
     return len(plano["efeitos"]), len(trilhas)
 
 

@@ -11,7 +11,7 @@ Mapa:
                 {"t": 0.05, "som": "letras", "texto": "ÓTICA TÉCNICA", "passo": 0.03, "sem": 11}]}]}]}
   t: segundos dentro da cena (o quadro em que o elemento aparece); "som" é uma função de sfx_sintese.py e o
   resto da camada são os argumentos dela. Especiais: "letras" (texto, passo, t0, db_pico, sem) faz um tique
-  por letra; "sobe" aceita "pouso": [camadas] (o som em que o inchaço pousa). "entrada": true põe um sopro
+  por letra; "sobe" aceita "pouso": [camadas] (o som em que o inchaço pousa). "entrada": true (não usar desde 2026-10-31: ela pediu sem whoosh na entrada) põe um sopro
   que chega no início da cena (quando não há whoosh); "saida" (padrão true), um sopro curto que desce no fim;
   as duas aceitam um dict que muda o padrão (ex.: {"sem": 13, "db_pico": -35}).
 Uso: sfx_motion.py <mapa.json> <pasta dos WAV> <saida plano.json> [--sufixo=v2]

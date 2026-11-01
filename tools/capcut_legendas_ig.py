@@ -3,13 +3,15 @@
 
 Pedido: "aprenda como elas são feitas e replique no CapCut ... avalie se ficou de fato igual". Medido quadro a quadro
 em referencias/legenda-simples-ig (simples) e referencias/legenda-mista-ig, legenda-mista-ig-2 (simples + blocos):
-  - Simples: Poppins Medium, branca, em = 2,71% da altura (52 px em 1920), espaçamento -0,065 em (o espaço entre
-    palavras encolhe junto), centrada, linha de base a 63,9% da altura, sombra preta suave, sem contorno, sem
+  - Simples: Poppins Medium, branca, tamanho 16 no CapCut (em = 3,66% da altura, 70 px em 1920; pedido de 2026-11-01, a referência media 52 px = 11,85), espaçamento -0,065 em (o espaço entre
+    palavras encolhe junto), centrada, linha de base a 63,9% da altura, sombra preta (35%, indefinição 8%, distância 3, -90°), sem contorno, sem
     animação; 1 a 4 palavras (até ~40% da largura), uma emendada na outra, some nas pausas.
   - Blocos dinâmicos: Poppins SemiBold; linhas pequenas com em de 4,4% da altura e a chave com 7,6% (até 9,7% na
     frase de fecho); espaçamento -0,07 / -0,06 em; entrelinha bem fechada (o topo das minúsculas de baixo fica 0,2 em
     da linha de cima abaixo da base dela); a linha da chave na base da legenda simples; palavra por palavra, sem
     animação. Centrado (o usuário alinha ao centro), só branco, sem serifa nem cursiva (pedido dele).
+Texto (pedido de 2026-11-01): o ponto final não aparece, mas continua separando as legendas, e a palavra depois dele
+começa com maiúscula (troca de parágrafo); vírgula, ?, ! e reticências aparecem; nenhuma outra maiúscula é forçada.
 Tamanho no CapCut (medido no export do "11 - Caixinha", 2026-10-29): o CapCut faz a altura typo da fonte
 (ascendente - descendente do OS/2) = tamanho x 0,0032 da altura do quadro, e centra essa caixa na posição (a base
 fica 0,018 em abaixo do meio dela). Erro medido: ~2%.
@@ -52,11 +54,16 @@ SIMPLES = dict(arq="Poppins-Medium.ttf", titulo="Poppins Medium", em=52 / 1920, 
 PEQUENA = dict(arq="Poppins-SemiBold.ttf", titulo="Poppins SemiBold", em=85 / 1920, trk=-0.07)
 CHAVE = dict(arq="Poppins-SemiBold.ttf", titulo="Poppins SemiBold", em=146 / 1920, trk=-0.06)
 FECHO = dict(CHAVE, em=186 / 1920, trk=-0.05)
-SOMBRA = dict(alpha=0.50, blur=0.008, desloc=0.0015)   # blur e deslocamento em fração da altura (prévia)
-LARGURA_SIMPLES = 0.42     # a simples nunca passa disso (referência: até 40%)
+# Sombra (padrão da usuária desde 2026-10-31, "nos próximos vídeos ... use a configuração das sombras das legendas assim
+# como no print"): preta, opacidade 35%, indefinição 8%, distância 3, ângulo -90°, copiada do EP02C08 em que ela a pôs.
+# No JSON do CapCut a indefinição é ~0,0016 por ponto (8% -> 0,0128; 16% -> 0,0262) e o shadow_smoothing do material
+# é 18x isso. blur e desloc só desenham a prévia (fração da altura).
+SOMBRA = dict(alpha=0.3534, difuso=0.0128, distancia=3.0, angulo=-90, blur=0.0011, desloc=0.0015)
+LARGURA_SIMPLES = 0.57     # a simples nunca passa disso (era 0,42 no tamanho 11,85; no 16 os grupos ficam os mesmos)
 LARGURA_BLOCO = 0.70       # margens do usuário (15% a 85%)
 MAX_PALAVRAS = 4
 PAUSA = 0.45               # pausa maior que isso apaga a legenda
+ABREVIACOES = {"dr.", "dra.", "sr.", "sra.", "prof.", "profa.", "etc."}   # o ponto delas fica e não abre frase
 
 novo_id = lambda: str(uuid.uuid4()).upper()  # noqa: E731
 _fontes, _metr = {}, {}
@@ -77,6 +84,12 @@ def metricas(arq):
     return _metr[arq]
 
 
+# legenda simples no tamanho 16 do CapCut (pedido de 2026-11-01: "aumente o tamanho para 16 pontos", só nas simples;
+# era 11,85 = 52 px medidos na referência); o em sai do tamanho pela mesma conta do segmento()
+TAMANHO_SIMPLES = 16
+SIMPLES["em"] = TAMANHO_SIMPLES * K_CAPCUT / (metricas(SIMPLES["arq"])["asc"] + metricas(SIMPLES["arq"])["desc"])
+
+
 def largura(texto, est, em_px):
     f = fonte(est["arq"], em_px)
     return sum(f.getlength(c) for c in texto) + est["trk"] * em_px * (len(texto) - 1)
@@ -87,6 +100,32 @@ def espaco(est, em_px):
 
 
 # ---------------------------------------------------------------- montagem
+def ponto_final(t):
+    """A palavra fecha frase com ponto final (não reticências nem abreviação)?"""
+    t = t.strip()
+    return t.endswith(".") and not t.endswith("..") and t.lower() not in ABREVIACOES
+
+
+def visivel(t):
+    """Texto que aparece: sem o ponto final (pedido de 2026-11-01: "retire os pontos finais das frases mas continue
+    imaginando que eles estão lá"); vírgula, ?, ! e reticências ficam."""
+    t = t.strip()
+    return t[:-1] if ponto_final(t) else t
+
+
+def maiuscula_depois_do_ponto(words):
+    """A palavra depois de um ponto final (que não aparece) começa com maiúscula: é a troca de parágrafo. As outras
+    ficam como vieram (nada de maiúscula em todo começo de legenda)."""
+    saida = []
+    for k, w in enumerate(words):
+        t = w["word"]
+        if k and ponto_final(words[k - 1]["word"]) and t.strip():
+            i = len(t) - len(t.lstrip())
+            t = t[:i] + t[i].upper() + t[i + 1:]
+        saida.append(dict(w, word=t))
+    return saida
+
+
 def simples(words, livres):
     """Agrupa as palavras fora dos blocos em legendas de 1 a 4 palavras, emendadas, que somem nas pausas."""
     itens, atual = [], []
@@ -114,7 +153,7 @@ def simples(words, livres):
         fim_fala = words[grupo[-1]]["end"]
         prox = words[grupo[-1] + 1]["start"] if grupo[-1] + 1 < len(words) else None
         fim = prox if prox is not None and prox - fim_fala <= PAUSA else fim_fala + 0.15
-        texto = " ".join(words[j]["word"].strip() for j in grupo)
+        texto = " ".join(visivel(words[j]["word"]) for j in grupo)
         out.append(dict(texto=texto, est=SIMPLES, em=SIMPLES["em"], cx=0.5, base=SIMPLES["base"], ini=ini, fim=fim, anim=False))
     return out
 
@@ -144,7 +183,7 @@ def bloco(words, b, fim):
         linha = []
         for m, (i, est) in enumerate(ps):
             em = est["em"] * H * k
-            t = words[i]["word"].strip()
+            t = visivel(words[i]["word"])
             if i in chave:
                 t = t.rstrip(",")
             w = largura(t, est, em)
@@ -191,6 +230,7 @@ def tinta(linha, base, folga=0.0):
 
 
 def montar(words, plano):
+    words = maiuscula_depois_do_ponto(words)   # o ponto continua valendo para agrupar; só não é desenhado
     usados, itens = set(), []
     for n, b in enumerate(plano.get("blocos", [])):
         idx = [i for linha in b["linhas"] for i in linha]
@@ -260,11 +300,11 @@ def segmento(it, modelo, render_index):
                   fill={"content": {"solid": {"color": [1.0, 1.0, 1.0]}, "render_type": "solid"}})
     estilo.pop("strokes", None)
     for sh in estilo.get("shadows", []):
-        sh.update(alpha=SOMBRA["alpha"], diffuse=0.35, distance=3.0, angle=-90)
+        sh.update(alpha=SOMBRA["alpha"], diffuse=SOMBRA["difuso"], distance=SOMBRA["distancia"], angle=SOMBRA["angulo"])
     m = copy.deepcopy(modelo["material"])
     m.update(id=novo_id(), type="text", content=json.dumps({"styles": [estilo], "text": it["texto"]}, ensure_ascii=False),
              font_path=caminho, font_title=est["titulo"], font_name="", font_size=tamanho, letter_spacing=est["trk"],
-             has_shadow=True, shadow_alpha=SOMBRA["alpha"], border_width=0.0, text_color="#FFFFFF", alignment=1, group_id="",
+             has_shadow=True, shadow_alpha=SOMBRA["alpha"], shadow_smoothing=SOMBRA["difuso"] * 18, border_width=0.0, text_color="#FFFFFF", alignment=1, group_id="",
              add_type=0, recognize_task_id="", recognize_text="", name="")
     anim = copy.deepcopy(modelo["refs"]["material_animations"])
     anim.update(id=novo_id(), animations=[])

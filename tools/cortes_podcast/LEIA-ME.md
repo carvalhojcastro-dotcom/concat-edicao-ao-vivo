@@ -57,7 +57,8 @@ $TRABALHO/c<EP>/destaques.txt    frases de destaque por corte (formato do edit-d
   - O estilo único das legendas (EDICAO.md seção 2, desde 2026-10-29): Poppins branca, simples de 1 a 4 palavras +
     blocos dinâmicos nas frases de destaque (chave grande), sombra suave, sem contorno, sem animação, sem cor. Os
     estilos antigos (escada/chave/sanduíche, serifada, amarelo) foram apagados.
-  - Primeira palavra do vídeo em maiúscula. No resto, maiúscula só depois de "?"/"!" e em nome próprio/sigla (lista `PROPRIOS` em plano_auto.py).
+  - Primeira palavra do vídeo em maiúscula. No resto, maiúscula só depois de "?"/"!"/ponto final e em nome próprio/sigla (lista `PROPRIOS` em plano_auto.py).
+  - Sem ponto final na tela (2026-11-01): o `capcut_legendas_ig.py` não desenha o ponto, mas ele continua separando as legendas e dando a maiúscula da frase seguinte.
   - Revisão ortográfica sem mudar palavra nem ordem. Palavra que ninguém entende sai do corte (áudio e legenda).
   - A última legenda termina antes do fim do vídeo. O Concat exportava 1 quadro preto com a legenda; o `finalizar.sh` agora confere e tira.
 - **Escopo:** quando ele comentar vídeos específicos, mexa **só** neles.

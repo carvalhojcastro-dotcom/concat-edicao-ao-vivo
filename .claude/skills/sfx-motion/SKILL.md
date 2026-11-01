@@ -35,14 +35,15 @@ movimento. Se um som chama atenção para si, ele está alto demais ou é carica
   `clique("aperta"|"solta")`, curto, seco e variado, funcionou.
 - **Saída.** Um sopro curto que desce nos últimos 0,3 s da cena acompanha o motion encolhendo de volta para
   a fala.
-- **Nível: abaixo do whoosh dela.**
+- **Nível: sutil, bem abaixo da voz.**
   - Efeitos ~17-20 dB abaixo da voz: picos de -20 a -27 dBFS e -35 a -42 LUFS momentâneo por cena, com a
     voz por volta de -19 LUFS.
-  - O whoosh que ela mesma deixou (Simple Whoosh a 45%) é o teto: dá ~-35 LUFS e pico -14 dBFS.
+  - Teto: ~-35 LUFS e pico -14 dBFS (o nível do whoosh que ela usava a 45%, que não entra mais).
   - Cada clipe vai a 100% no CapCut, com o nível já no arquivo, para ela ajustar um a um.
-- **Respeite o que ela já fez no projeto.**
-  - Cena que já abre com whoosh dela não ganha entrada nossa; a que não tem ganha `"entrada"`.
-  - Não recoloque cliques de zoom nem música que ela tirou.
+- **Sem som de entrada no motion.** Nada de whoosh ou sopro na abertura da cena (2026-10-31: "não utilize mais
+  esses swooshes, na entrada de cada animação"): o primeiro som é o do primeiro elemento que aparece. Não use
+  `"entrada"` no mapa nem o "Simple Whoosh" nos `"efeitos"` do plano.
+- **Respeite o que ela já fez no projeto:** leia o projeto antes de escrever (música, cliques e sons que ela pôs ou tirou ficam).
 
 ## A paleta (`tools/sfx_sintese.py`)
 
@@ -77,7 +78,7 @@ Guarde os princípios acima e mude o "timbre" a cada vídeo, para não virar ass
   - `sem` de todos os sintetizados.
 - **Dentro do vídeo**, dois elementos iguais seguidos (cartão 1, 2, 3) mantêm a receita e variam afinação,
   pan e golpe. Assim soam como família, não como repetição.
-- **Combinações novas** valem se seguirem as regras: sem tom musical, curtas, no quadro, abaixo do whoosh.
+- **Combinações novas** valem se seguirem as regras: sem tom musical, curtas, no quadro, abaixo do teto de nível.
   Se criar um som novo em `sfx_sintese.py`, olhe o espectrograma antes. Seno cortado sem rampa estala
   (`fecha()` resolve).
 
@@ -103,9 +104,8 @@ Guarde os princípios acima e mude o "timbre" a cada vídeo, para não virar ass
    Para **trocar só o som** de clipes já postos, mantendo a posição, o volume e o que ela apagou, gere com
    `--sufixo=v2` (nome novo: o CapCut não relê arquivo de mesmo nome) e rode `capcut_sfx.py ... --trocar`.
 5. **Conferir.** Antes de escrever, leia o projeto: ela pode ter mexido (compôs as legendas, apagou música,
-   moveu whoosh). Depois, reabra o CapCut. O CapCut encaixa os clipes no quadro, e ±1 quadro é normal.
-6. **Relatório curto.** Que som entrou em cada cena, em uma linha por cena; o nível em relação à voz e ao
-   whoosh; e o que ficou como ela deixou. Diga que não deu para ouvir dentro do CapCut, se for o caso.
+   pôs ou trocou a música). Depois, reabra o CapCut. O CapCut encaixa os clipes no quadro, e ±1 quadro é normal.
+6. **Relatório curto.** Que som entrou em cada cena, em uma linha por cena; o nível em relação à voz; e o que ficou como ela deixou. Diga que não deu para ouvir dentro do CapCut, se for o caso.
 
 ## Armadilhas
 

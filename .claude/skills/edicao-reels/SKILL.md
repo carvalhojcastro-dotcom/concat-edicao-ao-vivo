@@ -87,8 +87,8 @@ Em homem, não aplique sem pedido.
 Instagram que o usuário mandou, medido quadro a quadro (EDICAO.md 6f; vídeos em `referencias/legenda-*-ig*`).
 Sempre **branco**, **Poppins Medium/SemiBold** (sem serifa, sem cursiva, sem rosa), sombra preta suave, sem
 contorno, **sem animação** (corte seco; no bloco, cada palavra entra quando é dita), centrado, dentro das margens
-de 15% a 85%. A ferramenta faz a legenda simples sozinha (1 a 4 palavras emendadas, com a pontuação, some nas
-pausas); você escreve só os blocos em `$W/blocos.json`:
+de 15% a 85%. A ferramenta faz a legenda simples sozinha (1 a 4 palavras emendadas, com a pontuação menos o ponto
+final, que some mas deixa maiúscula na frase seguinte; some nas pausas); você escreve só os blocos em `$W/blocos.json`:
 ```json
 {"blocos": [{"linhas": [[0, 1], [2, 3, 4], [5, 6, 7]], "chave": [7]},
             {"linhas": [[204, 205], [206, 207, 208]], "chave": [208], "fecho": true}]}

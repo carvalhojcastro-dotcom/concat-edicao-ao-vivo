@@ -27,7 +27,7 @@ movimento lento. A exportação é em 4K a 30 fps.
 | **Áudio para redes** | Quando pedirem volume "padrão de rede social": áudio já limpo pelo `limpar_audio.py` + efeito `user.voz-redes-sociais` (compressor leve, ganho, limitador; pasta `efeitos/`, o setup instala) com ganho calibrado para ~-14 LUFS e pico ≤ -1 dB, volume do clipe 1,0. No Ozempic (áudio limpo): 14,2 dB → -14,0 LUFS, pico -1,4 dB. |
 | **Velocidade** | **1.10x** em todos os clipes (padrão desde 2026-10-21; antes 1.05x), sem folgas, alinhados à grade de quadros (`alinhar_quadros.py`). |
 | **Legendas** | Seção 2: Poppins branca, legenda simples de 1 a 4 palavras + blocos dinâmicos, sem animação (`capcut_legendas_ig.py`). |
-| **Texto da legenda** | Maiúscula só no início de frase; a pontuação fica. Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
+| **Texto da legenda** | **Sem ponto final** (pedido de 2026-11-01: "evitamos poluição visual de pontos finais"): ele some da legenda, mas a frase seguinte começa com maiúscula (troca de parágrafo). Maiúscula só aí, depois de ?/! e em nome próprio, nunca em todo começo de legenda. Vírgula, ?, ! e reticências ficam. Corrija erros do Whisper e junte palavras partidas ("sente" + "-se"). |
 | **Nitidez e cor** | **Não aplicar automaticamente** (pedido de 2026-10-19). Só quando pedirem: camada `concat.adjust` em T3 (nitidez antiga: `sharpen` 20.23). |
 | **Retoque de rosto** | **Sempre em vídeo de mulher.** `tools/retoque.py` copia a predefinição do CapCut: remover rugas 13, uniforme 12, linhas do sorriso 93, olheiras 17 e maquiagem "Naturais" 56. Gera uma cópia retocada do bruto e troca a mídia no projeto (`--projeto`). |
 | **Cor** | Nenhuma correção, até haver uma LUT definida para o cliente. |
@@ -44,7 +44,8 @@ sobreposição contra 220 candidatas; tamanho, espaçamento e linha de base por 
 | entrelinha | — | topo das minúsculas de baixo 0,2 em (da linha de cima) abaixo da base de cima |
 | posição | centrada, base a 63,9% | centrado, a linha da chave na base da simples |
 | animação | nenhuma (corte seco, emendada) | nenhuma; palavra por palavra quando é dita |
-Sombra preta suave, sem contorno. Simples de 1 a 4 palavras (até ~40% da largura), mantém a pontuação, some nas pausas.
+Sombra preta, sem contorno: opacidade 35%, indefinição 8%, distância 3, ângulo -90° (padrão da usuária desde 2026-10-31,
+segundo print; no JSON do CapCut: `alpha` 0,3534, `diffuse` 0,0128 = ~0,0016 por ponto de indefinição, `shadow_smoothing` 18x isso). Simples no **tamanho 16** do CapCut (pedido de 2026-11-01: "achei que elas estavam muito pequenas"; era 11,85 = 52 px; os blocos dinâmicos não mudam), de 1 a 4 palavras (até ~57% da largura), mantém a pontuação menos o ponto final (que ainda separa as legendas e dá a maiúscula seguinte), some nas pausas.
 Blocos: ~13 por minuto, frase inteira de 2 a 8 palavras em 2 ou 3 linhas; descendente de cima (g, ç) empurra a linha
 de baixo. Ferramenta: `tools/capcut_legendas_ig.py <pasta CapCut> <words.json> <plano.json>` (direto no CapCut, palavras
 com tempos da timeline) ou `tools/capcut_legendas_ig.py --concat=<projeto> <words.json> <plano.json>` (no Concat, com o
@@ -217,9 +218,10 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   (1,02x, retoque, zoom 1,1/1,3/1,5). Pedaços com zoom por frase e rosto centrado: `tools/capcut_pedacos.py`;
   folha de revisão sem abrir o CapCut (zoom, motions e legendas): `tools/capcut_previa.py`. A pasta do vídeo em
   Edições › Sabrina Reinbold leva o **nome da pasta do Drive** do card (ex.: "3 - Por que um RPPS pode ter…", 2026-10-31).
-  No 24/11 ela tirou a música e os cliques de zoom e pôs o whoosh do modelo (45%) na entrada de cada motion;
-  o 01/12 saiu assim: sem música, sem clique, whoosh na entrada dos motions (`"efeitos"` no início de cada B-roll).
-  Se ela pedir música, a Lofi vai a 0,16 (`"musica": {"volume": 0.157}`; no 13 ela baixou de 0,39 para isso).
+  Música: ela pôs lofi de volta em cada vídeo, numa faixa diferente (24/11 "Rainy Lofi Windows" a 0,135; 01/12
+  "Warm Toast Lofi" a 0,166; antes "LoFi Coffee Shop"): uma lofi a ~0,15, trocando a faixa a cada vídeo
+  (`"musica": {"projeto", "nome", "volume"}`). **Sem whoosh na entrada dos motions** (2026-10-31: "não utilize mais
+  esses swooshes, na entrada de cada animação"); clique de mouse só onde ela pedir.
 - **B-roll em motion graphics** (Sabrina, 2026-10-28: "animações motions sobre o que ela está falando ... paleta
   de cores verde ... lettering moderno e com dinamismo"): cenas em tela cheia, fundo verde-escuro, menta e lima,
   Poppins Black + Plus Jakarta. No plano, `"tipo": "video"` no B-roll. **Sem legenda enquanto o motion está na
@@ -227,6 +229,19 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   legendas nos momentos em que o motion aparece ... puxar o motion mais para baixo, e diminuir ... centralizar
   todos os elementos"): `tools/planos/sabrina_24_motion.py` mede a caixa da cena e a põe no centro; nas legendas,
   `"sem_legenda": [[ini, fim], ...]` (as janelas do B-roll) no plano do `capcut_legendas_ig.py`.
+  **Varie de um vídeo para o outro** (2026-10-31: "estão ficando repetitivas demais ... mudando entre um e outro a
+  paleta de cores, mais focado para o branco e menos para o verde ... no outro você inverte ... o fundo está sempre
+  o mesmo ... as caixas também ... setas que vão sendo desenhadas, outras figuras e ícones, outros estilos de animações"):
+  - paleta alternada: num vídeo claro (fundo branco ou off-white, texto escuro, verde só no destaque), no seguinte
+    escuro (verde dominante, texto branco);
+  - fundo diferente a cada vídeo, e não o degradê verde com partículas subindo de sempre: papel ou textura clara,
+    grade que se desenha, formas grandes que entram, faixas diagonais, gradiente que muda de tom;
+  - menos caixas arredondadas: setas e linhas que se desenham, ícones e figuras simples, sublinhado ou marca-texto,
+    círculo que se fecha em volta da palavra, número que conta, gráfico (barras, pizza, linha), linha do tempo,
+    comparação lado a lado, visto e X desenhados;
+  - outros estilos de animação: revelação por máscara, digitação, escala com mola, deslize ou giro, traço que se desenha;
+  - antes de fazer, olhe o motion do vídeo anterior da cliente e mude de propósito pelo menos a paleta, o fundo e
+    dois tipos de elemento.
 - **Efeitos sonoros nos motions** (2026-10-30: "profissional, sem esses efeitos clichês ... cada vez que entra uma
   nova frase nos motions ... variar ... sobrepor ... sutil, fluido"): um evento por elemento que entra, no quadro
   em que ele aparece, feito em `tools/sfx_sintese.py` (sopro de ar, tique digital, grave sentido, traço de caneta,
