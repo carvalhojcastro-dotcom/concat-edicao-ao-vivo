@@ -5,6 +5,8 @@ mídia dos clipes do projeto pela versão limpa. O vídeo não é recodificado (
 Uso:
   tools/.venv/bin/python tools/limpar_audio.py <video> <saida.mov> [--projeto <projeto>] [--limite=24]
   ... --amostra=<ini>-<fim>   só gera <saida>.wav com esse trecho (segundos do bruto), para ouvir antes
+  ... --bips=4605,2801,...     filtros bem estreitos nessas frequências antes do DeepFilterNet (bips e apitos de
+                               máquina com tom fixo, ex.: centro cirúrgico; ache-os no espectro das pausas)
 
 Por que não o "Noise Reduction" do Concat: ele é o afftdn do ffmpeg (subtração espectral); para tirar
 o chiado de verdade ele abafa a voz e deixa "metálica". O DeepFilterNet separa voz de ruído.
@@ -40,6 +42,16 @@ def ler(video, nc, ini=None, dur=None):
     cmd += (["-t", f"{dur:.3f}"] if dur is not None else []) + ["-vn", "-ac", str(nc), "-ar", str(SR), "-f", "f32le", "-"]
     raw = subprocess.run(cmd, capture_output=True, check=True).stdout
     return np.frombuffer(raw, np.float32).reshape(-1, nc).T.copy()
+
+
+def tirar_bips(x, freqs, q=30.0):
+    """Entalhes estreitos (Q 30: ~150 Hz de largura a 4,6 kHz) nas frequências dos bips, sem defasar (filtfilt).
+    Pedido de 2026-11-01 (Dra. Luciana no centro cirúrgico): o DeepFilterNet sozinho deixava os bips de monitor."""
+    import scipy.signal as sinal
+    for f in freqs:
+        b, a = sinal.iirnotch(f, q, SR)
+        x = sinal.filtfilt(b, a, x, axis=1).astype(np.float32)
+    return x
 
 
 def limpar(x, limite):
@@ -87,16 +99,17 @@ def main():
         sys.exit(__doc__)
     video, saida = os.path.abspath(args[0]), os.path.abspath(args[1])
     limite = float(opc.get("limite", 24))
+    bips = [float(f) for f in opc["bips"].split(",")] if opc.get("bips") else []
     nc = canais(video)
     if "amostra" in opc:
         a, b = (float(v) for v in opc["amostra"].split("-"))
-        y = limpar(ler(video, nc, a, b - a), limite)
+        y = limpar(tirar_bips(ler(video, nc, a, b - a), bips), limite)
         gravar(y, os.path.splitext(saida)[0] + ".wav")
         print("amostra:", os.path.splitext(saida)[0] + ".wav")
         return
     os.makedirs(os.path.dirname(saida), exist_ok=True)
     print(f"limpando {os.path.basename(video)} (teto de {limite:.0f} dB)", flush=True)
-    gravar(limpar(ler(video, nc), limite), saida, video)
+    gravar(limpar(tirar_bips(ler(video, nc), bips), limite), saida, video)
     print("pronto:", saida)
     projeto = opc.get("projeto") or (args[2] if "projeto" in opc and len(args) > 2 else None)
     if projeto:
