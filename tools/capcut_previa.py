@@ -4,7 +4,7 @@ bruto com a escala e a posição do pedaço (ou o B-roll em vídeo, se houver um
 desenhadas com as métricas do CapCut (capcut_legendas_ig.desenhar).
 
 Serve para conferir rosto centrado nos zooms, legenda abaixo do rosto e fora dos motions, e os motions.
-Uso: capcut_previa.py <plano.json do capcut_montar> <words da timeline> <blocos.json> <vídeo bruto> <saida.jpg> "<t1,t2,...>"
+Uso: capcut_previa.py <plano.json do capcut_montar> <words da timeline> <blocos.json> <vídeo bruto> <saida.jpg> "<t1,t2,...>" [--base=0.76]
 """
 import json
 import os
@@ -22,7 +22,10 @@ VISTA = "/Library/Containers/com.lemon.lvoverseas/Data"
 
 
 def main():
-    plano_arq, words_arq, blocos_arq, video, saida, tempos = sys.argv[1:7]
+    plano_arq, words_arq, blocos_arq, video, saida, tempos = [a for a in sys.argv[1:] if not a.startswith("--")][:6]
+    base = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--base=")), None)
+    if base:   # a mesma opção do capcut_legendas_ig.py
+        ig.SIMPLES["base"] = float(base)
     plano = json.load(open(plano_arq, encoding="utf-8"))
     P = plano["pedacos"]
     total = P[-1]["ini"] + P[-1]["dur"]

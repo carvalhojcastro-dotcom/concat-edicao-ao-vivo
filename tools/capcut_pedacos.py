@@ -41,6 +41,7 @@ for tg, _ in grupos[1:]:
             keep[k:k + 1] = [(s, corte), (corte, e)]
             break
 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+perfil = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_profileface.xml")
 tmp = tempfile.mkdtemp()
 
 
@@ -50,8 +51,14 @@ def rosto(t):
     img = cv2.imread(png)
     h, w = img.shape[:2]
     g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    fs = [f for f in cascade.detectMultiScale(g, 1.1, 5, minSize=(int(w * 0.12), int(w * 0.12)))
+    fs = [f for f in cascade.detectMultiScale(g, 1.1, 5, minSize=(int(w * 0.18), int(w * 0.18)))
           if 0.1 * h < f[1] + f[3] / 2 < 0.6 * h]
+    if not fs:   # de perfil (ex.: dirigindo, "45 dias depois da cirurgia", 2026-11-01): o detector de frente falha
+        for espelho in (False, True):
+            gg = cv2.flip(g, 1) if espelho else g
+            for x, y, fw, fh in perfil.detectMultiScale(gg, 1.1, 5, minSize=(int(w * 0.18), int(w * 0.18))):
+                if 0.1 * h < y + fh / 2 < 0.7 * h:
+                    fs.append((w - x - fw if espelho else x, y, fw, fh))
     if not fs:
         return None
     x, y, fw, fh = max(fs, key=lambda f: f[2])
