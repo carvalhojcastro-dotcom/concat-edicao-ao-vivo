@@ -7,6 +7,7 @@ Uso:
   ... --amostra=<ini>-<fim>   só gera <saida>.wav com esse trecho (segundos do bruto), para ouvir antes
   ... --bips=4605,2801,...     filtros bem estreitos nessas frequências antes do DeepFilterNet (bips e apitos de
                                máquina com tom fixo, ex.: centro cirúrgico)
+  ... --graves=90              passa-alta (Hz) antes da limpeza: ronco de carro em movimento, ar-condicionado
   ... --bips=auto              acha esses tons sozinho no espectro das pausas da fala (padrão para vídeo de
                                centro cirúrgico, 2026-11-01: "quero esses aprimoramentos ... quando o vídeo for de
                                centro cirúrgico")
@@ -45,6 +46,16 @@ def ler(video, nc, ini=None, dur=None):
     cmd += (["-t", f"{dur:.3f}"] if dur is not None else []) + ["-vn", "-ac", str(nc), "-ar", str(SR), "-f", "f32le", "-"]
     raw = subprocess.run(cmd, capture_output=True, check=True).stdout
     return np.frombuffer(raw, np.float32).reshape(-1, nc).T.copy()
+
+
+def tirar_graves(x, hz):
+    """Passa-alta de 4ª ordem sem defasar: o ronco de motor/rolagem fica abaixo de ~90 Hz, abaixo da voz
+    ("45 dias depois da cirurgia", gravado no carro, 2026-11-01)."""
+    if not hz:
+        return x
+    import scipy.signal as sinal
+    sos = sinal.butter(2, hz, btype="highpass", fs=SR, output="sos")
+    return sinal.sosfiltfilt(sos, x, axis=1).astype(np.float32)
 
 
 def tirar_bips(x, freqs, q=30.0):
@@ -121,6 +132,7 @@ def main():
     video, saida = os.path.abspath(args[0]), os.path.abspath(args[1])
     limite = float(opc.get("limite", 24))
     nc = canais(video)
+    graves = float(opc.get("graves", 0))
     if opc.get("bips") == "auto":
         bips = achar_bips(ler(video, nc))
         print("tons de máquina achados (Hz):", ", ".join(f"{b:g}" for b in bips) or "nenhum", flush=True)
@@ -128,13 +140,13 @@ def main():
         bips = [float(f) for f in opc["bips"].split(",")] if opc.get("bips") else []
     if "amostra" in opc:
         a, b = (float(v) for v in opc["amostra"].split("-"))
-        y = limpar(tirar_bips(ler(video, nc, a, b - a), bips), limite)
+        y = limpar(tirar_bips(tirar_graves(ler(video, nc, a, b - a), graves), bips), limite)
         gravar(y, os.path.splitext(saida)[0] + ".wav")
         print("amostra:", os.path.splitext(saida)[0] + ".wav")
         return
     os.makedirs(os.path.dirname(saida), exist_ok=True)
     print(f"limpando {os.path.basename(video)} (teto de {limite:.0f} dB)", flush=True)
-    gravar(limpar(tirar_bips(ler(video, nc), bips), limite), saida, video)
+    gravar(limpar(tirar_bips(tirar_graves(ler(video, nc), graves), bips), limite), saida, video)
     print("pronto:", saida)
     projeto = opc.get("projeto") or (args[2] if "projeto" in opc and len(args) > 2 else None)
     if projeto:

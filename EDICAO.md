@@ -283,6 +283,13 @@ não mudam.
 
 Resultado no 16: os bips de até +24 dB sumiram, o fundo caiu 8 a 9 dB e a voz caiu só 1,5 dB.
 
+**Gravado no carro em movimento** ("45 dias depois da cirurgia", 2026-11-01: "consegue deixar o áudio mais limpo? ...
+bastante ruído"):
+- Use `limpar_audio.py <bruto> "<bruto> voz limpa.mov" --limite=24`, sem `--bips`, e troque a mídia como no item 3.
+- O ronco do carro é grave e contínuo. O DeepFilterNet sozinho baixou o fundo 18 dB e a voz caiu só 0,7 dB.
+- `--graves=90` tira mais 3 a 6 dB de ruído, mas também 1,4 dB do corpo da voz; não foi usado.
+- Estabilização no carro: `tools/estabilizar.py` existe, mas a usuária pediu para tirar nesse vídeo e preferiu o original.
+
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
 - **Tempos** que ele passa vêm em `mm:ss:quadros`.
