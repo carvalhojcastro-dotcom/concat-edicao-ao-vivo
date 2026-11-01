@@ -253,6 +253,36 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   "pop" ou "boing". Processo, paleta e como variar a cada vídeo: skill `sfx-motion`
   (`.claude/skills/sfx-motion/SKILL.md`); mapa de eventos em JSON para `tools/sfx_motion.py`.
 
+## 6g. Vídeo gravado em centro cirúrgico
+Pedido de 2026-11-01 (Dra. Luciana, "16 - Suspenção de medicações antes da cirurgia"): "quero esses aprimoramentos
+que fizemos aqui quando o vídeo for de centro cirúrgico" e "lembre-se de borrar a logo na camisa também".
+
+Reconheça pelo cenário (pijama cirúrgico, touca, máscara, equipamentos) ou pelos bips no áudio. Faça os dois
+tratamentos no bruto, antes de montar, ou depois, trocando a mídia no projeto, como no 16. Cortes, zooms e legendas
+não mudam.
+
+1. **Logo da roupa:**
+   ```bash
+   tools/desfocar_logo.py <bruto> "<bruto> sem logo.mov" --t=<s de um quadro limpo> --logo=x,y --ancora=x,y
+   ```
+   - x,y são em 540x960: o centro do logo e um ponto fixo do peito (ex.: o botão).
+   - O desfoque é redondo, com degradê largo, e segue a pessoa.
+   - Quando a mão passa na frente do logo, a âncora e o rosto seguram a posição.
+   - Confira em recortes de perto em 3 tempos e em quadros da edição, inclusive nos zooms.
+2. **Áudio:**
+   ```bash
+   tools/limpar_audio.py "<bruto> sem logo.mov" "<bruto> voz limpa.mov" --limite=24 --bips=auto
+   ```
+   - Faz filtros estreitos nos tons fixos das máquinas, achados nas pausas da fala, e depois passa o DeepFilterNet.
+   - A voz não fica robótica, como na "Isolar voz" do CapCut.
+   - Mande ao usuário uma amostra antes/depois (8 s de cada, no volume do projeto).
+3. **No CapCut:**
+   - Troque o caminho de todos os materiais de vídeo **e** dos trechos de áudio separados (mesma posição e duração)
+     pelo arquivo final.
+   - Desligue a redução de ruído do CapCut (`realtime_denoises.is_denoise`), para não processar a voz duas vezes.
+
+Resultado no 16: os bips de até +24 dB sumiram, o fundo caiu 8 a 9 dB e a voz caiu só 1,5 dB.
+
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.
 - **Tempos** que ele passa vêm em `mm:ss:quadros`.

@@ -72,6 +72,10 @@ $PY tools/limpar_audio.py "<video>" "$P/midia/<nome>_audio_limpo.mov" --projeto 
 $PY tools/reel.py listar "$P"                        # índices e tempos para os planos
 ```
 
+### Centro cirúrgico (pijama, touca, equipamentos, bips no áudio)
+Sempre desfoque o logo da roupa (`tools/desfocar_logo.py`) e limpe o áudio (`tools/limpar_audio.py --bips=auto
+--limite=24`), com a redução de ruído do CapCut desligada. O passo a passo está em `EDICAO.md` 6g.
+
 ### Retoque de rosto (sempre em vídeo de mulher)
 Se quem fala é mulher, retoque o rosto. Os padrões vêm da predefinição do CapCut do usuário. A
 ferramenta processa o bruto em 4K (leva alguns minutos, então rode em segundo plano) e troca a mídia

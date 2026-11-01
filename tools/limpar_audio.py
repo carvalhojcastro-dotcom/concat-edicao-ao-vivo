@@ -6,7 +6,10 @@ Uso:
   tools/.venv/bin/python tools/limpar_audio.py <video> <saida.mov> [--projeto <projeto>] [--limite=24]
   ... --amostra=<ini>-<fim>   só gera <saida>.wav com esse trecho (segundos do bruto), para ouvir antes
   ... --bips=4605,2801,...     filtros bem estreitos nessas frequências antes do DeepFilterNet (bips e apitos de
-                               máquina com tom fixo, ex.: centro cirúrgico; ache-os no espectro das pausas)
+                               máquina com tom fixo, ex.: centro cirúrgico)
+  ... --bips=auto              acha esses tons sozinho no espectro das pausas da fala (padrão para vídeo de
+                               centro cirúrgico, 2026-11-01: "quero esses aprimoramentos ... quando o vídeo for de
+                               centro cirúrgico")
 
 Por que não o "Noise Reduction" do Concat: ele é o afftdn do ffmpeg (subtração espectral); para tirar
 o chiado de verdade ele abafa a voz e deixa "metálica". O DeepFilterNet separa voz de ruído.
@@ -54,6 +57,24 @@ def tirar_bips(x, freqs, q=30.0):
     return x
 
 
+def achar_bips(x, minimo_db=8.0, maximo=12):
+    """Tons fixos de máquina: picos estreitos no espectro dos 25% de trechos mais quietos (as pausas), ao menos
+    `minimo_db` acima do ruído em volta, entre 150 Hz e 8 kHz. No centro cirúrgico do vídeo 16 da Dra. Luciana
+    vieram 1,2/1,6/2,0/2,8/3,6/4,2/4,4/4,6 kHz e dois zumbidos de 182 e 229 Hz."""
+    import scipy.signal as sinal
+    m = x.mean(0)
+    h = int(0.05 * SR)
+    n = len(m) // h
+    rms = np.sqrt((m[:n * h].reshape(n, h) ** 2).mean(1) + 1e-12)
+    quietos = m[:n * h].reshape(n, h)[rms <= np.percentile(rms, 25)].ravel()
+    f, p = sinal.welch(quietos, SR, nperseg=16384)
+    pdb = 10 * np.log10(p + 1e-20)
+    acima = pdb - sinal.medfilt(pdb, 101)
+    picos = [i for i in sinal.find_peaks(acima, height=minimo_db, distance=10)[0] if 150 < f[i] < 8000]
+    picos = sorted(picos, key=lambda i: -acima[i])[:maximo]
+    return [round(float(f[i]), 1) for i in sorted(picos)]
+
+
 def limpar(x, limite):
     import torch
     from df.enhance import enhance, init_df
@@ -99,8 +120,12 @@ def main():
         sys.exit(__doc__)
     video, saida = os.path.abspath(args[0]), os.path.abspath(args[1])
     limite = float(opc.get("limite", 24))
-    bips = [float(f) for f in opc["bips"].split(",")] if opc.get("bips") else []
     nc = canais(video)
+    if opc.get("bips") == "auto":
+        bips = achar_bips(ler(video, nc))
+        print("tons de máquina achados (Hz):", ", ".join(f"{b:g}" for b in bips) or "nenhum", flush=True)
+    else:
+        bips = [float(f) for f in opc["bips"].split(",")] if opc.get("bips") else []
     if "amostra" in opc:
         a, b = (float(v) for v in opc["amostra"].split("-"))
         y = limpar(tirar_bips(ler(video, nc, a, b - a), bips), limite)
