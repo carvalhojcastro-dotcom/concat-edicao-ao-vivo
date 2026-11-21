@@ -44,9 +44,9 @@ for cena in plano["cenas"]:
             # Esse modelo lê negação ao contrário: "no doctors, no stethoscope" PÕE jaleco e estetoscópio.
             # Então só descrição positiva: o prompt da cena já diz quem aparece e como.
             prompt = f"{cena['prompt']} {plano['estilo']} {POSITIVO}"
-            args = {"prompt": prompt[:800], "aspect_ratio": "9:16", "resolution": "2k", "prompt_extend": False}
+            args = {"prompt": prompt[:800], "aspect_ratio": plano.get("proporcao", "9:16"), "resolution": "2k", "prompt_extend": False}
         else:                          # Soul 2, o mais barato
-            args = {"prompt": prompt, "aspect_ratio": "9:16", "resolution": "1080p", "batch_size": 1,
+            args = {"prompt": prompt, "aspect_ratio": plano.get("proporcao", "9:16"), "resolution": "1080p", "batch_size": 1,
                     "enhance_prompt": False}
         r = higgsfield_client.subscribe(modelo, arguments=args)
     except Exception as erro:  # erro HTTP, saldo, rede: conta como falha, sem mostrar credenciais

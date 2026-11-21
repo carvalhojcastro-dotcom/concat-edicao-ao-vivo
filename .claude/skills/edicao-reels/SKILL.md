@@ -18,13 +18,16 @@ Projeto **no CapCut, já cortado** ("só adicione as legendas e b-rolls ... e os
 EDICAO.md 6f. Remonte o áudio dos cortes e transcreva (tempos da timeline), e então: zoom por frases com
 `tools/capcut_caixinha.py` (plano sem "pergunta"; `"x"` no grupo centra quem fala), B-roll do Higgsfield com
 `tools/capcut_broll.py` e legendas com `tools/capcut_legendas_ig.py` (passo 4). CapCut fechado para escrever.
+Vídeos do **Dr. Leonardo (Simples Medicina)** têm estilo próprio, só dele: `EDICAO.md` seção 6h e
+`tools/capcut_simples.py` (abre com ele e legenda, tela dividida e motion sozinho com o arco verde da marca, pílula
+coral do kit, vinheta no fim). Não use esse estilo nos outros clientes.
 
 Variáveis (raiz do repositório = `$R`):
 - `PY=$R/tools/.venv/bin/python` (Mac) ou `PY=$R/tools/.venv/Scripts/python.exe` (Windows). Use `$PY` em
   todos os comandos; no Windows o `python3` é um atalho da Microsoft Store. O Claude Code no Windows roda
   os comandos no Git Bash, então a sintaxe abaixo é a mesma; `tools/plataforma.py` cuida das diferenças
   (transcrição, fontes Arimo/Archivo, codificador). Ver `INSTALAR-WINDOWS.md`.
-- Pasta Concat = a pasta-mãe do repositório (`$(dirname $R)`, em geral `~/Desktop/Concat`)
+- Pasta Concat = a pasta-mãe do repositório (`$(dirname $R)`, em geral `~/Desktop/Claude Code Skills`)
 - Projeto: `<pasta Concat>/editados/<nome>`
 - Trabalho: uma pasta temporária sua
 - Saída (quando exportar): `<pasta Concat>/exportados/<nome>.mp4`

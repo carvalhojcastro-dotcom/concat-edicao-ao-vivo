@@ -16,16 +16,18 @@ metades da tela, y para cima). Então:
 
 Plano:
 {"velocidade": 1.05, "volume": 4.0,
- "pecas": [{"fonte": 812.4, "fonte_dur": 6.2, "layout": "solo", "escala": 3.2, "tx": 1.1, "ty": 0.0},
+ "pecas": [{"fonte": 812.4, "fonte_dur": 6.2, "layout": "solo", "escala": 3.2, "tx": 1.1, "ty": 0.0,
+            "kx": [[812.4, 1.1], [814.0, 1.1], [814.8, 1.25]]},   # opcional: seguir a pessoa (s do bruto, x)
            {"fonte": 818.6, "fonte_dur": 4.0, "layout": "dupla", "cima": [x0, y0, x1, y1], "baixo": [x0, y0, x1, y1]}]}
   (recortes em fração do bruto: canto de cima à esquerda e de baixo à direita)
 O projeto vem do capcut_novo.py (um clipe do bruto na trilha principal); rodar de novo refaz a montagem.
-O CapCut precisa estar FECHADO. Backup em ~/Desktop/Concat/backup-capcut/.
+O CapCut precisa estar FECHADO. Backup em ~/Desktop/Claude Code Skills/backup-capcut/.
 Uso: capcut_podcast.py <pasta do projeto no CapCut> <plano.json>
 """
 import copy
 import glob
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -44,6 +46,15 @@ TRILHA_BAIXO = "Tela dividida (Concat)"
 def recorte(x0, y0, x1, y1):
     return {"upper_left_x": x0, "upper_left_y": y0, "upper_right_x": x1, "upper_right_y": y0,
             "lower_left_x": x0, "lower_left_y": y1, "lower_right_x": x1, "lower_right_y": y1}
+
+
+def chaves(prop, pontos):
+    """Uma propriedade com keyframes lineares, como o CapCut grava (time_offset em us do BRUTO, como nos keyframes
+    que o usuário pôs à mão no "12 - Linda pro Natal")."""
+    return {"id": novo_id(), "material_id": "", "property_type": prop,
+            "keyframe_list": [{"id": novo_id(), "curveType": "Line", "time_offset": us(t),
+                               "left_control": {"x": 0.0, "y": 0.0}, "right_control": {"x": 0.0, "y": 0.0},
+                               "values": [v], "string_value": "", "graphID": ""} for t, v in pontos]}
 
 
 def montar(d, plano):
@@ -79,16 +90,31 @@ def montar(d, plano):
             m = dict(copy.deepcopy(m), id=novo_id())
             d["materials"].setdefault(k, []).append(m)
             refs.append(m["id"])
+        # emendas sem quadro adiantado (2026-11-10, "no primeiro frame do corte b ... ainda tem o enquadramento do
+        # corte a"): o pedaço começa no µs logo acima do quadro (o µs truncado lia o quadro anterior) e a velocidade é
+        # exatamente origem/timeline; com 1,1 redondo e a duração arredondada a quadros, o último quadro de um pedaço
+        # podia ler o primeiro quadro do plano seguinte
+        # os pedaços caem na grade de quadros do bruto (fps do plano, 30 por padrão): "fonte" com 4 casas
+        # (709,8333) ficava abaixo do quadro 21295 (709,83333…) e o 1º quadro mostrava o plano anterior
+        fps = plano.get("fps", 30)
+        ini_us = math.ceil(round(round(p["fonte"] * fps) / fps * 1e6, 3))
+        src_us = math.ceil(round(round((p["fonte"] + p["fonte_dur"]) * fps) / fps * 1e6, 3)) - ini_us
+        vel_p = src_us / us(dur)
         s.update(id=novo_id(), material_id=mat_id, extra_material_refs=refs,
-                 source_timerange={"start": us(p["fonte"]), "duration": us(p["fonte_dur"])},
-                 target_timerange={"start": us(ini), "duration": us(dur)}, common_keyframes=[], keyframe_refs=[], speed=vel)
+                 source_timerange={"start": ini_us, "duration": src_us},
+                 target_timerange={"start": us(ini), "duration": us(dur)}, common_keyframes=[], keyframe_refs=[], speed=vel_p)
         for r in s["extra_material_refs"]:
             k, m = material(d, r)
             if k == "speeds":
-                m["speed"] = vel
+                m["speed"] = vel_p
         s["clip"]["scale"] = {"x": escala, "y": escala}
         s["clip"]["transform"] = {"x": tx, "y": ty}
         s["uniform_scale"] = {"on": True, "value": 1.0}   # proporção x/y travada (1,0), não o zoom
+        if p.get("kx"):   # seguir a pessoa dentro do mesmo plano com keyframes de posição (pedido de 2026-11-10)
+            s["clip"]["transform"]["x"] = p["kx"][0][1]
+            s["common_keyframes"] = [chaves(prop, [(t, v if prop == "KFTypePositionX" else fixo) for t, v in p["kx"]])
+                                     for prop, fixo in (("KFTypePositionX", None), ("KFTypePositionY", ty),
+                                                        ("KFTypeScaleX", escala), ("KFTypeRotation", 0.0))]
         if volume is not None:
             s["volume"] = s["last_nonzero_volume"] = volume
         return s
@@ -126,6 +152,31 @@ def montar(d, plano):
     return len(segs), len(baixo), ini
 
 
+def capa(d, destino):
+    """Primeiro quadro do corte como o CapCut desenha (recorte do material, encaixe na largura, escala e posição)."""
+    from PIL import Image
+    tela = Image.new("RGB", (1080, 1920))
+    for tr in [t for t in d["tracks"] if t["type"] == "video"]:
+        s = next((s for s in tr["segments"] if s["target_timerange"]["start"] == 0), None)
+        if not s:
+            continue
+        _, m = material(d, s["material_id"])
+        bruto = m["path"].replace("/Library/Containers/com.lemon.lvoverseas/Data", "")
+        t0 = s["source_timerange"]["start"] / 1e6 + 0.3
+        png = destino + ".png"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{t0:.3f}", "-i", "file:" + bruto, "-frames:v", "1", png], check=True)
+        img = Image.open(png).convert("RGB")
+        os.remove(png)
+        c = m.get("crop", {})
+        W0, H0 = img.size
+        img = img.crop((int(c.get("upper_left_x", 0) * W0), int(c.get("upper_left_y", 0) * H0),
+                        int(c.get("lower_right_x", 1) * W0), int(c.get("lower_right_y", 1) * H0)))
+        e, tx, ty = s["clip"]["scale"]["x"], s["clip"]["transform"]["x"], s["clip"]["transform"]["y"]
+        w, h = int(1080 * e), int(img.height * 1080 / img.width * e)
+        tela.paste(img.resize((w, h)), (int(540 - w / 2 + tx * 540), int(960 - h / 2 - ty * 960)))
+    tela.save(destino, quality=90)
+
+
 def main():
     pasta, plano_arq = os.path.abspath(sys.argv[1]), sys.argv[2]
     if subprocess.run(["pgrep", "-x", "CapCut"], capture_output=True).returncode == 0:
@@ -133,7 +184,7 @@ def main():
     plano = json.load(open(plano_arq, encoding="utf-8"))
     alvos = [p for p in [os.path.join(pasta, "draft_info.json"), os.path.join(pasta, "template-2.tmp")]
              + glob.glob(os.path.join(pasta, "Timelines", "*", "draft_info.json")) if os.path.exists(p)]
-    copia = os.path.expanduser(f"~/Desktop/Concat/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
+    copia = os.path.expanduser(f"~/Desktop/Claude Code Skills/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
     while os.path.exists(copia):
         copia += "+"
     for p in glob.glob(os.path.join(pasta, "*.json")) + glob.glob(os.path.join(pasta, "*.tmp")) + glob.glob(os.path.join(pasta, "Timelines", "**", "*"), recursive=True):
@@ -150,6 +201,17 @@ def main():
         mi = json.load(open(meta, encoding="utf-8"))
         mi["tm_duration"] = us(total)
         json.dump(mi, open(meta, "w", encoding="utf-8"), ensure_ascii=False)
+    # lista de projetos: duração do corte (não a do bruto) e capa com o primeiro quadro enquadrado (2026-11-05)
+    raiz_p = os.path.join(os.path.dirname(pasta), "root_meta_info.json")
+    raiz = json.load(open(raiz_p, encoding="utf-8"))
+    for e in raiz["all_draft_store"]:
+        if os.path.realpath(e.get("draft_fold_path", "")) == os.path.realpath(pasta):
+            e["tm_duration"] = us(total)
+    json.dump(raiz, open(raiz_p, "w", encoding="utf-8"), ensure_ascii=False)
+    try:
+        capa(d, os.path.join(pasta, "draft_cover.jpg"))
+    except Exception as erro:   # a capa é só a miniatura da lista: não impede a montagem
+        print("capa não gerada:", erro)
     print(f"{n} pedaços ({nb} com tela dividida), {total:.2f}s a {plano.get('velocidade', 1.0)}x; backup em {copia}")
 
 

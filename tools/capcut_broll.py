@@ -9,7 +9,10 @@ avanço lento de zoom (100% -> 108%) que ela manteve.
 
 Uso: capcut_broll.py <pasta do projeto no CapCut> <plano.json> <pasta das imagens> [--modelo=<projeto modelo>]
   plano.json: o mesmo do broll_higgsfield.py ({"cenas": [{"nome", "inicio", "fim"}, ...]}); imagem = <nome>.png
-O CapCut precisa estar FECHADO. Backup em ~/Desktop/Concat/backup-capcut/. Rodar de novo troca os B-rolls.
+  Cada cena pode trazer "arquivo" (caminho de um JPG/PNG/MP4 já em 1080x1920) no lugar de <nome>.png, e "tipo": "video"
+  para vídeo (fotos e vídeos dos clientes, JFIT 2026-11-15): entra sem som, sem animação de entrada e sem zoom, a partir
+  de "fonte" s do arquivo (padrão 0).
+O CapCut precisa estar FECHADO. Backup em ~/Desktop/Claude Code Skills/backup-capcut/. Rodar de novo troca os B-rolls.
 """
 import copy
 import glob
@@ -39,7 +42,7 @@ def main():
              if os.path.exists(p)]
     N = json.load(open(alvos[0], encoding="utf-8"))
     B = json.load(open(os.path.join(RAIZ, modelo_nome, "draft_info.json"), encoding="utf-8"))
-    copia = os.path.expanduser(f"~/Desktop/Concat/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
+    copia = os.path.expanduser(f"~/Desktop/Claude Code Skills/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
     while os.path.exists(copia):
         copia += "+"
     for p in glob.glob(os.path.join(pasta, "*.json")) + glob.glob(os.path.join(pasta, "*.tmp")) + glob.glob(os.path.join(pasta, "Timelines", "**", "*"), recursive=True):
@@ -72,16 +75,37 @@ def main():
     tr = dict(copy.deepcopy({k: v for k, v in trilha_mod.items() if k != "segments"}), id=novo_id(), name=NOME_TRILHA,
               is_default_name=False, segments=[])
     for n, c in enumerate(plano["cenas"]):
-        arq = os.path.join(imagens, c["nome"] + ".png")
-        shutil.copy2(arq, os.path.join(destino, os.path.basename(arq)))
-        from PIL import Image
-        larg, alt = Image.open(arq).size
-        m = dict(copy.deepcopy(foto_mat), id=novo_id(), path=os.path.join(BROLL_VISTA, os.path.basename(destino), os.path.basename(arq)),
-                 width=larg, height=alt, material_name=os.path.basename(arq), local_material_id="", category_name="local")
-        N["materials"].setdefault("videos", []).append(m)
+        arq = c.get("arquivo") or os.path.join(imagens, c["nome"] + ".png")
+        if os.path.dirname(os.path.abspath(arq)) != os.path.abspath(destino):
+            shutil.copy2(arq, os.path.join(destino, os.path.basename(arq)))
         dur = c["fim"] - c["inicio"]
-        s = segmento_de(foto_seg, B, N, m["id"], 0.0, dur, c["inicio"], dur)
+        visto = os.path.join(BROLL_VISTA, os.path.basename(destino), os.path.basename(arq))
+        if c.get("tipo") == "video":
+            # vídeo: material de vídeo como o bruto do projeto (o molde de foto não serve), sem som (capcut_montar.py)
+            info = json.loads(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                                              "stream=width,height:format=duration", "-of", "json", arq], capture_output=True, text=True).stdout)
+            larg, alt = info["streams"][0]["width"], info["streams"][0]["height"]
+            bruto = material(N, next(t for t in N["tracks"] if t["type"] == "video")["segments"][0]["material_id"])[1]
+            bruto = bruto if bruto.get("type") == "video" and bruto.get("path") else next(
+                m for m in N["materials"]["videos"] if m.get("type") == "video" and m.get("path"))
+            m = dict(copy.deepcopy(bruto), id=novo_id(), path=visto, width=larg, height=alt, duration=us(float(info["format"]["duration"])),
+                     material_name=os.path.basename(arq), local_material_id=novo_id().lower(), md5="", has_audio=False)
+            if isinstance(m.get("matting"), dict):
+                m["matting"].update(flag=0, path="", custom_matting_id="")
+        else:
+            from PIL import Image
+            larg, alt = Image.open(arq).size
+            m = dict(copy.deepcopy(foto_mat), id=novo_id(), path=visto, width=larg, height=alt, material_name=os.path.basename(arq),
+                     local_material_id="", category_name="local", material_id="", source=0, source_platform=0, category_id="")
+        N["materials"].setdefault("videos", []).append(m)
+        s = segmento_de(foto_seg, B, N, m["id"], float(c.get("fonte", 0.0)), dur, c["inicio"], dur)
         s["extra_material_refs"] = [r for r in s["extra_material_refs"] if material(N, r)[0] != "material_animations"]
+        if c.get("tipo") == "video":
+            s["volume"] = 0.0
+            s["clip"]["scale"] = {"x": 1.0, "y": 1.0}
+            s["clip"]["transform"] = {"x": 0.0, "y": 0.0}
+            tr["segments"].append(s)
+            continue
         if entradas:
             anim = dict(copy.deepcopy(anim_mod), id=novo_id(), animations=[copy.deepcopy(entradas[n % len(entradas)])])
             N["materials"].setdefault("material_animations", []).append(anim)

@@ -8,7 +8,7 @@ atualizações").
   na altura em que está; acima disso vai a 1/3 da altura.
 - `uniform_scale` fica em 1,0 e não há keyframes.
 
-grupos.json: [[t na timeline, escala], ...]; o primeiro em 0. CapCut FECHADO; backup em ~/Desktop/Concat/backup-capcut.
+grupos.json: [[t na timeline, escala], ...]; o primeiro em 0. CapCut FECHADO; backup em ~/Desktop/Claude Code Skills/backup-capcut.
 Uso: capcut_zoom_grupos.py <pasta do projeto no CapCut> <grupos.json>
 """
 import copy
@@ -32,7 +32,7 @@ ALVO_Y = 0.33
 novo_id = lambda: str(uuid.uuid4()).upper()
 alvos = [p for p in [os.path.join(P, "draft_info.json"), os.path.join(P, "template-2.tmp")] + glob.glob(os.path.join(P, "Timelines", "*", "draft_info.json")) if os.path.exists(p)]
 d = json.load(open(alvos[0], encoding="utf-8"))
-copia = os.path.expanduser(f"~/Desktop/Concat/backup-capcut/{os.path.basename(P)} {time.strftime('%Y-%m-%d %H%M%S')} (antes do zoom por frase)")
+copia = os.path.expanduser(f"~/Desktop/Claude Code Skills/backup-capcut/{os.path.basename(P)} {time.strftime('%Y-%m-%d %H%M%S')} (antes do zoom por frase)")
 for p in alvos + glob.glob(os.path.join(P, "*.json")):
     dest = os.path.join(copia, os.path.relpath(p, P)); os.makedirs(os.path.dirname(dest), exist_ok=True); shutil.copy2(p, dest)
 mats = {}
@@ -100,6 +100,9 @@ for g, segs in sorted(por_grupo.items()):
 if d.get("render_index_track_mode_on"):
     for i, tr in enumerate(d["tracks"]):
         for s in tr["segments"]: s["track_render_index"] = i
+# cada take com o seu material (senão "Extrair áudio" num take emudece todos os que dividem o material, 2026-11-17)
+import capcut_materiais_unicos
+capcut_materiais_unicos.unicos(d)
 texto = json.dumps(d, ensure_ascii=False, separators=(",", ":"))
 for p in alvos: open(p, "w", encoding="utf-8").write(texto)
 print(f"{len(t['segments'])} takes; backup em {copia}")

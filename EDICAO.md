@@ -45,7 +45,7 @@ sobreposição contra 220 candidatas; tamanho, espaçamento e linha de base por 
 | posição | centrada, base a 63,9% | centrado, a linha da chave na base da simples |
 | animação | nenhuma (corte seco, emendada) | nenhuma; palavra por palavra quando é dita |
 Sombra preta, sem contorno: opacidade 35%, indefinição 8%, distância 3, ângulo -90° (padrão da usuária desde 2026-10-31,
-segundo print; no JSON do CapCut: `alpha` 0,3534, `diffuse` 0,0128 = ~0,0016 por ponto de indefinição, `shadow_smoothing` 18x isso). Simples no **tamanho 16** do CapCut (pedido de 2026-11-01: "achei que elas estavam muito pequenas"; era 11,85 = 52 px; os blocos dinâmicos não mudam), de 1 a 4 palavras (até ~57% da largura), mantém a pontuação menos o ponto final (que ainda separa as legendas e dá a maiúscula seguinte), some nas pausas.
+segundo print; no JSON do CapCut: `alpha` 0,3534, `diffuse` 0,0128 = ~0,0016 por ponto de indefinição, `shadow_smoothing` 18x isso). Simples no **tamanho 14,4** do CapCut e blocos a **85%** dos valores da tabela (padrão desde 2026-11-21: "deixe as legendas normais em 90% do tamanho original e as legendas destaque em 85% ... ficarão menores e mais sofisticadas", depois "salve como padrão para os próximos"; antes a simples era 16, pedido de 2026-11-01; `--simples=1 --blocos=1` volta ao tamanho antigo num projeto entregue antes), de 1 a 4 palavras (até ~57% da largura), mantém a pontuação menos o ponto final (que ainda separa as legendas e dá a maiúscula seguinte), some nas pausas.
 Blocos: ~13 por minuto, frase inteira de 2 a 8 palavras em 2 ou 3 linhas; descendente de cima (g, ç) empurra a linha
 de baixo. Ferramenta: `tools/capcut_legendas_ig.py <pasta CapCut> <words.json> <plano.json>` (direto no CapCut, palavras
 com tempos da timeline) ou `tools/capcut_legendas_ig.py --concat=<projeto> <words.json> <plano.json>` (no Concat, com o
@@ -171,7 +171,7 @@ entram nele como textos normais, no estilo da seção 2.
 2. Remonte o áudio da trilha principal pelos segmentos do `draft_info.json` (fonte, velocidade) e transcreva com
    dois modelos: os tempos já são os da timeline.
 3. Escreva os blocos (seção 2) e, com o CapCut **fechado**, rode `tools/capcut_legendas_ig.py <pasta do projeto>
-   <words.json> <blocos.json>`: backup em `~/Desktop/Concat/backup-capcut/`, fontes copiadas para
+   <words.json> <blocos.json>`: backup em `~/Desktop/Claude Code Skills/backup-capcut/`, fontes copiadas para
    `~/Movies/CapCut/User Data/Fontes Concat/` (a única pasta fora do sistema que o CapCut da App Store lê), textos
    em trilhas "Legendas IG". Rodar de novo troca as legendas. Prévia de como o CapCut desenha: `desenhar()` do
    mesmo script.
@@ -208,6 +208,12 @@ efeitos, B-roll) e depois `capcut_legendas_ig.py`. Fotos e fontes em `~/Movies/C
   `capcut_novo.py` (modelo da mesma cliente e do mesmo cenário) e `capcut_montar.py` só com `pedacos`,
   `"velocidade"` e `"volume"` (ganho para ~-14 LUFS; pedaço com `"volume"` próprio, ex.: pergunta de quem filma 7 dB
   mais alta), depois `capcut_legendas_ig.py`. Confira a fala cortada transcrevendo o corte de novo.
+- **Trocar a velocidade depois de editado:** `tools/capcut_velocidade.py <pasta> 1.0` muda só a velocidade dos takes
+  (mesmo trecho do bruto) e leva legendas, motions e efeitos para os tempos novos, sem desfazer o que ela mudou.
+  Dra. Larissa fala rápido: **1,0x** (pedido de 2026-11-09).
+- **Ângulo do bruto:** "não mexa no ângulo dos vídeos" (2026-11-09). O modelo pode ter os clipes girados para
+  endireitar o vídeo dele (Julianna: 4°), e isso não vale para outro bruto. `capcut_novo.py` e `capcut_montar.py` deixam
+  `clip.rotation` em 0 e sem espelhar.
 - **Escala uniforme no JSON do CapCut:** `uniform_scale.value` é a proporção x/y que a trava mantém (1,0 em todos os
   clipes feitos por ela), não o zoom; o zoom fica só em `clip.scale`. Com o zoom ali, a imagem aparecia certa, mas
   ao mudar o tamanho no CapCut ficava achatada (y = x / value; "a imagem fica achatada. isso é errado", 2026-10-30).
@@ -289,6 +295,53 @@ bastante ruído"):
 - O ronco do carro é grave e contínuo. O DeepFilterNet sozinho baixou o fundo 18 dB e a voz caiu só 0,7 dB.
 - `--graves=90` tira mais 3 a 6 dB de ruído, mas também 1,4 dB do corpo da voz; não foi usado.
 - Estabilização no carro: `tools/estabilizar.py` existe, mas a usuária pediu para tirar nesse vídeo e preferiu o original.
+
+## 6h. Dr. Leonardo (Simples Medicina): estilo só dele
+Pedido de 2026-11-05 (o nosso jeito mesclado ao manual da marca da Bia: motions nos números, tela dividida, fundo coral
+na legenda, finalização da marca), ajustado com o feedback dela e aprovado pelo usuário **só para os vídeos do
+Dr. Leonardo** ("esse não é o estilo que usarei em outros vídeos além dos do doutor Leonardo"). Nos outros clientes
+continua o padrão das seções 1 a 6g.
+
+Ferramenta: `tools/capcut_simples.py` (`telas`, `folha`, `montar`, `previa`, `conferir`), com as cenas em
+`tools/simples_cenas.py` e o kit da Bia em `~/Desktop/Edições/Kit de edição/Simples Medicina` (fora do Git). Plano em
+`tools/planos/simples_NN.json`, com índices das palavras do `reel.py cortes` (dados em `tools/planos/simples_trab/`).
+- **Do nosso jeito:** cortes do `reel.py`, 1,05x, zoom seco por grupos de frases com o rosto centrado, voz a ~-14 LUFS.
+  A pausa cortada guarda o fim de palavra dito baixinho ("ris-co").
+- **Áudio:** o bruto original da câmera com a redução de ruído do próprio CapCut ligada (85%), nunca o "voz limpa" do
+  DeepFilterNet (2026-11-06: "gostaria que usasse os arquivos originais mas adicionasse a redução de ruído do proprio
+  capcut em todos eles"). No plano, `"video"` é o `.MP4` da câmera e `"ruido_capcut": true`; o bruto entra na pasta
+  do CapCut por link físico.
+- **Abertura:** sempre ele enquadrado, falando, com legenda e o cartão de nome (CRM e RQE) na primeira fala ("comece
+  sempre com o doutor enquadrado aparecendo, e adicione legendas"). Nunca abra com motion em tela cheia.
+- **Três formatos, com o arco verde da marca em cada troca:**
+  - ele sozinho;
+  - tela dividida para números e dados: painel 1080x960 em cima, legenda na faixa marinho, ele embaixo;
+  - motion sozinho (tela cheia, sem legenda, só com a voz dele) para a fala ou o número mais importante.
+  Na troca fica até 0,75 s da pausa natural, e a legenda some enquanto o arco passa. Telas separadas por poucas
+  palavras (até 2,2 s) ficam emendadas, sem voltar para ele por meio segundo.
+- **Poucas telas, poucos arcos** (2026-11-05: "os vídeos tem muitos arcos de transição, está over ... retire boa parte
+  desses arcos e telas divididas mas deixe alguns poucos ... mais minimalista"): no máximo 2 telas por vídeo, em geral
+  uma tela dividida e um motion sozinho, longe uma da outra; dá 3 ou 4 arcos verdes mais o off-white do fim. No resto
+  ele fala com legenda e zoom seco por frases (no máximo uns 9 s no mesmo zoom). Quando ele anda para os lados, o zoom
+  do grupo desce até o rosto ficar a no máximo 30% do centro do quadro.
+- **Legenda:** Inter Bold, 66 px com ele e 54 px na faixa, até 4 palavras. A palavra falada vai numa pílula coral
+  (uma imagem atrás da palavra: 8 px além dela, cantos de 11 px) com texto marinho; o fundo de texto do CapCut não
+  chega nessa medida e cobria a letra vizinha. Bloco off-white (marinho e sem sombra na camiseta creme), acima da
+  estampa da camiseta.
+- **Final:** 0,5 s depois da última palavra, sem som, o arco off-white sobe e emenda na vinheta (3,6 s, com o som dela).
+  Arcos e vinheta saem do próprio código do kit (`build/arco.py`, `build/vinheta.py`), conferidos com os arquivos da
+  Bia, e ficam em `Broll Concat/Simples Medicina marca`. O arco verde é mudo; sem música e sem efeito sonoro na fala.
+- **Cor:** a camada de ajuste do usuário fica logo acima da trilha dele, embaixo de telas, legendas, arcos e vinheta, na
+  fala toda ("em cima apenas da camada de video doutor"). Ele ajusta por vídeo; vídeo sem a dele copia a de outro
+  (`"ajuste_de"` no plano).
+- **Gráfico por cima dele, sem dividir a tela e sem arco** (2026-11-10, vídeo 2: barras dos efeitos "em cima da barriga/peitoral do doutor"): `tools/simples_barras_sobre.py <plano_barras.json> <saída.mov>` faz um cartão off-white com barras
+  horizontais que crescem na fala do número, o nome dentro da barra e o valor ao lado (ProRes 4444 com alfa, faixa
+  1080x600 com o centro em y=1420, abaixo da legenda). Entra numa trilha própria ("Motion ... (Concat)") logo acima
+  do B-roll, sem remontar o projeto; os tempos vêm das palavras das legendas no corte dela.
+- **Exportação**, só quando ele pedir: 4K, 24 fps, HEVC, `.mov`, em `~/Desktop/Edições/Dr Leonardo/Versão final`.
+- **Foto no CapCut:** foto local tem `material_id` vazio e `source` 0. Um molde tirado de item da biblioteca do CapCut
+  (o "白" do "5 - Braços definidos") faz o CapCut trocar a foto pela imagem branca na exportação, embora a prévia fique
+  certa (a faixa branca no lugar do cartão, 2026-11-05; corrigido no `capcut_montar.py`).
 
 ## 7. Como trabalhar (regras do usuário)
 - **Escopo:** mexa só no vídeo que ele apontou; não refaça os outros por iniciativa própria.

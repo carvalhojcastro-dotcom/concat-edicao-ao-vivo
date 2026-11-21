@@ -26,6 +26,7 @@ def main():
     base = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--base=")), None)
     if base:   # a mesma opção do capcut_legendas_ig.py
         ig.SIMPLES["base"] = float(base)
+    ig.aplicar_escalas(sys.argv)   # --simples= / --blocos=: os mesmos tamanhos do capcut_legendas_ig.py
     plano = json.load(open(plano_arq, encoding="utf-8"))
     P = plano["pedacos"]
     total = P[-1]["ini"] + P[-1]["dur"]

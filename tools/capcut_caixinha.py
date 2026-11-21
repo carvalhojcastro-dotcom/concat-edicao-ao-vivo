@@ -9,7 +9,7 @@ já estão feitos e o médico já está centralizado (eixo X). Entram:
     enquadramento dela é o "aberto"; no zoom in o X acompanha a escala (o centro que ela escolheu continua no
     centro) e o Y vem do plano (a cabeça não pode subir até a caixinha).
 
-O CapCut precisa estar FECHADO. Backup em ~/Desktop/Concat/backup-capcut/. Rodar de novo refaz os dois.
+O CapCut precisa estar FECHADO. Backup em ~/Desktop/Claude Code Skills/backup-capcut/. Rodar de novo refaz os dois.
 Uso: capcut_caixinha.py <pasta do projeto no CapCut> <plano.json>   (sem "pergunta": só o zoom por frases)
 plano.json: {"pergunta": "Reposição hormonal protege o coração?", "cabecalho": "Faça uma pergunta",
              "avatar": "<foto quadrada do rosto>", "base_caixinha": 470,      (px do quadro 1080x1920)
@@ -124,7 +124,7 @@ def main():
     alvos = [p for p in [os.path.join(pasta, "draft_info.json")] + glob.glob(os.path.join(pasta, "Timelines", "*", "draft_info.json"))
              if os.path.exists(p)]
     d = json.load(open(alvos[0], encoding="utf-8"))
-    copia = os.path.expanduser(f"~/Desktop/Concat/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
+    copia = os.path.expanduser(f"~/Desktop/Claude Code Skills/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
     while os.path.exists(copia):   # duas ferramentas no mesmo segundo não podem dividir a pasta do backup
         copia += "+"
     for p in glob.glob(os.path.join(pasta, "*.json")) + glob.glob(os.path.join(pasta, "*.tmp")) + glob.glob(os.path.join(pasta, "Timelines", "**", "*"), recursive=True):
@@ -187,6 +187,9 @@ def salvar(d, alvos, msg):
         for i, t in enumerate(d["tracks"]):
             for seg in t["segments"]:
                 seg["track_render_index"] = i
+    # cada take com o seu material (senão "Extrair áudio" num take emudece todos os que dividem o material, 2026-11-17)
+    import capcut_materiais_unicos
+    capcut_materiais_unicos.unicos(d)
     texto = json.dumps(d, ensure_ascii=False, separators=(",", ":"))
     for p in alvos:
         open(p, "w", encoding="utf-8").write(texto)

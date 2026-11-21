@@ -18,12 +18,13 @@ Plano (JSON):
    (volume da música é opcional: senão fica o do modelo)
    "efeitos": [{"nome": "Clique do mouse", "em": 0.0}, ...],
    "broll": [{"arquivo": "<caminho visto pelo CapCut>", "largura": 1152, "altura": 2048, "inicio": s, "fim": s, "zoom": 1.08}, ...],
+   (opcionais no B-roll: "tx", "ty", "escala": posição e escala do clipe; padrão 0, 0, 1 = tela cheia)
    "broll_modelo": "<pasta de um projeto com B-roll de foto>"}   (opcional: o jeito do B-roll vem de lá)
   As fotos precisam estar numa pasta que o CapCut (sandbox) lê: ~/Movies/CapCut/User Data/..., com o caminho
   escrito como ele vê (~/Library/Containers/com.lemon.lvoverseas/Data/Movies/CapCut/User Data/...).
   tx/ty: posição do CapCut (metade do quadro; y para cima). Tempos em segundos.
 
-O CapCut precisa estar FECHADO. Backup em ~/Desktop/Concat/backup-capcut/.
+O CapCut precisa estar FECHADO. Backup em ~/Desktop/Claude Code Skills/backup-capcut/.
 Uso: capcut_montar.py <pasta do projeto novo> <pasta do projeto modelo> <plano.json>
 """
 import copy
@@ -81,7 +82,7 @@ def main():
     N = json.load(open(alvos[0], encoding="utf-8"))
     A = json.load(open(os.path.join(modelo_dir, "draft_info.json"), encoding="utf-8"))
 
-    copia = os.path.expanduser(f"~/Desktop/Concat/backup-capcut/{os.path.basename(novo_dir)} {time.strftime('%Y-%m-%d %H%M%S')}")
+    copia = os.path.expanduser(f"~/Desktop/Claude Code Skills/backup-capcut/{os.path.basename(novo_dir)} {time.strftime('%Y-%m-%d %H%M%S')}")
     for p in glob.glob(os.path.join(novo_dir, "*.json")) + glob.glob(os.path.join(novo_dir, "*.tmp")) + glob.glob(os.path.join(novo_dir, "Timelines", "**", "*"), recursive=True):
         if os.path.isfile(p):
             destino = os.path.join(copia, os.path.relpath(p, novo_dir))
@@ -97,10 +98,33 @@ def main():
             N["materials"][k] = [m for m in v if not (isinstance(m, dict) and m.get("id") in velhos)]
     modelo_voz = sorted(next(t for t in A["tracks"] if t["type"] == "video")["segments"], key=lambda s: s["target_timerange"]["start"])[0]
     segs = []
+    # "arquivo" no pedaço: outro bruto (o vídeo junta duas gravações, PSV2 da Dra. Larissa, 2026-11-17). Ganha um
+    # material próprio, cópia do bruto do projeto com o caminho e o tamanho do outro arquivo
+    outros_brutos = {}
+
+    def material_do(arq):
+        if not arq:
+            return bruto_id
+        if arq not in outros_brutos:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import capcut_novo
+            w, h, dur = capcut_novo.sonda(arq)
+            m = dict(copy.deepcopy(material(N, bruto_id)[1]), id=novo_id(), path=capcut_novo.bruto_visivel(arq, os.path.basename(novo_dir)),
+                     material_name=os.path.basename(arq), width=w, height=h, duration=dur, local_material_id=novo_id().lower(), md5="")
+            if isinstance(m.get("matting"), dict):
+                m["matting"].update(flag=0, path="", custom_matting_id="")
+            N["materials"]["videos"].append(m)
+            outros_brutos[arq] = m["id"]
+        return outros_brutos[arq]
+
     for p in plano["pedacos"]:
-        s = segmento_de(modelo_voz, A, N, bruto_id, p["fonte"], p["fonte_dur"], p["ini"], p["dur"])
+        s = segmento_de(modelo_voz, A, N, material_do(p.get("arquivo")), p["fonte"], p["fonte_dur"], p["ini"], p["dur"])
         s["clip"]["scale"] = {"x": p["escala"], "y": p["escala"]}
         s["clip"]["transform"] = {"x": p.get("tx", 0.0), "y": p.get("ty", 0.0)}
+        # o ângulo é do bruto, não do modelo: a Julianna girou o vídeo dela 4° para endireitar e isso veio junto
+        # para a Dra. Larissa ("não mexa no ângulo dos vídeos", 2026-11-09)
+        s["clip"]["rotation"] = p.get("rotacao", 0.0)
+        s["clip"]["flip"] = {"vertical": False, "horizontal": False}
         # "value" é a proporção x/y travada pela escala uniforme (1,0 em todos os clipes que ela fez), não o zoom:
         # com o zoom aqui, mudar a escala no CapCut achatava a imagem (y = x / value; 2026-10-30)
         s["uniform_scale"] = {"on": True, "value": 1.0}
@@ -128,7 +152,12 @@ def main():
 
     # B-roll: fotos numa trilha por cima, com a animação de entrada que a usuária usa (Fade-in do modelo)
     # e um avanço lento de zoom no tempo todo (movimento na foto; pedido de 2026-10-27)
-    N["tracks"] = [t for t in N["tracks"] if not t.get("name", "").startswith("B-roll")]
+    velhas = [t for t in N["tracks"] if t.get("name", "").startswith("B-roll")]
+    ids = {s["material_id"] for t in velhas for s in t["segments"]} | {r for t in velhas for s in t["segments"] for r in s.get("extra_material_refs", [])}
+    N["tracks"] = [t for t in N["tracks"] if t not in velhas]
+    for k, v in N["materials"].items():   # os materiais do B-roll anterior saem junto (não ficam sobrando no projeto)
+        if isinstance(v, list):
+            N["materials"][k] = [m for m in v if not (isinstance(m, dict) and m.get("id") in ids)]
     brolls = plano.get("broll", [])
     if brolls:
         B = json.load(open(os.path.join(plano["broll_modelo"], "draft_info.json"), encoding="utf-8")) if plano.get("broll_modelo") else A
@@ -150,8 +179,12 @@ def main():
                 if isinstance(m.get("matting"), dict):
                     m["matting"].update(flag=0, path="", custom_matting_id="")
             else:
+                # foto local: o molde pode ser um item da biblioteca do CapCut (o "白" do "5 - Braços definidos"). Com o
+                # material_id e a origem dele, o CapCut troca a foto pela imagem da biblioteca ao exportar (a faixa branca no
+                # lugar do cartão de nome, 2026-11-05); foto importada do disco não tem material_id e tem source 0
                 m = dict(copy.deepcopy(foto_mat), id=novo_id(), path=b["arquivo"], width=b["largura"], height=b["altura"],
-                         material_name=os.path.basename(b["arquivo"]))
+                         material_name=os.path.basename(b["arquivo"]), material_id="", source=0, source_platform=0,
+                         category_id="", category_name="local", local_material_id=novo_id().lower(), md5="")
             N["materials"].setdefault("videos", []).append(m)
             s = segmento_de(foto_seg, B, N, m["id"], 0.0, dur, b["inicio"], dur)
             s["volume"] = 0.0 if b.get("tipo") == "video" else s.get("volume", 1.0)
@@ -159,8 +192,10 @@ def main():
                 anim = dict(copy.deepcopy(anim_modelo), id=novo_id(), animations=copy.deepcopy(entrada))
                 N["materials"].setdefault("material_animations", []).append(anim)
                 s["extra_material_refs"].append(anim["id"])
-            s["clip"]["scale"] = {"x": 1.0, "y": 1.0}
-            s["clip"]["transform"] = {"x": 0.0, "y": 0.0}
+            # posição e escala opcionais (padrão: tela cheia). Ex.: painel 1080x960 da tela dividida do Simples
+            # Medicina na metade de cima: "ty": 0.5 (capcut_simples.py)
+            s["clip"]["scale"] = {"x": b.get("escala", 1.0), "y": b.get("escala", 1.0)}
+            s["clip"]["transform"] = {"x": b.get("tx", 0.0), "y": b.get("ty", 0.0)}
             zoom = b.get("zoom", 1.0 if b.get("tipo") == "video" else 1.08)
             if abs(zoom - 1.0) < 1e-6:
                 tr["segments"].append(s)
@@ -212,6 +247,9 @@ def main():
         trilhas[livre][1]["segments"].append(s)
     N["tracks"] += [t for _, t in trilhas]
 
+    # cada take com o seu material (senão "Extrair áudio" num take emudece todos os que dividem o material, 2026-11-17)
+    import capcut_materiais_unicos
+    capcut_materiais_unicos.unicos(N)
     texto = json.dumps(N, ensure_ascii=False, separators=(",", ":"))
     for p in alvos:
         open(p, "w", encoding="utf-8").write(texto)

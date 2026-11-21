@@ -17,7 +17,7 @@ for i, w in enumerate(words):
     t = corr.get(str(i), w["word"]).strip()
     w["leg"] = t
 # maiúsculas: 1ª palavra do vídeo, depois de ?/! e de ponto final (que a legenda não mostra), nomes próprios e siglas; o resto minúsculo
-PROPRIOS = set("Rafael Rafa Bruno Ive Simone Barra Recreio Brasil Deus Cushing Fantástico Bia Isabela Isa Caxias TikTok Farah Rio Janeiro São Paulo Nordeste Minas Gerais Moçambique Angola Elon Musk Paula Paulinha Myrian Mira João Joãozinho Duda Maria Marias Clara Luísa Malu Estevão Sêneca Bernardinho Tijuca Fiocruz Bíblia".split())
+PROPRIOS = set("Rafael Rafa Bruno Ive Simone Barra Recreio Brasil Deus Cushing Fantástico Bia Isabela Isa Caxias TikTok Farah Rio Janeiro São Paulo Nordeste Minas Gerais Moçambique Angola Elon Musk Paula Paulinha Myrian Mira João Joãozinho Duda Maria Marias Clara Luísa Malu Estevão Sêneca Bernardinho Tijuca Fiocruz Bíblia Daniella Varela Vitor Natal Velocity Humman Maracanã Eduarda Jorginho Austrália Lancefield Miguel Tepedino Estados Unidos Ivy Bruno Márcia Monnerat Myrian Jonas Renata Raíssa JFit Physical Shape Caxias Niterói Friburgo Bom Jardim Nova Paris Celimax Neutrogena Botox Enem Unigranrio Mounjaro Ozempic Ilha Governador IA André Vera Embryolisse Caudalie La RochePosay CeraVe Veillard Lopes Camilee Tostes Antonella Nutrindo Ideais PUC Sculptra Radiesse Galderma Ultraformer Moema Ipanema Belém Macaé BH Marcelo Instagram Karen Bergman Férez Luiz Escherichia Gleason ISUP Europa Proteus Klebsiella X Y J D L T A B".split())   # L e T: cicatriz em L/T; A e B: "do ponto A ao B"
 for i, w in enumerate(words):
     t = w["leg"]
     nome = re.sub(r"[^\wÀ-ú]", "", t)

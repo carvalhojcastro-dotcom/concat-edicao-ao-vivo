@@ -23,7 +23,17 @@ Uso: capcut_legendas_ig.py <pasta do projeto no CapCut> <words.json> <plano.json
   e troca as legendas do projeto (a headline, com placa, fica).
   plano.json: {"blocos": [{"linhas": [[i, i], [i]], "chave": [i], "fecho": false}, ...]}  (índices de words.json)
      opcional "sem_legenda": [[ini, fim], ...] (s da timeline): sem legenda ali (motion em tela cheia)
+     opcional "divisoes": [t, ...] (s da timeline): dois cortes num projeto só; nenhuma legenda atravessa t
+     opcional "animar": "alternado" (ou "anim": true num bloco): entrada das palavras dos blocos com fade (5 quadros)
+     e subida curta (4 quadros, ~19 px) por keyframes, bloco sim, bloco não; o desfoque só com ANIM_BLUR (animação
+     "in" de texto do CapCut copiada de um texto em que o usuário a aplicou: o catálogo dela não está no cache)
   --base=0.70: desce (ou sobe) a linha das legendas (fração da altura; padrão 0.639), ex.: estampa no peito.
+  Tamanho: desde 2026-11-21 o padrão é simples a 90% (tamanho 14,4 no CapCut) e blocos a 85% ("menores e mais
+  sofisticadas"). --simples=1 --blocos=1 volta ao tamanho antigo (ajuste num projeto entregue antes disso);
+  outro valor (ex.: --simples=0.95) também vale. O capcut_previa.py aceita as mesmas opções.
+  --acrescentar: não apaga as legendas que já estão no projeto; só põe as do words.json (as que faltam, ex.: ela
+  esticou o clipe e o fim ficou sem legenda, JFIT C04 2026-11-14) nas trilhas "Legendas IG" onde houver espaço livre.
+  O words.json traz só as palavras novas (tempos da timeline) e o plano, os blocos delas (índices desse words.json).
 O CapCut precisa estar FECHADO (rodar de novo troca as legendas; trilhas "Legendas IG").
 """
 import copy
@@ -88,6 +98,12 @@ def metricas(arq):
 # era 11,85 = 52 px medidos na referência); o em sai do tamanho pela mesma conta do segmento()
 TAMANHO_SIMPLES = 16
 SIMPLES["em"] = TAMANHO_SIMPLES * K_CAPCUT / (metricas(SIMPLES["arq"])["asc"] + metricas(SIMPLES["arq"])["desc"])
+# Padrão desde 2026-11-21 (Dra. Liliane, "deixe as legendas normais em 90% do tamanho original e as legendas destaque
+# em 85% ... ficarão menores e mais sofisticadas"; depois "salve como padrão para os próximos"): simples a 90% do
+# tamanho 16 (14,4) e blocos a 85%. --simples=1 --blocos=1 volta ao tamanho antigo (ajuste em projeto entregue antes).
+ESCALA_SIMPLES, ESCALA_BLOCOS = 0.9, 0.85
+_EM_100 = {id(est): est["em"] for est in (SIMPLES, PEQUENA, CHAVE, FECHO)}
+_LARGURA_SIMPLES_100 = LARGURA_SIMPLES
 
 
 def largura(texto, est, em_px):
@@ -240,7 +256,10 @@ def montar(words, plano):
         fim = words[ult + 1]["start"] if ult + 1 < len(words) else words[ult]["end"] + 0.3
         if fim - words[ult]["end"] > PAUSA:
             fim = words[ult]["end"] + 0.3
-        itens += bloco(words, b, fim)
+        # entrada animada (2026-11-14, Marcia C01): "fade-in somada à blur-in, somada a debaixo pra cima (poucos frames)
+        # ... apenas nas palavras dos blocos ... bloco sim, bloco não"; plano "animar": "alternado" ou "anim" no bloco
+        anim = b.get("anim", plano.get("animar") == "alternado" and n % 2 == 0)
+        itens += [dict(it, anim=anim) for it in bloco(words, b, fim)]
     # "sem_legenda": janelas da timeline sem legenda (motion graphics em tela cheia; pedido de 2026-10-30:
     # "retirar as legendas nos momentos em que o motion aparece"); a palavra dita dentro delas fica sem legenda
     fora = plano.get("sem_legenda", [])
@@ -253,6 +272,11 @@ def montar(words, plano):
                 it["fim"] = a
             if a <= it["ini"] < b < it["fim"]:
                 it["ini"] = b
+        # "divisoes": onde um projeto junta dois cortes (2026-11-01, EP02C03: "são 2 cortes em um projeto"); nenhuma
+        # legenda passa de um corte para o outro (a palavra antes da divisão deve fechar frase, com ponto)
+        for t in plano.get("divisoes", []):
+            if it["ini"] < t < it["fim"]:
+                it["fim"] = t
     itens = [it for it in itens if it["fim"] - it["ini"] > 0.05]
     return sorted(itens, key=lambda it: (it["ini"], it["base"]))
 
@@ -317,17 +341,43 @@ def segmento(it, modelo, render_index):
              target_timerange={"start": ini, "duration": max(fim - ini, 33333)}, keyframe_refs=[], common_keyframes=[], group_id="")
     s["clip"] = {"scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0, "alpha": 1.0, "flip": {"vertical": False, "horizontal": False},
                  "transform": {"x": round(2 * it["cx"] - 1, 6), "y": round(1 - 2 * centro_y / H, 6)}}
+    if it.get("anim"):
+        s["common_keyframes"] = entrada(s["clip"]["transform"]["x"], s["clip"]["transform"]["y"])
+        if ANIM_BLUR:   # animação de entrada do CapCut copiada de um texto em que o usuário a pôs (desfoque)
+            anim["animations"] = [dict(copy.deepcopy(ANIM_BLUR), start=0)]
     return m, anim, s
 
 
-def escrever(pasta, itens):
+# entrada dos blocos animados: opacidade 0 -> 1 e subida curta, em quadros de 30 fps (keyframes de texto do CapCut,
+# no formato que ele grava: as cinco propriedades, tempo relativo ao início do texto)
+ENTRADA_FADE = 5 / 30
+ENTRADA_SUBIDA = 4 / 30
+ENTRADA_DY = 0.02          # em metades da altura da tela (~19 px em 1920)
+ANIM_BLUR = None           # {"id", "path", "resource_id", ...} de uma animação "in" de texto, quando houver
+
+
+def entrada(x, y):
+    def kf(tipo, pontos):
+        return {"id": novo_id(), "material_id": "", "property_type": tipo,
+                "keyframe_list": [{"id": novo_id(), "curveType": "Line", "time_offset": int(round(t * 1e6)),
+                                   "left_control": {"x": 0.0, "y": 0.0}, "right_control": {"x": 0.0, "y": 0.0},
+                                   "values": [v], "string_value": "", "graphID": ""} for t, v in pontos]}
+    fim = max(ENTRADA_FADE, ENTRADA_SUBIDA)
+    return [kf("KFTypePositionX", [(0, x), (fim, x)]),
+            kf("KFTypePositionY", [(0, round(y - ENTRADA_DY, 6)), (ENTRADA_SUBIDA, y)] + ([(fim, y)] if fim > ENTRADA_SUBIDA else [])),
+            kf("KFTypeScaleX", [(0, 1.0), (fim, 1.0)]),
+            kf("KFTypeRotation", [(0, 0.0), (fim, 0.0)]),
+            kf("KFTypeGlobalAlpha", [(0, 0.0), (ENTRADA_FADE, 1.0)])]
+
+
+def escrever(pasta, itens, manter=False):
     if not os.environ.get("CAPCUT_TESTE") and subprocess.run(["pgrep", "-x", "CapCut"], capture_output=True).returncode == 0:
         sys.exit("feche o CapCut antes (ele regrava o projeto aberto por cima)")
     alvos = [p for p in [os.path.join(pasta, "draft_info.json")] + glob.glob(os.path.join(pasta, "Timelines", "*", "draft_info.json"))
              if os.path.exists(p)]
     base = json.load(open(alvos[0], encoding="utf-8"))
     modelo = json.load(open(os.path.join(AQUI, "capcut_modelo_texto.json"), encoding="utf-8"))
-    copia = os.path.expanduser(f"~/Desktop/Concat/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
+    copia = os.path.expanduser(f"~/Desktop/Claude Code Skills/backup-capcut/{os.path.basename(pasta)} {time.strftime('%Y-%m-%d %H%M%S')}")
     while os.path.exists(copia):
         copia += "+"
     for p in glob.glob(os.path.join(pasta, "*.json")) + glob.glob(os.path.join(pasta, "*.tmp")) + glob.glob(os.path.join(pasta, "Timelines", "**", "*"), recursive=True):
@@ -336,27 +386,34 @@ def escrever(pasta, itens):
             os.makedirs(os.path.dirname(destino), exist_ok=True)
             shutil.copy2(p, destino)
     velhas = [t for t in base["tracks"] if t.get("name", "").startswith(NOME_TRILHA)]
-    ids = {s["material_id"] for t in velhas for s in t["segments"]}
-    refs = {r for t in velhas for s in t["segments"] for r in s.get("extra_material_refs", [])}
-    base["tracks"] = [t for t in base["tracks"] if t not in velhas]
-    base["materials"]["texts"] = [m for m in base["materials"].get("texts", []) if m["id"] not in ids]
-    base["materials"]["material_animations"] = [m for m in base["materials"].get("material_animations", []) if m["id"] not in refs]
-    render = max([s.get("render_index", 0) for t in base["tracks"] for s in t["segments"]] + [0]) + 1
     trilhas = []
+    if manter:   # --acrescentar: as trilhas dela ficam como estão; as legendas novas entram no espaço livre delas
+        num = lambda t: int(t["name"].split()[-1]) if t["name"].split()[-1].isdigit() else 99  # noqa: E731
+        for t in sorted(velhas, key=num):
+            ocup = [(s["target_timerange"]["start"], s["target_timerange"]["start"] + s["target_timerange"]["duration"]) for s in t["segments"]]
+            trilhas.append([ocup, t])
+    else:
+        ids = {s["material_id"] for t in velhas for s in t["segments"]}
+        refs = {r for t in velhas for s in t["segments"] for r in s.get("extra_material_refs", [])}
+        base["tracks"] = [t for t in base["tracks"] if t not in velhas]
+        base["materials"]["texts"] = [m for m in base["materials"].get("texts", []) if m["id"] not in ids]
+        base["materials"]["material_animations"] = [m for m in base["materials"].get("material_animations", []) if m["id"] not in refs]
+    existentes = len(trilhas)
+    render = max([s.get("render_index", 0) for t in base["tracks"] for s in t["segments"]] + [0]) + 1
     for it in itens:
         m, anim, s = segmento(it, modelo, render)
         render += 1
         base["materials"].setdefault("texts", []).append(m)
         base["materials"].setdefault("material_animations", []).append(anim)
         ini, fim = s["target_timerange"]["start"], s["target_timerange"]["start"] + s["target_timerange"]["duration"]
-        livre = next((k for k, (f, _) in enumerate(trilhas) if f <= ini), None)
+        livre = next((k for k, (oc, _) in enumerate(trilhas) if all(f <= ini or a >= fim for a, f in oc)), None)
         if livre is None:
-            trilhas.append([fim, dict(copy.deepcopy(modelo["trilha"]), id=novo_id(), type="text", flag=0,
-                                      name=f"{NOME_TRILHA} {len(trilhas) + 1}", is_default_name=False, segments=[])])
+            trilhas.append([[], dict(copy.deepcopy(modelo["trilha"]), id=novo_id(), type="text", flag=0,
+                                     name=f"{NOME_TRILHA} {len(trilhas) + 1}", is_default_name=False, segments=[])])
             livre = len(trilhas) - 1
-        trilhas[livre][0] = fim
+        trilhas[livre][0].append((ini, fim))
         trilhas[livre][1]["segments"].append(s)
-    base["tracks"] += [tr for _, tr in trilhas]
+    base["tracks"] += [tr for _, tr in trilhas[existentes:]]
     if base.get("render_index_track_mode_on"):
         for i, t in enumerate(base["tracks"]):
             for s in t["segments"]:
@@ -367,7 +424,7 @@ def escrever(pasta, itens):
         tmp = os.path.join(os.path.dirname(p), "template-2.tmp")
         if os.path.exists(tmp):
             open(tmp, "w", encoding="utf-8").write(texto)
-    print(f"{len(itens)} textos em {len(trilhas)} trilhas \"{NOME_TRILHA}\"; backup em {copia}")
+    print(f"{len(itens)} textos {'acrescentados ' if manter else ''}em {len(trilhas)} trilhas \"{NOME_TRILHA}\"; backup em {copia}")
 
 
 # ---------------------------------------------------------------- Concat
@@ -494,7 +551,24 @@ def escrever_concat(projeto, words_src, plano):
           f"{len(plano.get('blocos', []))} blocos); projeto salvo")
 
 
+def aplicar_escalas(argv=()):
+    """Tamanho das simples e dos blocos em relação ao tamanho antigo (simples 16; blocos 85/146/186 px em 1920).
+    Sem opção vale o padrão (ESCALA_SIMPLES 0,9 e ESCALA_BLOCOS 0,85, desde 2026-11-21); --simples=1 --blocos=1 volta
+    ao antigo. A largura máxima da simples encolhe junto, então os grupos de palavras ficam os mesmos."""
+    global LARGURA_SIMPLES
+    s = next((float(a.split("=", 1)[1]) for a in argv if a.startswith("--simples=")), ESCALA_SIMPLES)
+    b = next((float(a.split("=", 1)[1]) for a in argv if a.startswith("--blocos=")), ESCALA_BLOCOS)
+    SIMPLES["em"] = _EM_100[id(SIMPLES)] * s
+    LARGURA_SIMPLES = _LARGURA_SIMPLES_100 * s
+    for est in (PEQUENA, CHAVE, FECHO):
+        est["em"] = _EM_100[id(est)] * b
+
+
+aplicar_escalas()   # o padrão vale também para quem importa este módulo (capcut_previa, cortes de podcast, motions)
+
+
 def main():
+    aplicar_escalas(sys.argv)
     base = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--base=")), None)
     if base:   # --base=0.70: linha de base da legenda (e da chave dos blocos) em fração da altura (padrão 0.639)
         SIMPLES["base"] = float(base)
@@ -503,7 +577,8 @@ def main():
         args = [a for a in sys.argv[1:] if not a.startswith("--")]
         escrever_concat(os.path.abspath(concat), json.load(open(args[0])), json.load(open(args[1])))
         return
-    pasta, words, plano = sys.argv[1], json.load(open(sys.argv[2])), json.load(open(sys.argv[3]))
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    pasta, words, plano = args[0], json.load(open(args[1])), json.load(open(args[2]))
     itens = montar(words, plano)
     duracao = json.load(open(os.path.join(pasta, "draft_info.json"), encoding="utf-8"))["duration"] / 1e6 if os.path.isdir(pasta) else None
     for it in itens:   # nenhuma legenda passa do fim do vídeo
@@ -514,7 +589,7 @@ def main():
         json.dump([dict(it, est=it["est"]["titulo"]) for it in itens], open(os.path.join(previa, "itens.json"), "w"), ensure_ascii=False, indent=0)
         print(f"{len(itens)} textos montados (prévia em {previa})")
         return
-    escrever(os.path.abspath(pasta), itens)
+    escrever(os.path.abspath(pasta), itens, manter="--acrescentar" in sys.argv)
 
 
 if __name__ == "__main__":

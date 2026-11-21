@@ -14,16 +14,16 @@ deste fork, as ferramentas, as fontes, as referências e a skill que o Claude Co
 **1. Clonar dentro de uma pasta `Concat`.** O repositório vira a subpasta `ferramentas`; o setup
 cria `editados/`, `exportados/` e `referencias/` ao lado dele.
 ```bash
-mkdir -p ~/Desktop/Concat
+mkdir -p ~/Desktop/Claude\ Code\ Skills
 ```
 ```bash
-gh repo clone carvalhojcastro-dotcom/concat-edicao-ao-vivo ~/Desktop/Concat/ferramentas
+gh repo clone carvalhojcastro-dotcom/concat-edicao-ao-vivo ~/Desktop/Claude\ Code\ Skills/ferramentas
 ```
-(Sem o `gh`: `git clone https://github.com/carvalhojcastro-dotcom/concat-edicao-ao-vivo.git ~/Desktop/Concat/ferramentas`.)
+(Sem o `gh`: `git clone https://github.com/carvalhojcastro-dotcom/concat-edicao-ao-vivo.git ~/Desktop/Claude\ Code\ Skills/ferramentas`.)
 
 **2. Rodar o setup**, com o Concat fechado:
 ```bash
-cd ~/Desktop/Concat/ferramentas && ./tools/setup.sh
+cd ~/Desktop/Claude\ Code\ Skills/ferramentas && ./tools/setup.sh
 ```
 Ele faz sozinho:
 - instala ffmpeg, gh e o ambiente Python (transcrição, rosto, Higgsfield);
@@ -32,14 +32,14 @@ Ele faz sozinho:
 - **liga a API do Concat** (porta 7420) e grava o token em `.concat-token`;
 - prepara as fontes: as livres (inclusive a Poppins das legendas) já vêm no repositório, a Coolvetica é baixada do site oficial e as
   faces da Helvetica Neue são extraídas do macOS;
-- cria `~/Desktop/Concat/editados`, `exportados` e o atalho `referencias`.
+- cria `~/Desktop/Claude\ Code\ Skills/editados`, `exportados` e o atalho `referencias`.
 
 **3. Ligar o Higgsfield** (B-roll). A chave é digitada sem aparecer e fica em `.env.local`, fora do Git:
 ```bash
 ./tools/configurar_chave_higgsfield.sh
 ```
 
-**4. Usar.** Abra o Concat, abra o Claude Code na pasta `~/Desktop/Concat/ferramentas` e diga:
+**4. Usar.** Abra o Concat, abra o Claude Code na pasta `~/Desktop/Claude\ Code\ Skills/ferramentas` e diga:
 > edita esse vídeo: ~/Downloads/C5430.MP4 e salve como 13 - Título
 
 ## O que fica onde

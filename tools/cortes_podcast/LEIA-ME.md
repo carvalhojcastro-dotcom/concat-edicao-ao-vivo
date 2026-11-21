@@ -83,3 +83,76 @@ passos Python um a um; transcrição, codificador e lista de recentes já passam
 ## Escopo
 Quando o usuário aponta um corte, mexa **só nele** ("só mude o vídeo que eu mencionei"); não refaça os
 outros por iniciativa própria.
+
+## Cortes no CapCut (desde o Podcast 12 do Dr. Rafael, 2026-11-10)
+Projetos editáveis no CapCut em vez de MP4 do Concat, com os scripts de `capcut/`. Pasta de trabalho `W` com
+`config.json` (ver `capcut/comum.py`), `audio.wav`, `turbo.json` → `rotulado.json` (rotular.py) e `cortes.txt`.
+1. **Seleção:** da pergunta até o fim da resposta, sem cortar pausas nem respirações. In/out em silêncio: use
+   `capcut/bordas.py W palavras a b` e `capcut/bordas.py W energia a-b`. O foco é quem o usuário pedir (no Humman 01,
+   o convidado). Fala ininteligível no fim sai.
+2. **Enquadramento:** `capcut/analisar.py W id in out`, depois `capcut/enquadrar.py W id in out volume`, que grava
+   `c<id>/plano.json`. Regras:
+   - Corte seco só na troca de câmera ou de pessoa.
+   - X fixo por pessoa e câmera, com o corpo centrado.
+   - Keyframes de X só quando a pessoa se desloca e fica no novo lugar.
+3. **Volume:** ganho = mín(−16 − LUFS, −1 − pico), com o ebur128 no trecho do bruto. Cabe no `plano.json` como
+   `volume`.
+4. **Texto:** `capcut/transcrever_cortes.py W` gera o turbo e o medium. `capcut/comparar.py W id` mostra onde eles
+   divergem. Grave as correções em `c<id>/correcoes_tl.json`, depois rode
+   `capcut/preparar_legenda.py W id duração` para gerar `words_leg.json`, e `destaques.py` para gerar `blocos.json`.
+   - Nenhum bloco enquanto a headline está na tela, nos primeiros 7 s.
+5. **Projeto:**
+   - `capcut_novo.py "<EP02C01 …>" "<nome>" <bruto>`
+   - `capcut_podcast.py <pasta> plano.json`
+   - `capcut/headline.py <pasta> "Linha 1\nLinha 2" 7.0 0.0 0.80`
+   - `capcut_legendas_ig.py <pasta> words_leg.json blocos.json`
+   - Cor e filtro, quando pedirem (Dra Márcia e JFIT, 2026-11-13): `capcut/cor.py <pasta> --nitidez 15 --exposicao 2
+     --filtro 20` (camada de ajuste + "Crepúsculo dos sonhos"). O modelo EP02C01 não tem retoque de rosto nem
+     maquiagem; confira isso antes de trocar de modelo quando pedirem "sem filtros de rosto".
+   - CapCut FECHADO.
+6. **Conferência:**
+   - `capcut/emendas.py <bruto> <pastas…>`: nenhum pedaço pode mostrar quadro de outro plano.
+   - `capcut/previa.py`: folha com enquadramento, headline e legendas.
+- **Armadilhas (Humman 01, 2026-11-10):**
+  - Num `while read` de vários projetos, passe `</dev/null` para cada ferramenta. O ffmpeg do `capcut_novo.py` lê a
+    entrada e come o 1º caractere da linha seguinte (o "0" de "02").
+  - Câmeras pela cor do canto (`camera_por_cor` no config) quando um plano aberto tem só um rosto detectado.
+  - Plano aberto com escala 5 (`escala_mesa`) e o rosto do convidado a ~36% da altura.
+- **Dois convidados no mesmo plano (JFIT, 2026-11-13):** a voz M/F não separa (o Jonas sai "F"), então
+  `decide_pela_boca: ["G"]` escolhe pela boca. Ela erra quando quem escuta ri ou acena: a Renata contava a história e o
+  Jonas ficava na tela por 23 s. Depois do `enquadrar.py`, leia o texto de cada pedaço G (quem está contando?) e
+  force pelo conteúdo com `"falantes": {"<id>": [[t0 do bruto, t1, "renata"], ...]}` no config, e rode de novo.
+- **Plano aberto parado numa pessoa:** `"mesa": {"modo": "fixo", "nome": "joao", "cx": 0.885, "cy": 0.27}` (Márcia:
+  o plano aberto só entra quando o João pergunta) ou `{"modo": "voz", "M": {...}, "F": {...}}`.
+- **Exportar o MP4** é só pela tela do CapCut (não há linha de comando): precisa do Computer use ligado no app do
+  Claude, senão o usuário exporta.
+- **Quando quem fala olha para o outro (2026-11-10, Humman 01):** corte seco para a outra pessoa em tela cheia nesse trecho, e
+  depois volta para quem fala. É "uma vez ou outra", e NÃO em tela dividida ("pode ser só um corte normal").
+  - `capcut/olhar.py W id` mede o giro da cabeça. No Humman o convidado fica à esquerda da câmera dos apresentadores:
+    - a Myrian olhando para o João: giro > +0,10;
+    - o João olhando para a Myrian: giro < −1,4 (vira de perfil); olhando para o convidado, entre −0,3 e −1.
+  - Trechos sustentados por ≥ 1,4 s: `capcut/dividir.py W id "t0-t1:myrian"`.
+    - O modo `"t0-t1:joao/myrian"` faz a tela dividida, que só vale se ele pedir.
+  - Depois, rode `capcut_podcast.py` de novo e o `emendas.py`.
+- **Só legendas num corte que ele já montou (Marcia C01, 2026-11-14):** ele corta, acelera (1.2x) e cola trechos além
+  do corte original; não mexa em clipe, velocidade, headline (ele a pôs num clipe composto) nem filtro.
+  `capcut/transcrever_timeline.py <pasta> <bruto> W id` transcreve a timeline dele (trechos do bruto em 1x, palavras
+  levadas pedaço a pedaço); depois `comparar.py`, `preparar_legenda.py`, `destaques.py` e `capcut_legendas_ig.py`, que
+  só troca as trilhas "Legendas IG". Ele pediu mais blocos de destaque: ~13 por minuto (32 em 2:29).
+  - O CapCut pode reabrir sozinho segundos depois do primeiro `quit`: confira o `pgrep` de novo antes de gravar.
+- **Zoom seco ao longo do corte (JFIT C04 a C10, 2026-11-14):** "adicione cortes para poder dar zoom in e zoom out ao
+  longo de todo o video ... Esse vai e volta é bom pra dar dinamicidade".
+  - Comando: `capcut_zoom_podcast.py <pasta> <words.json da timeline>`. As palavras saem de `capcut/transcrever_timeline.py`.
+  - Divide os takes longos em trechos de ~4,5 s, no começo de uma frase, e alterna normal e zoom de 1,18x. O rosto fica
+    no mesmo lugar da tela e não há keyframe.
+  - Rode uma vez por projeto: rodar de novo multiplica o zoom.
+  - Bruto 1080p já está em escala 3,2: não passe muito de 1,2.
+- **Ela esticou o clipe e faltou legenda:** `capcut_legendas_ig.py <pasta> <words do trecho novo> <blocos> --acrescentar`.
+  As legendas dela ficam; as novas entram no espaço livre das trilhas "Legendas IG".
+- **Dra. Camilee Tostes (2026-11-19):** 10 cortes a 1.1x, cada um da pergunta ao fim da resposta e sem cortes
+  internos ("evite muitos cortes de respirações e erros"). Pasta de trabalho durável em
+  `Claude Code Skills/trabalho/Camilee`, porque o scratchpad é apagado entre os dias.
+  - Plano aberto com `escala_mesa` 3,2: no 5 o rosto pequeno fica borrado.
+  - `capcut_zoom_podcast.py` agora divide e dá zoom também nos takes com keyframes de X. O `time_offset` desses keyframes é
+    o tempo absoluto do bruto; cada metade fica com os dela mais um keyframe interpolado na emenda.
+  - Letra solta em legenda ("vitamina D") precisa estar em PROPRIOS, senão o plano_auto a põe em minúscula.

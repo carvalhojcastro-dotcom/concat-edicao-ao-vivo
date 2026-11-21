@@ -9,7 +9,7 @@ vídeo. O modelo é um projeto da mesma cliente; dele ficam as camadas que valem
 retoque); sai o que era daquele vídeo (cortes, B-roll, clipes compostos, legendas, música e efeitos).
 
 O CapCut precisa estar FECHADO. A pasta nova fica ao lado das outras e entra na lista de projetos
-(root_meta_info.json, com backup em ~/Desktop/Concat/backup-capcut/).
+(root_meta_info.json, com backup em ~/Desktop/Claude Code Skills/backup-capcut/).
 Uso: capcut_novo.py <pasta do projeto modelo> "<nome do projeto novo>" <vídeo bruto>
 """
 import copy
@@ -41,6 +41,13 @@ def bruto_visivel(video, pasta_nome):
             shutil.copy2(video, destino)
     return os.path.join(BRUTOS_VISTA, pasta_nome, os.path.basename(video))
 PULAR = {"matting", "subdraft", "video", "qr_upload", "smart_crop", "adjust_mask"}   # caches do vídeo do modelo
+
+
+def capa(video, dur, destino):
+    """Capa da lista de projetos: um quadro do bruto novo no 9:16 (a do modelo mostrava o vídeo dele, 2026-11-05).
+    O capcut_podcast.py troca depois pelo primeiro quadro já enquadrado."""
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{min(1.0, dur / 2e6):.2f}", "-i", "file:" + video, "-frames:v", "1",
+                    "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920", destino], check=True)
 
 
 def sonda(video):
@@ -106,6 +113,9 @@ def main():
         mat["matting"].update(flag=0, path="", custom_matting_id="")
     seg.update(id=novo_id(), material_id=mat["id"], source_timerange={"start": 0, "duration": dur},
                target_timerange={"start": 0, "duration": int(dur / seg.get("speed", 1.0))}, common_keyframes=[], keyframe_refs=[])
+    # o ângulo do modelo (ela girou o vídeo dela para endireitar) não vale para outro bruto ("não mexa no ângulo", 2026-11-09)
+    seg["clip"]["rotation"] = 0.0
+    seg["clip"]["flip"] = {"vertical": False, "horizontal": False}
     seg["extra_material_refs"] = [r for r in seg["extra_material_refs"]
                                   if not any(m.get("id") == r and k in ("transitions", "drafts")
                                              for k, v in d["materials"].items() if isinstance(v, list) for m in v if isinstance(m, dict))]
@@ -115,6 +125,10 @@ def main():
         return len(t["segments"]) == 1 and t["segments"][0]["target_timerange"]["duration"] >= 0.9 * total
     d["tracks"] = [t for t in d["tracks"] if t is principal or (t["type"] in ("adjust", "video", "effect", "filter") and inteira(t))]
     d["materials"]["videos"].append(mat)
+    # mídias do modelo que nenhum clipe usa saem: senão a lista do CapCut soma o bruto dele no tamanho do projeto
+    # (os cortes da Dra. Daniella apareciam com 9,7G, o bruto do Humman 02, 2026-11-05)
+    usados = {s["material_id"] for t in d["tracks"] for s in t["segments"]}
+    d["materials"]["videos"] = [m for m in d["materials"]["videos"] if m["id"] in usados]
     d["materials"]["drafts"] = []
     d.update(id=tl, duration=seg["target_timerange"]["duration"])
     texto = json.dumps(d, ensure_ascii=False, separators=(",", ":"))
@@ -137,8 +151,10 @@ def main():
                                "sub_time_range": {"duration": -1, "start": -1}, "type": 0, "width": w}]
     json.dump(meta, open(meta_p, "w", encoding="utf-8"), ensure_ascii=False)
 
+    capa(video, dur, os.path.join(pasta, "draft_cover.jpg"))
+
     raiz_p = os.path.join(RAIZ, "root_meta_info.json")
-    copia = os.path.expanduser(f"~/Desktop/Concat/backup-capcut/root_meta_info {time.strftime('%Y-%m-%d %H%M%S')}.json")
+    copia = os.path.expanduser(f"~/Desktop/Claude Code Skills/backup-capcut/root_meta_info {time.strftime('%Y-%m-%d %H%M%S')}.json")
     os.makedirs(os.path.dirname(copia), exist_ok=True)
     shutil.copy2(raiz_p, copia)
     raiz = json.load(open(raiz_p, encoding="utf-8"))
@@ -146,7 +162,8 @@ def main():
     raiz["all_draft_store"].insert(0, dict(copy.deepcopy(base), draft_id=did, draft_name=nome, draft_fold_path=pasta,
                                            draft_cover=os.path.join(pasta, "draft_cover.jpg"),
                                            draft_json_file=os.path.join(pasta, "draft_info.json"),
-                                           tm_draft_create=agora, tm_draft_modified=agora, tm_duration=d["duration"]))
+                                           tm_draft_create=agora, tm_draft_modified=agora, tm_duration=d["duration"],
+                                           draft_timeline_materials_size=os.path.getsize(video)))
     json.dump(raiz, open(raiz_p, "w", encoding="utf-8"), ensure_ascii=False)
     print(f"projeto \"{nome}\" em {pasta}: {w}x{h}, {dur / 1e6:.2f}s; camadas mantidas: "
           f"{[t['type'] for t in d['tracks']]}; lista de projetos com backup em {copia}")
